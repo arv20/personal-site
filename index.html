@@ -8,6 +8,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..600;1,9..144,300..600&family=Sora:wght@300;400;500&display=swap" rel="stylesheet" />
+  <link href="https://cdn.jsdelivr.net/npm/splitting@1.0.6/dist/splitting.css" rel="stylesheet" />
+  <link href="https://cdn.jsdelivr.net/npm/splitting@1.0.6/dist/splitting-cells.css" rel="stylesheet" />
 
   <style>
     /* ═══════════════════════════════════════════════
@@ -31,9 +33,20 @@
     }
 
     html {
-      scroll-behavior: smooth;
       -webkit-font-smoothing: antialiased;
       -moz-osx-font-smoothing: grayscale;
+    }
+
+    html.lenis, html.lenis body {
+      height: auto;
+    }
+
+    .lenis.lenis-smooth {
+      scroll-behavior: auto !important;
+    }
+
+    .lenis.lenis-smooth [data-lenis-prevent] {
+      overscroll-behavior: contain;
     }
 
     body {
@@ -850,6 +863,52 @@
       background: var(--border);
       margin: 0 auto;
     }
+
+    /* ═══════════════════════════════════════════════
+       THREE.JS PARTICLE CANVAS
+       ═══════════════════════════════════════════════ */
+    #hero-particles {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    .hero-content {
+      position: relative;
+      z-index: 2;
+    }
+
+    /* ═══════════════════════════════════════════════
+       SPLITTING.JS CHARACTER ANIMATIONS
+       ═══════════════════════════════════════════════ */
+    .section-heading[data-splitting] .char {
+      opacity: 0;
+      transform: translateY(30px);
+      transition: none;
+      display: inline-block;
+    }
+
+    .section-heading[data-splitting] .whitespace {
+      width: 0.3em;
+      display: inline-block;
+    }
+
+    /* ═══════════════════════════════════════════════
+       VANILLA TILT ENHANCEMENTS
+       ═══════════════════════════════════════════════ */
+    .interest-card,
+    .stat-card,
+    .project-card {
+      transform-style: preserve-3d;
+    }
+
+    .js-tilt-glare {
+      border-radius: 16px;
+    }
   </style>
 </head>
 <body>
@@ -882,6 +941,7 @@
        SECTION: HERO
        ═══════════════════════════════════════════════ -->
   <section class="hero" id="hero">
+    <canvas id="hero-particles"></canvas>
     <div class="hero-decor">
       <div class="decor-shape decor-shape-1"></div>
       <div class="decor-shape decor-shape-2"></div>
@@ -926,7 +986,7 @@
        ═══════════════════════════════════════════════ -->
   <section id="github">
     <div class="container">
-      <h2 class="section-heading reveal">What I've been building<span class="accent-dot">.</span></h2>
+      <h2 class="section-heading" data-splitting>What I've been building<span class="accent-dot">.</span></h2>
       <div class="github-grid">
         <div class="github-card full-width reveal reveal-delay-1">
           <div class="github-card-label">Contribution Graph</div>
@@ -971,7 +1031,7 @@
        ═══════════════════════════════════════════════ -->
   <section id="about">
     <div class="container">
-      <h2 class="section-heading reveal">A little about me<span class="accent-dot">.</span></h2>
+      <h2 class="section-heading" data-splitting>A little about me<span class="accent-dot">.</span></h2>
       <div class="interest-grid">
 
         <div class="interest-card reveal reveal-delay-1">
@@ -1027,7 +1087,7 @@
        ═══════════════════════════════════════════════ -->
   <section id="work">
     <div class="container">
-      <h2 class="section-heading reveal">Selected work<span class="accent-dot">.</span></h2>
+      <h2 class="section-heading" data-splitting>Selected work<span class="accent-dot">.</span></h2>
       <div class="project-list">
 
         <div class="project-card reveal reveal-delay-1">
@@ -1077,7 +1137,7 @@
        ═══════════════════════════════════════════════ -->
   <section class="contact" id="contact">
     <div class="container">
-      <h2 class="contact-heading reveal">Let's build something<span class="accent-dot">.</span></h2>
+      <h2 class="contact-heading" data-splitting>Let's build something<span class="accent-dot">.</span></h2>
       <a href="mailto:[YOUR_EMAIL]" class="contact-email reveal reveal-delay-1">[YOUR_EMAIL]</a>
 
       <div class="social-row reveal reveal-delay-2">
@@ -1110,13 +1170,22 @@
   </footer>
 
   <!-- ═══════════════════════════════════════════════
+       CDN LIBRARIES
+       ═══════════════════════════════════════════════ -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/lenis@1.0.42/dist/lenis.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/splitting@1.0.6/dist/splitting.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/vanilla-tilt@1.8.1/dist/vanilla-tilt.min.js"></script>
+
+  <!-- ═══════════════════════════════════════════════
        JAVASCRIPT
        ═══════════════════════════════════════════════ -->
   <script>
-    // ── GitHub Username — change this one constant to update all embeds ──
+    // ── GitHub Username ──
     const GITHUB_USERNAME = '[YOUR_GITHUB_USERNAME]';
 
-    // ── Set GitHub embed sources dynamically ──
     document.getElementById('gh-chart').src =
       `https://ghchart.rshah.org/${GITHUB_USERNAME}`;
     document.getElementById('gh-stats').src =
@@ -1124,22 +1193,238 @@
     document.getElementById('gh-langs').src =
       `https://github-readme-stats.vercel.app/api/top-langs/?username=${GITHUB_USERNAME}&layout=compact&theme=dark&hide_border=true&bg_color=141416&title_color=4AFF91&text_color=E8E6E0`;
 
-    // ── IntersectionObserver for scroll reveal ──
-    const revealObserver = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            entry.target.classList.add('visible');
-            revealObserver.unobserve(entry.target);
+    // ════════════════════════════════════════════════
+    // 1. LENIS SMOOTH SCROLL + GSAP INTEGRATION
+    // ════════════════════════════════════════════════
+    const lenis = new Lenis({
+      duration: 1.2,
+      easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+      orientation: 'vertical',
+      smoothWheel: true,
+    });
+
+    lenis.on('scroll', ScrollTrigger.update);
+
+    gsap.ticker.add((time) => {
+      lenis.raf(time * 1000);
+    });
+    gsap.ticker.lagSmoothing(0);
+
+    // ════════════════════════════════════════════════
+    // 2. THREE.JS PARTICLE SPHERE (HERO)
+    // ════════════════════════════════════════════════
+    (function initParticleSphere() {
+      const canvas = document.getElementById('hero-particles');
+      const hero = document.getElementById('hero');
+      if (!canvas || !hero) return;
+
+      const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+      renderer.setSize(hero.offsetWidth, hero.offsetHeight);
+
+      const scene = new THREE.Scene();
+      const camera = new THREE.PerspectiveCamera(60, hero.offsetWidth / hero.offsetHeight, 0.1, 1000);
+      camera.position.z = 4;
+
+      // Create particles on a sphere
+      const PARTICLE_COUNT = 1500;
+      const positions = new Float32Array(PARTICLE_COUNT * 3);
+      const originals = new Float32Array(PARTICLE_COUNT * 3);
+      const scattered = new Float32Array(PARTICLE_COUNT * 3);
+      const sizes = new Float32Array(PARTICLE_COUNT);
+
+      for (let i = 0; i < PARTICLE_COUNT; i++) {
+        const phi = Math.acos(-1 + (2 * i) / PARTICLE_COUNT);
+        const theta = Math.sqrt(PARTICLE_COUNT * Math.PI) * phi;
+        const radius = 1.8;
+
+        const x = radius * Math.sin(phi) * Math.cos(theta);
+        const y = radius * Math.sin(phi) * Math.sin(theta);
+        const z = radius * Math.cos(phi);
+
+        positions[i * 3] = x;
+        positions[i * 3 + 1] = y;
+        positions[i * 3 + 2] = z;
+
+        originals[i * 3] = x;
+        originals[i * 3 + 1] = y;
+        originals[i * 3 + 2] = z;
+
+        // Random scattered positions
+        scattered[i * 3] = (Math.random() - 0.5) * 15;
+        scattered[i * 3 + 1] = (Math.random() - 0.5) * 15;
+        scattered[i * 3 + 2] = (Math.random() - 0.5) * 15;
+
+        sizes[i] = Math.random() * 3 + 1;
+      }
+
+      const geometry = new THREE.BufferGeometry();
+      geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+      geometry.setAttribute('size', new THREE.BufferAttribute(sizes, 1));
+
+      const material = new THREE.ShaderMaterial({
+        uniforms: {
+          uColor: { value: new THREE.Color(0x4AFF91) },
+          uOpacity: { value: 0.85 },
+          uPixelRatio: { value: Math.min(window.devicePixelRatio, 2) },
+        },
+        vertexShader: `
+          attribute float size;
+          uniform float uPixelRatio;
+          void main() {
+            vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
+            gl_PointSize = size * uPixelRatio * (200.0 / -mvPosition.z);
+            gl_Position = projectionMatrix * mvPosition;
           }
-        });
-      },
-      { threshold: 0.12, rootMargin: '0px 0px -40px 0px' }
-    );
+        `,
+        fragmentShader: `
+          uniform vec3 uColor;
+          uniform float uOpacity;
+          void main() {
+            float dist = length(gl_PointCoord - vec2(0.5));
+            if (dist > 0.5) discard;
+            float alpha = 1.0 - smoothstep(0.3, 0.5, dist);
+            gl_FragColor = vec4(uColor, alpha * uOpacity);
+          }
+        `,
+        transparent: true,
+        depthWrite: false,
+      });
 
-    document.querySelectorAll('.reveal').forEach((el) => revealObserver.observe(el));
+      const points = new THREE.Points(geometry, material);
+      // Position sphere to the right side
+      points.position.x = 2.2;
+      points.position.y = 0.3;
+      scene.add(points);
 
-    // ── Animated count-up ──
+      let scrollProgress = { value: 0 };
+
+      // Pin hero and scrub particle animation
+      ScrollTrigger.create({
+        trigger: hero,
+        start: 'top top',
+        end: '+=100%',
+        pin: true,
+        scrub: 0.8,
+        onUpdate: (self) => {
+          scrollProgress.value = self.progress;
+        },
+      });
+
+      // Animation loop
+      function animate() {
+        requestAnimationFrame(animate);
+        const p = scrollProgress.value;
+        const posAttr = geometry.attributes.position;
+
+        for (let i = 0; i < PARTICLE_COUNT; i++) {
+          const i3 = i * 3;
+          posAttr.array[i3] = originals[i3] + (scattered[i3] - originals[i3]) * p;
+          posAttr.array[i3 + 1] = originals[i3 + 1] + (scattered[i3 + 1] - originals[i3 + 1]) * p;
+          posAttr.array[i3 + 2] = originals[i3 + 2] + (scattered[i3 + 2] - originals[i3 + 2]) * p;
+        }
+        posAttr.needsUpdate = true;
+
+        // Rotate sphere (tied to scroll)
+        points.rotation.y = p * Math.PI * 2 + performance.now() * 0.00008;
+        points.rotation.x = p * 0.5;
+
+        // Fade opacity as particles disperse
+        material.uniforms.uOpacity.value = 0.85 - p * 0.7;
+
+        renderer.render(scene, camera);
+      }
+      animate();
+
+      // Resize handler
+      window.addEventListener('resize', () => {
+        const w = hero.offsetWidth;
+        const h = hero.offsetHeight;
+        renderer.setSize(w, h);
+        camera.aspect = w / h;
+        camera.updateProjectionMatrix();
+      });
+    })();
+
+    // ════════════════════════════════════════════════
+    // 3. SPLITTING.JS CHARACTER ANIMATIONS
+    // ════════════════════════════════════════════════
+    Splitting();
+
+    document.querySelectorAll('[data-splitting]').forEach((heading) => {
+      const chars = heading.querySelectorAll('.char');
+      if (!chars.length) return;
+
+      gsap.fromTo(chars,
+        { opacity: 0, y: 30 },
+        {
+          opacity: 1,
+          y: 0,
+          duration: 0.6,
+          ease: 'power3.out',
+          stagger: 0.03,
+          scrollTrigger: {
+            trigger: heading,
+            start: 'top 85%',
+            toggleActions: 'play none none none',
+          },
+        }
+      );
+    });
+
+    // ════════════════════════════════════════════════
+    // 4. GITHUB SECTION PARALLAX (0.4x speed)
+    // ════════════════════════════════════════════════
+    gsap.utils.toArray('.github-card').forEach((card) => {
+      gsap.fromTo(card,
+        { y: 60 },
+        {
+          y: -60,
+          ease: 'none',
+          scrollTrigger: {
+            trigger: card,
+            start: 'top bottom',
+            end: 'bottom top',
+            scrub: 0.4,
+          },
+        }
+      );
+    });
+
+    // ════════════════════════════════════════════════
+    // 5. VANILLA TILT ON CARDS
+    // ════════════════════════════════════════════════
+    VanillaTilt.init(document.querySelectorAll('.interest-card, .stat-card, .project-card'), {
+      max: 5,
+      speed: 400,
+      glare: true,
+      'max-glare': 0.08,
+      scale: 1.02,
+    });
+
+    // ════════════════════════════════════════════════
+    // 6. REVEAL ANIMATIONS (remaining .reveal elements)
+    // ════════════════════════════════════════════════
+    gsap.utils.toArray('.reveal').forEach((el) => {
+      gsap.fromTo(el,
+        { opacity: 0, y: 32 },
+        {
+          opacity: 1,
+          y: 0,
+          duration: 0.8,
+          ease: 'power2.out',
+          scrollTrigger: {
+            trigger: el,
+            start: 'top 88%',
+            toggleActions: 'play none none none',
+          },
+        }
+      );
+    });
+
+    // ════════════════════════════════════════════════
+    // 7. ANIMATED COUNT-UP
+    // ════════════════════════════════════════════════
     const countObserver = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
@@ -1148,7 +1433,6 @@
             const target = parseInt(el.dataset.target, 10);
             const duration = 1800;
             const startTime = performance.now();
-
             const easeOutCubic = (t) => 1 - Math.pow(1 - t, 3);
 
             function tick(now) {
@@ -1163,7 +1447,6 @@
                 el.style.animation = 'countPulse 0.4s ease-out';
               }
             }
-
             requestAnimationFrame(tick);
             countObserver.unobserve(el);
           }
@@ -1171,10 +1454,11 @@
       },
       { threshold: 0.5 }
     );
-
     document.querySelectorAll('.count-up').forEach((el) => countObserver.observe(el));
 
-    // ── Close mobile nav when clicking a link ──
+    // ════════════════════════════════════════════════
+    // 8. MOBILE NAV CLOSE
+    // ════════════════════════════════════════════════
     document.querySelectorAll('.nav-links a').forEach((link) => {
       link.addEventListener('click', () => {
         document.querySelector('.nav-links').classList.remove('open');
