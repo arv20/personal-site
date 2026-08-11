@@ -200,7 +200,7 @@
     /* ── GitHub activity popup ── */
     .gh-pop {
       position: fixed; left: 50%; top: 50%;
-      width: 668px; max-width: calc(100vw - 32px); padding: 18px 20px 16px; border-radius: 18px;
+      width: 800px; max-width: calc(100vw - 32px); padding: 18px 20px 16px; border-radius: 18px;
       background: rgba(13, 21, 18, 0.92); border: 1px solid rgba(255, 255, 255, 0.14);
       box-shadow: 0 24px 60px rgba(0, 0, 0, 0.55), 0 0 24px rgba(0, 0, 0, 0.3);
       backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
@@ -218,21 +218,22 @@
     .gh-stat { flex: 1; padding: 10px 12px; border-radius: 12px; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.08); }
     .gh-stat b { display: block; font: 700 18px/1.2 "Space Grotesk", sans-serif; color: var(--text); font-variant-numeric: tabular-nums; }
     .gh-stat span { display: block; margin-top: 4px; font: 500 9.5px/1 "DM Mono", monospace; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
-    .gh-heat { position: relative; overflow-x: auto; padding-bottom: 6px; scrollbar-width: thin; scrollbar-color: rgba(255, 255, 255, 0.2) transparent; }
-    .gh-heat::-webkit-scrollbar { height: 6px; }
-    .gh-heat::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.18); border-radius: 3px; }
-    .gh-heat::-webkit-scrollbar-track { background: transparent; }
-    .gh-months { display: grid; grid-auto-flow: column; grid-auto-columns: 14px; gap: 3px; height: 16px; margin: 0 0 4px 26px; width: max-content; }
+    .gh-heat { position: relative; padding-bottom: 6px; }
+    .gh-scroll { overflow-x: auto; margin-left: 26px; scrollbar-width: thin; scrollbar-color: rgba(255, 255, 255, 0.2) transparent; }
+    .gh-scroll::-webkit-scrollbar { height: 6px; }
+    .gh-scroll::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.18); border-radius: 3px; }
+    .gh-scroll::-webkit-scrollbar-track { background: transparent; }
+    .gh-months { display: grid; grid-auto-flow: column; grid-auto-columns: 12px; gap: 3px; height: 16px; margin-bottom: 4px; }
     .gh-months span { font: 500 9px/16px "DM Mono", monospace; letter-spacing: 0.04em; color: var(--muted); }
-    .gh-rows { position: absolute; left: 0; top: 20px; display: grid; grid-template-rows: repeat(7, 11px); gap: 3px; font: 500 9px/11px "DM Mono", monospace; color: var(--muted); }
-    .gh-grid { display: grid; grid-auto-flow: column; grid-template-rows: repeat(7, 11px); gap: 3px; width: max-content; padding-left: 26px; }
-    .gh-cell { width: 11px; height: 11px; border-radius: 3px; background: rgba(255, 255, 255, 0.06); }
-    .gh-cell.l1 { background: #23593a; }
-    .gh-cell.l2 { background: #2f7d50; }
-    .gh-cell.l3 { background: #47a86b; }
-    .gh-cell.l4 { background: #7fe0a6; box-shadow: 0 0 6px rgba(127, 224, 166, 0.5); }
-    .gh-pop.show .gh-cell { animation: cellIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) backwards; animation-delay: var(--d, 0s); }
-    @keyframes cellIn { from { transform: scale(0); opacity: 0; } }
+    .gh-rows { position: absolute; left: 0; top: 20px; display: grid; grid-template-rows: repeat(7, 12px); gap: 3px; font: 500 9px/12px "DM Mono", monospace; color: var(--muted); }
+    .gh-grid { display: grid; grid-auto-flow: column; grid-template-rows: repeat(7, 12px); gap: 3px; width: max-content; }
+    .gh-cell { width: 12px; height: 12px; border-radius: 3px; background: rgba(255, 255, 255, 0.11); }
+    .gh-cell.l1 { background: #1b7a45; }
+    .gh-cell.l2 { background: #2ba85e; }
+    .gh-cell.l3 { background: #44d67d; }
+    .gh-cell.l4 { background: #7bffae; box-shadow: 0 0 7px rgba(123, 255, 174, 0.6); }
+    .gh-legend { display: flex; align-items: center; justify-content: flex-end; gap: 4px; margin-top: 10px; font: 500 9px/1 "DM Mono", monospace; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); }
+    .gh-legend .gh-cell { width: 10px; height: 10px; }
     .gh-tip {
       position: fixed; z-index: 50; padding: 6px 10px; border-radius: 8px;
       background: rgba(6, 10, 8, 0.95); border: 1px solid rgba(255, 255, 255, 0.15);
@@ -1068,6 +1069,7 @@
     const MONTHS_SHORT = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
     const toISO = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
     let heatLoaded = false;
+    let ghScrollEl = null;
 
     function renderHeatmap(data) {
       const entries = (data.contributions || [])
@@ -1118,8 +1120,6 @@
         monthsHtml += label ? `<span>${label}</span>` : '<span></span>';
       }
 
-      ghHeat.innerHTML = `<div class="gh-months">${monthsHtml}</div><div class="gh-rows"><span></span><span>M</span><span></span><span>W</span><span></span><span>F</span><span></span></div><div class="gh-grid">`;
-
       let cellsHtml = '';
       for (let w = 0; w < weekCount; w++) {
         for (let r = 0; r < 7; r++) {
@@ -1127,10 +1127,19 @@
           const iso = toISO(day);
           const count = counts.get(iso) || 0;
           const lvl = count === 0 ? '' : count <= 3 ? 'l1' : count <= 7 ? 'l2' : count <= 12 ? 'l3' : 'l4';
-          cellsHtml += `<span class="gh-cell ${lvl}" style="--d:${(w * 0.015).toFixed(3)}s" data-date="${iso}" data-count="${count}"></span>`;
+          cellsHtml += `<span class="gh-cell ${lvl}" data-date="${iso}" data-count="${count}"></span>`;
         }
       }
-      ghHeat.insertAdjacentHTML('beforeend', cellsHtml + '</div>');
+
+      ghHeat.innerHTML =
+        '<div class="gh-rows"><span></span><span>M</span><span></span><span>W</span><span></span><span>F</span><span></span></div>' +
+        '<div class="gh-scroll" id="ghScroll">' +
+        `<div class="gh-months">${monthsHtml}</div>` +
+        `<div class="gh-grid">${cellsHtml}</div>` +
+        '</div>';
+      ghScrollEl = ghHeat.querySelector('.gh-scroll');
+      ghHeat.insertAdjacentHTML('afterend', '<div class="gh-legend"><span>less</span><span class="gh-cell"></span><span class="gh-cell l1"></span><span class="gh-cell l2"></span><span class="gh-cell l3"></span><span class="gh-cell l4"></span><span>more</span></div>');
+      ghScrollEl.scrollLeft = ghScrollEl.scrollWidth;
 
       ghHeat.addEventListener('mouseover', (e) => {
         const cell = e.target.closest('.gh-cell');
@@ -1168,6 +1177,7 @@
       if (!heatLoaded) return;
       positionPop();
       ghPop.classList.add('show');
+      if (ghScrollEl) ghScrollEl.scrollLeft = ghScrollEl.scrollWidth;
     }
     function hidePop() { ghPop.classList.remove('show'); hideTip(); }
 
