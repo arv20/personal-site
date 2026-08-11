@@ -3,20 +3,22 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0" />
-  <meta name="description" content="Aarav K — engineer, builder, and creator. Interactive 3D driving portfolio experience." />
+  <meta name="description" content="Aarav Kolgaonkar — software engineer and full-stack builder. Explore an interactive 3D driving portfolio featuring a Ferrari on procedurally generated biomes, live weather, and real GitHub activity." />
   <meta name="theme-color" content="#0e1713" />
-  <link rel="canonical" href="https://arv20.github.io/" />
+  <link rel="canonical" href="https://aaravkolgaonkar.dev/" />
   
   <!-- OpenGraph / Facebook -->
   <meta property="og:type" content="website" />
-  <meta property="og:url" content="https://arv20.github.io" />
-  <meta property="og:title" content="Aarav K — Engineer & Builder" />
-  <meta property="og:description" content="Software engineer, system builder, and creator. Interactive 3D driving portfolio experience." />
+  <meta property="og:url" content="https://aaravkolgaonkar.dev" />
+  <meta property="og:title" content="Aarav Kolgaonkar — Engineer & Builder" />
+  <meta property="og:description" content="Software engineer and full-stack builder. Explore an interactive 3D driving portfolio featuring a Ferrari on procedurally generated biomes, live weather, and real GitHub activity." />
+  <meta property="og:image" content="https://aaravkolgaonkar.dev/og-image.jpg" />
   
   <!-- Twitter Cards -->
   <meta name="twitter:card" content="summary_large_image" />
-  <meta name="twitter:title" content="Aarav K — Engineer & Builder" />
-  <meta name="twitter:description" content="Software engineer, system builder, and creator. Interactive 3D driving portfolio experience." />
+  <meta name="twitter:title" content="Aarav Kolgaonkar — Engineer & Builder" />
+  <meta name="twitter:description" content="Software engineer and full-stack builder. Explore an interactive 3D driving portfolio featuring a Ferrari on procedurally generated biomes, live weather, and real GitHub activity." />
+  <meta name="twitter:image" content="https://aaravkolgaonkar.dev/og-image.jpg" />
 
   <!-- Favicon -->
   <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🏎️</text></svg>" />
@@ -28,10 +30,10 @@
     "@type": "Person",
     "name": "Aarav K",
     "jobTitle": "Software Engineer",
-    "url": "https://arv20.github.io",
+    "url": "https://aaravkolgaonkar.dev",
     "sameAs": [
       "https://github.com/arv20",
-      "https://linkedin.com/in/"
+      "https://www.linkedin.com/in/aarav-kolgaonkar-b1264b369/"
     ]
   }
   </script>
@@ -149,6 +151,7 @@
       display: none; position: fixed; bottom: 90px; right: 20px; z-index: 3;
       gap: 10px; pointer-events: auto;
     }
+    .touch-controls.touch-capable { display: flex; }
     .touch-btn {
       appearance: none; border: 1px solid rgba(255,255,255,0.2); background: rgba(14, 22, 17, 0.65);
       color: var(--text); font: 600 12px/1 "DM Mono", monospace; padding: 12px 18px; border-radius: 999px;
@@ -197,6 +200,7 @@
       to { opacity: 1; transform: translateY(0) translateX(var(--tx, 0)); filter: blur(0); }
     }
     .hint { --tx: -50%; }
+    .hint.hidden { opacity: 0 !important; pointer-events: none; transition: opacity 0.6s ease; }
 
     @media (prefers-reduced-motion: reduce) {
       *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
@@ -254,15 +258,35 @@
       .links a { padding: 6px 10px; font-size: 12px; }
       .role { font-size: 11px; }
       .name { font-size: 14px; }
-      .hint { display: none; }
-      .touch-controls { display: flex; position: fixed; bottom: 115px; right: 14px; gap: 6px; z-index: 3; }
+      .touch-controls.touch-capable { display: flex; position: fixed; bottom: 115px; right: 14px; gap: 6px; z-index: 3; }
       .touch-btn { padding: 8px 12px; font-size: 11px; }
       .hud-stats { top: 14px; right: 14px; font-size: 10px; padding: 6px 12px; gap: 8px; }
       .info { bottom: 120px; left: 14px; width: calc(100vw - 28px); }
     }
+
+    /* ── Loading screen ── */
+    #loadingScreen {
+      position: fixed; inset: 0; z-index: 100;
+      background: var(--ink);
+      display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px;
+      transition: opacity 0.6s ease;
+    }
+    #loadingScreen.hidden { opacity: 0; pointer-events: none; }
+    .loader-emoji { font-size: 48px; animation: loaderPulse 1.8s ease-in-out infinite; }
+    .loader-text { color: var(--muted); font: 500 11px/1 "DM Mono", monospace; letter-spacing: 0.12em; text-transform: uppercase; }
+    .loader-bar { width: 120px; height: 2px; border-radius: 2px; background: rgba(255,255,255,0.1); overflow: hidden; }
+    .loader-bar-inner { width: 40%; height: 100%; border-radius: 2px; background: linear-gradient(90deg, var(--accent), var(--accent-strong)); animation: loaderSlide 1.2s ease-in-out infinite; }
+    @keyframes loaderPulse { 0%, 100% { transform: scale(1); opacity: 0.7; } 50% { transform: scale(1.1); opacity: 1; } }
+    @keyframes loaderSlide { 0% { transform: translateX(-100%); } 100% { transform: translateX(350%); } }
   </style>
 </head>
 <body>
+  <div id="loadingScreen">
+    <span class="loader-emoji">🏎️</span>
+    <div class="loader-bar"><div class="loader-bar-inner"></div></div>
+    <span class="loader-text">Loading experience…</span>
+  </div>
+
   <canvas id="scene" aria-hidden="true"></canvas>
   <div class="grain"></div>
   <div class="vignette"></div>
@@ -276,7 +300,7 @@
   </div>
 
   <div class="hud-stats" id="hudStats">
-    <i class="hud-gauge" id="hudGauge" aria-hidden="true"></i>
+    <i class="hud-gauge" id="hudGauge" aria-hidden="true" title="Throttle"></i>
     <span class="stat-dot"></span>
     <span id="speedVal">68 MPH</span>
     <span style="opacity:0.3">|</span>
@@ -286,7 +310,7 @@
     <span style="opacity:0.3">|</span>
     <span id="biomeVal" class="biome-badge">FOREST</span>
     <span style="opacity:0.3">|</span>
-    <span id="wthrVal">☀️ 72°F</span>
+    <span id="wthrVal" title="Live weather — Columbus, OH">☀️ 72°F</span>
     <span style="opacity:0.3">|</span>
     <button id="btnAudio" class="btn-audio" type="button" aria-label="Toggle engine sound">SOUND 🔇</button>
   </div>
@@ -313,7 +337,7 @@
   
   <aside class="info" id="info" aria-hidden="true">
     <span class="info-label">About</span>
-    <p>Software engineer, system builder, and creator. Focused on craft, performance, and building thoughtful digital experiences.</p>
+    <p>Software engineer and full-stack builder. Focused on craft, performance, and creating thoughtful digital experiences — from JavaFX tools to AI-integrated systems and this interactive 3D portfolio.</p>
     <a href="https://github.com/arv20" target="_blank" rel="noopener">View GitHub Projects <span aria-hidden="true">↗</span></a>
   </aside>
 
@@ -328,7 +352,7 @@
         <li class="link-github">
           <a href="https://github.com/arv20" target="_blank" rel="noopener">github <span class="arrow" aria-hidden="true">↗</span></a>
         </li>
-        <li><a href="https://linkedin.com/in/" target="_blank" rel="noopener">linkedin <span class="arrow" aria-hidden="true">↗</span></a></li>
+        <li><a href="https://www.linkedin.com/in/aarav-kolgaonkar-b1264b369/" target="_blank" rel="noopener">linkedin <span class="arrow" aria-hidden="true">↗</span></a></li>
         <li><a href="mailto:aarav.kolgaonkar@gmail.com">email <span class="arrow" aria-hidden="true">↗</span></a></li>
       </ul>
     </nav>
@@ -470,8 +494,8 @@
     const WEATHER_PALETTES = {
       clear_day: { top: CC(0x3f8fd4), horizon: CC(0xcfe6f2), sun: CC(0xfff6df), sunIntensity: 2.1, night: 0, fogDensity: 0.0022, ambient: 0.55, hemi: 0.65, clouds: 0.06, cloudColor: CC(0xffffff), rain: 0, snow: 0, storm: 0 },
       partly_day: { top: CC(0x5a9bd4), horizon: CC(0xd3e2ea), sun: CC(0xfff2d8), sunIntensity: 1.7, night: 0, fogDensity: 0.0026, ambient: 0.5, hemi: 0.6, clouds: 0.45, cloudColor: CC(0xffffff), rain: 0, snow: 0, storm: 0 },
-      overcast: { top: CC(0x8a959e), horizon: CC(0xc9ced1), sun: CC(0xe8ecf0), sunIntensity: 0.5, night: 0, fogDensity: 0.0034, ambient: 0.62, hemi: 0.55, clouds: 0.92, cloudColor: CC(0xd6dade), rain: 0, snow: 0, storm: 0 },
-      fog: { top: CC(0x9aa2a6), horizon: CC(0xcdd2d0), sun: CC(0xe6eaeb), sunIntensity: 0.45, night: 0, fogDensity: 0.0085, ambient: 0.7, hemi: 0.6, clouds: 0.5, cloudColor: CC(0xccd2d2), rain: 0, snow: 0, storm: 0 },
+      overcast: { top: CC(0x8a959e), horizon: CC(0xc9ced1), sun: CC(0xe8ecf0), sunIntensity: 0.5, night: 0, fogDensity: 0.0034, ambient: 0.62, hemi: 0.55, clouds: 0.92, cloudColor: CC(0xa8b4bc), rain: 0, snow: 0, storm: 0 },
+      fog: { top: CC(0x9aa2a6), horizon: CC(0xcdd2d0), sun: CC(0xe6eaeb), sunIntensity: 0.45, night: 0, fogDensity: 0.0085, ambient: 0.7, hemi: 0.6, clouds: 0.5, cloudColor: CC(0xa8b4b4), rain: 0, snow: 0, storm: 0 },
       rain: { top: CC(0x4c5a68), horizon: CC(0x93a0ab), sun: CC(0xd8e2ea), sunIntensity: 0.3, night: 0, fogDensity: 0.0046, ambient: 0.5, hemi: 0.55, clouds: 1, cloudColor: CC(0x8f9aa3), rain: 1, snow: 0, storm: 0 },
       thunderstorm: { top: CC(0x232a36), horizon: CC(0x5b6775), sun: CC(0xb8c4d0), sunIntensity: 0.15, night: 0.45, fogDensity: 0.0052, ambient: 0.4, hemi: 0.4, clouds: 1, cloudColor: CC(0x4a5562), rain: 1, snow: 0, storm: 1 },
       snow: { top: CC(0xaebdc6), horizon: CC(0xe2e9ec), sun: CC(0xffffff), sunIntensity: 0.55, night: 0, fogDensity: 0.0038, ambient: 0.6, hemi: 0.62, clouds: 0.95, cloudColor: CC(0xdde6ea), rain: 0, snow: 1, storm: 0 },
@@ -596,8 +620,8 @@
           }
           float band = smoothstep(0.02, 0.28, d.y) * (1.0 - smoothstep(0.28, 0.62, d.y));
           float cloudN = fbm21(d.xz * 2.4 + vec2(timeU * 0.012, 0.0));
-          float cloudM = band * cloudCover * smoothstep(0.42, 0.88, cloudN);
-          col = mix(col, cloudColor, cloudM * 0.92);
+          float cloudM = band * cloudCover * smoothstep(0.32, 0.82, cloudN);
+          col = mix(col, cloudColor, cloudM * 0.96);
           gl_FragColor = vec4(col, 1.0);
         }`,
     });
@@ -1632,13 +1656,32 @@
       return wrapper;
     }
 
+    function hideLoadingScreen() {
+      const ls = document.getElementById('loadingScreen');
+      if (ls) { ls.classList.add('hidden'); setTimeout(() => ls.remove(), 700); }
+    }
+    // Safety timeout: hide loading screen after 6s even if models fail
+    setTimeout(hideLoadingScreen, 6000);
+
     gltfLoader.load('ferrari.glb', (gltf) => {
       carGroup.add(prepareCarModel(gltf.scene));
+      hideLoadingScreen();
     }, undefined, (err) => {
       console.warn('Ferrari GLB fallback to car.glb:', err);
       const fallbackLoader = new GLTFLoader();
       fallbackLoader.load('car.glb', (gltf) => {
         carGroup.add(prepareCarModel(gltf.scene));
+        hideLoadingScreen();
+      }, undefined, (err2) => {
+        console.error('All car models failed to load:', err2);
+        // Final fallback: simple colored box placeholder
+        const fallbackGeo = new THREE.BoxGeometry(4, 1.4, 2);
+        const fallbackMat = new THREE.MeshStandardMaterial({ color: 0xcc2222, roughness: 0.3, metalness: 0.7 });
+        const fallbackMesh = new THREE.Mesh(fallbackGeo, fallbackMat);
+        fallbackMesh.position.y = 0.8;
+        fallbackMesh.castShadow = true;
+        carGroup.add(fallbackMesh);
+        hideLoadingScreen();
       });
     });
 
@@ -1654,11 +1697,25 @@
     }
     pGeo.setAttribute('position', new THREE.BufferAttribute(pPos, 3));
 
+    // Generate soft radial-gradient texture for dust particles
+    const dustCanvas = document.createElement('canvas');
+    dustCanvas.width = 64; dustCanvas.height = 64;
+    const dustCtx = dustCanvas.getContext('2d');
+    const gradient = dustCtx.createRadialGradient(32, 32, 0, 32, 32, 32);
+    gradient.addColorStop(0, 'rgba(255, 255, 255, 0.9)');
+    gradient.addColorStop(0.4, 'rgba(255, 255, 255, 0.4)');
+    gradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
+    dustCtx.fillStyle = gradient;
+    dustCtx.fillRect(0, 0, 64, 64);
+    const dustTexture = new THREE.CanvasTexture(dustCanvas);
+
     const pMat = new THREE.PointsMaterial({
       color: 0xc8d8ca,
       size: 0.5,
+      map: dustTexture,
       transparent: true,
       opacity: 0.35,
+      alphaTest: 0.01,
       depthWrite: false
     });
     const dustParticles = new THREE.Points(pGeo, pMat);
@@ -1686,9 +1743,14 @@
       tailGlowMat.opacity = active ? 1.0 : 0.5;
     }
 
+    // Hint auto-hide: fade out on first drive input
+    const hintEl = document.querySelector('.hint');
+    function hideHint() {
+      if (hintEl) hintEl.classList.add('hidden');
+    }
     window.addEventListener('keydown', (e) => {
-      if (e.key === 'ArrowUp' || e.key === 'w' || e.key === 'W') setGas(true);
-      if (e.key === 'ArrowDown' || e.key === 's' || e.key === 'S') setBrake(true);
+      if (e.key === 'ArrowUp' || e.key === 'w' || e.key === 'W') { setGas(true); hideHint(); }
+      if (e.key === 'ArrowDown' || e.key === 's' || e.key === 'S') { setBrake(true); hideHint(); }
     });
 
     window.addEventListener('keyup', (e) => {
@@ -1696,15 +1758,32 @@
       if (['ArrowDown', 's', 'S'].includes(e.key)) setBrake(false);
     });
 
-    btnGas?.addEventListener('touchstart', (e) => { e.preventDefault(); setGas(true); }, { passive: false });
+    // Touch capability detection — show touch controls on any touch-capable device
+    const touchControls = document.querySelector('.touch-controls');
+    const isTouchCapable = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+    if (isTouchCapable && touchControls) {
+      touchControls.classList.add('touch-capable');
+    }
+
+    // Touch + mouse fallback for gas/brake buttons
+    btnGas?.addEventListener('touchstart', (e) => { e.preventDefault(); setGas(true); hideHint(); }, { passive: false });
     btnGas?.addEventListener('touchend', (e) => { e.preventDefault(); setGas(false); }, { passive: false });
-    btnBrake?.addEventListener('touchstart', (e) => { e.preventDefault(); setBrake(true); }, { passive: false });
+    btnBrake?.addEventListener('touchstart', (e) => { e.preventDefault(); setBrake(true); hideHint(); }, { passive: false });
     btnBrake?.addEventListener('touchend', (e) => { e.preventDefault(); setBrake(false); }, { passive: false });
+
+    // Mouse fallback so buttons work on narrow desktop windows too
+    btnGas?.addEventListener('mousedown', (e) => { e.preventDefault(); setGas(true); hideHint(); });
+    btnGas?.addEventListener('mouseup', () => setGas(false));
+    btnGas?.addEventListener('mouseleave', () => setGas(false));
+    btnBrake?.addEventListener('mousedown', (e) => { e.preventDefault(); setBrake(true); hideHint(); });
+    btnBrake?.addEventListener('mouseup', () => setBrake(false));
+    btnBrake?.addEventListener('mouseleave', () => setBrake(false));
 
     window.addEventListener('touchstart', (e) => {
       if (e.target.closest('.ui') || e.target.closest('.info') || e.target.closest('.touch-controls') || e.target.closest('.hud-stats')) return;
       const touchY = e.touches[0].clientY;
       if (touchY < innerHeight * 0.5) setGas(true); else setBrake(true);
+      hideHint();
     }, { passive: true });
 
     window.addEventListener('touchend', () => {
