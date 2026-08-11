@@ -164,14 +164,16 @@
     .hint { --tx: -50%; }
     
     @media (max-width: 600px) {
-      .ui { align-items: flex-end; }
-      .links { gap: 4px; }
-      .links a { padding: 8px 10px; font-size: 13px; }
-      .role { font-size: 12px; }
-      .name { font-size: 15px; }
+      .ui { padding: 14px; flex-direction: column; align-items: flex-start; justify-content: flex-end; gap: 8px; }
+      .links { gap: 6px; flex-wrap: wrap; justify-content: flex-start; }
+      .links a { padding: 6px 10px; font-size: 12px; }
+      .role { font-size: 11px; }
+      .name { font-size: 14px; }
       .hint { display: none; }
-      .touch-controls { display: flex; }
-      .hud-stats { top: 20px; right: 20px; font-size: 10px; padding: 6px 12px; }
+      .touch-controls { display: flex; position: fixed; bottom: 115px; right: 14px; gap: 6px; z-index: 3; }
+      .touch-btn { padding: 8px 12px; font-size: 11px; }
+      .hud-stats { top: 14px; right: 14px; font-size: 10px; padding: 6px 12px; gap: 8px; }
+      .info { bottom: 120px; left: 14px; width: calc(100vw - 28px); }
     }
   </style>
 </head>
