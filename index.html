@@ -139,6 +139,11 @@
       opacity: 0.75; transition: opacity 0.2s, color 0.2s;
     }
     .btn-audio:hover { opacity: 1; color: var(--accent); }
+    .biome-badge {
+      font: 700 10px/1 "DM Mono", monospace; letter-spacing: 0.14em;
+      padding: 3px 7px; border-radius: 6px; color: #dff3e4;
+      background: rgba(72, 187, 120, 0.16); border: 1px solid rgba(114, 221, 156, 0.35);
+    }
 
     .touch-controls {
       display: none; position: fixed; bottom: 90px; right: 20px; z-index: 3;
@@ -279,6 +284,8 @@
     <span style="opacity:0.3">|</span>
     <span id="lapVal">L1</span>
     <span style="opacity:0.3">|</span>
+    <span id="biomeVal" class="biome-badge">FOREST</span>
+    <span style="opacity:0.3">|</span>
     <span id="wthrVal">☀️ 72°F</span>
     <span style="opacity:0.3">|</span>
     <button id="btnAudio" class="btn-audio" type="button" aria-label="Toggle engine sound">SOUND 🔇</button>
@@ -414,6 +421,8 @@
         fogDensity: 0.0046, night: 0,
       },
     };
+
+    const BIOME_LABELS = { forest: 'FOREST', beach: 'BEACH', city: 'CITY', desert: 'DESERT' };
 
     // Randomized arc assignment: 6 arcs around the loop, city + beach guaranteed,
     // no two adjacent arcs share a biome.
@@ -1324,7 +1333,7 @@
     const trafficBodyGeo = new THREE.BoxGeometry(1.15, 0.38, 2.15);
     const trafficCabinGeo = new THREE.BoxGeometry(0.88, 0.34, 0.95);
     const trafficWindowMat = new THREE.MeshStandardMaterial({ color: 0x17242d, roughness: 0.46, metalness: 0.2 });
-    const trafficColors = [0x587e91, 0xb76554, 0xc6a45f, 0x73818b];
+    const trafficColors = [0x5d8fb0, 0xd46a52, 0xe0b24f, 0x8797a6, 0x6faf8a];
     function makeTraffic(color) {
       const vehicle = new THREE.Group();
       const body = new THREE.Mesh(trafficBodyGeo, new THREE.MeshStandardMaterial({ color, roughness: 0.72, metalness: 0.12 }));
@@ -1336,13 +1345,14 @@
       return vehicle;
     }
     const cityArcsLife = cityArcs;
-    for (let i = 0; i < 10 && cityArcsLife.length; i++) {
+    const TRAFFIC_COUNT = 16;
+    for (let i = 0; i < TRAFFIC_COUNT && cityArcsLife.length; i++) {
       const arc = cityArcsLife[i % cityArcsLife.length];
       const entry = {
         arc,
-        t: arc.from + propRng() * (arc.to - arc.from),
+        t: arc.from + (i / TRAFFIC_COUNT) * (arc.to - arc.from),
         lane: i % 2 === 0 ? 1.55 : -1.55,
-        speed: 0.000045 + propRng() * 0.000035,
+        speed: 0.00005 + propRng() * 0.00004,
         vehicle: makeTraffic(trafficColors[i % trafficColors.length]),
       };
       scene.add(entry.vehicle);
@@ -1350,15 +1360,16 @@
     }
 
     // City pedestrians occupy the sidewalks and loop through their district.
-    for (let i = 0; i < 18 && cityArcsLife.length; i++) {
+    const PEDESTRIAN_COUNT = 24;
+    for (let i = 0; i < PEDESTRIAN_COUNT && cityArcsLife.length; i++) {
       const arc = cityArcsLife[i % cityArcsLife.length];
       const entry = {
         arc,
-        t: arc.from + propRng() * (arc.to - arc.from),
+        t: arc.from + (i / PEDESTRIAN_COUNT) * (arc.to - arc.from),
         side: i % 2 === 0 ? 1 : -1,
         speed: 0.000018 + propRng() * 0.000018,
         phase: propRng() * Math.PI * 2,
-        person: makePerson(pedestrianShirts[i % pedestrianShirts.length], 0.78 + propRng() * 0.18),
+        person: makePerson(pedestrianShirts[i % pedestrianShirts.length], 0.82 + propRng() * 0.2),
       };
       scene.add(entry.person);
       cityPedestrians.push(entry);
@@ -1368,7 +1379,7 @@
     const deerBodyGeo = new THREE.BoxGeometry(1.25, 0.56, 0.46);
     const deerHeadGeo = new THREE.BoxGeometry(0.42, 0.42, 0.34);
     const deerLegGeo = new THREE.CylinderGeometry(0.055, 0.075, 0.65, 5);
-    const deerMat = new THREE.MeshStandardMaterial({ color: 0x806047, roughness: 0.95, flatShading: true });
+    const deerMat = new THREE.MeshStandardMaterial({ color: 0x8a6844, roughness: 0.95, flatShading: true });
     const deerDarkMat = new THREE.MeshStandardMaterial({ color: 0x463528, roughness: 0.95, flatShading: true });
     function makeDeer() {
       const deer = new THREE.Group();
@@ -1379,6 +1390,13 @@
       const tail = new THREE.Mesh(new THREE.ConeGeometry(0.16, 0.3, 5), deerDarkMat);
       tail.rotation.x = -Math.PI / 2;
       tail.position.set(0, 1.17, -0.7);
+      // Antlers make the deer readable at driving distance.
+      for (const x of [-0.14, 0.14]) {
+        const antler = new THREE.Mesh(new THREE.ConeGeometry(0.035, 0.42, 4), deerDarkMat);
+        antler.position.set(x, 1.72, 0.5);
+        antler.rotation.z = x < 0 ? -0.35 : 0.35;
+        deer.add(antler);
+      }
       deer.add(body, head, tail);
       for (const x of [-0.4, 0.4]) for (const z of [-0.25, 0.25]) {
         const leg = new THREE.Mesh(deerLegGeo, deerDarkMat);
@@ -1395,7 +1413,7 @@
         arc,
         t: arc.from + propRng() * (arc.to - arc.from),
         side: i % 2 === 0 ? 1 : -1,
-        offset: 13 + propRng() * 13,
+        offset: 8 + propRng() * 10,
         phase: propRng() * Math.PI * 2,
         deer: makeDeer(),
       };
@@ -1426,13 +1444,14 @@
     // Beach life: bright, simple silhouettes near the waterline and slow boats.
     const beachArcsLife = beachArcs;
     const beachShirts = [0xe17858, 0x5b9eb5, 0xf0c76e, 0xf1e2c2].map(hex => new THREE.MeshStandardMaterial({ color: hex, roughness: 0.86 }));
-    for (let i = 0; i < 14 && beachArcsLife.length; i++) {
+    const BEACHGOER_COUNT = 16;
+    for (let i = 0; i < BEACHGOER_COUNT && beachArcsLife.length; i++) {
       const arc = beachArcsLife[i % beachArcsLife.length];
       const entry = {
         arc,
-        t: arc.from + propRng() * (arc.to - arc.from),
+        t: arc.from + (i / BEACHGOER_COUNT) * (arc.to - arc.from),
         side: shoreSide(arc.from + (arc.to - arc.from) * 0.5),
-        offset: 10 + propRng() * 7,
+        offset: 7 + propRng() * 4,
         phase: propRng() * Math.PI * 2,
         person: makePerson(beachShirts[i % beachShirts.length], 0.72 + propRng() * 0.2),
       };
@@ -1444,11 +1463,11 @@
     const umbrellaGeo = new THREE.ConeGeometry(0.9, 0.32, 10);
     const umbrellaPoleMat = new THREE.MeshStandardMaterial({ color: 0x6b5140, roughness: 0.9 });
     const umbrellaMats = [0xe17858, 0x5b9eb5, 0xf0c76e].map(hex => new THREE.MeshStandardMaterial({ color: hex, roughness: 0.84, flatShading: true }));
-    for (let i = 0; i < 8 && beachArcsLife.length; i++) {
+    for (let i = 0; i < 10 && beachArcsLife.length; i++) {
       const arc = beachArcsLife[i % beachArcsLife.length];
-      const t = arc.from + propRng() * (arc.to - arc.from);
+      const t = arc.from + (i / 10) * (arc.to - arc.from);
       const side = shoreSide(t);
-      const p = roadOffset(t, 12 + propRng() * 5, side);
+      const p = roadOffset(t, 6 + propRng() * 3, side);
       const umbrella = new THREE.Group();
       const pole = new THREE.Mesh(umbrellaPoleGeo, umbrellaPoleMat);
       pole.position.y = 0.82;
@@ -1789,6 +1808,7 @@
     const distValEl = document.querySelector('#distVal');
     const lapValEl = document.querySelector('#lapVal');
     const wthrValEl = document.querySelector('#wthrVal');
+    const biomeValEl = document.querySelector('#biomeVal');
     const hudGauge = document.querySelector('#hudGauge');
 
     addEventListener('pointermove', e => {
@@ -1876,6 +1896,7 @@
       if (speedValEl) speedValEl.textContent = `${currentSpeed} MPH`;
       if (distValEl) distValEl.textContent = `${((progress * loopLength) / 1000).toFixed(1)} KM`;
       if (lapValEl) lapValEl.textContent = `L${lap}`;
+      if (biomeValEl) biomeValEl.textContent = BIOME_LABELS[arcBiomes[Math.floor((((progress % 1) + 1) % 1) * ARC_COUNT) % ARC_COUNT]];
       if (hudGauge) hudGauge.style.width = `${((speedMultiplier - 0.45) / (1.8 - 0.45)) * 100}%`;
 
       // Live Ohio weather drives the sky — ease toward the current condition
@@ -1919,7 +1940,7 @@
       const dark = Math.max(skyState.night, skyState.storm * 0.65);
       cityPedestrians.forEach(entry => { entry.person.visible = dark < 0.78; });
       beachPeople.forEach(entry => { entry.person.visible = dark < 0.62; });
-      fireflyMat.opacity = Math.min(0.9, dark * 0.95);
+      fireflyMat.opacity = 0.18 + Math.min(0.75, dark * 0.95);
       headlightLeft.intensity = dark * 14;
       headlightRight.intensity = dark * 14;
       lampHeadMat.emissiveIntensity = 0.02 + 1.8 * dark;
