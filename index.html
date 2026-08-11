@@ -125,7 +125,7 @@
   <div class="grain"></div>
   <div class="vignette"></div>
   
-  <span class="hint">enjoy the drive</span>
+  <span class="hint">use ▲ ▼ to accelerate / brake</span>
   <div class="hud-stats" id="hudStats">
     <span class="stat-dot"></span>
     <span id="speedVal">68 MPH</span>
@@ -183,8 +183,8 @@
     
     // Dynamic Sky Color Palette (Sage Morning -> Golden Sunset -> Twilight)
     const skyMorning = new THREE.Color(0x8cb6a0);
-    const skySunset = new THREE.Color(0xb89278);
-    const skyTwilight = new THREE.Color(0x485868);
+    const skySunset = new THREE.Color(0xba8c72);
+    const skyTwilight = new THREE.Color(0x354452);
     const currentSkyColor = skyMorning.clone();
     
     scene.background = currentSkyColor;
@@ -327,8 +327,11 @@
     scene.add(groundMesh);
 
     /* ═══════════════════════════════════════
-       VEGETATION & LOW-POLY BOULDERS
+       ROADSIDE PROPS: TREES, ROCKS & MILEPOSTS
        ═══════════════════════════════════════ */
+    const dummy = new THREE.Object3D();
+
+    // Instanced Trees
     const TREE_COUNT = 600;
     const trunkGeo = new THREE.CylinderGeometry(0.14, 0.22, 1.3, 5);
     const trunkMat = new THREE.MeshLambertMaterial({ color: 0x483424 });
@@ -338,7 +341,6 @@
     const pineMat = new THREE.MeshStandardMaterial({ color: 0x27592e, flatShading: true, roughness: 0.85 });
     const pineInst = new THREE.InstancedMesh(pineGeo, pineMat, TREE_COUNT);
 
-    const dummy = new THREE.Object3D();
     for (let i = 0; i < TREE_COUNT; i++) {
       const z = -Math.random() * (ROAD_LENGTH - 30);
       const side = Math.random() > 0.5 ? 1 : -1;
@@ -361,7 +363,7 @@
     pineInst.castShadow = true;
     scene.add(trunkInst, pineInst);
 
-    // Instanced Low-Poly Boulders/Rocks
+    // Instanced Boulders
     const ROCK_COUNT = 150;
     const rockGeo = new THREE.DodecahedronGeometry(0.7, 0);
     const rockMat = new THREE.MeshStandardMaterial({ color: 0x6e7872, flatShading: true, roughness: 0.9 });
@@ -385,8 +387,40 @@
     rockInst.castShadow = true;
     scene.add(rockInst);
 
+    // Instanced Roadside Kilometer Posts
+    const POST_COUNT = 35;
+    const postBaseGeo = new THREE.CylinderGeometry(0.08, 0.08, 0.9, 6);
+    const postBaseMat = new THREE.MeshLambertMaterial({ color: 0x3d2b1f });
+    const postBaseInst = new THREE.InstancedMesh(postBaseGeo, postBaseMat, POST_COUNT);
+
+    const postCapGeo = new THREE.BoxGeometry(0.2, 0.18, 0.1);
+    const postCapMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.4 });
+    const postCapInst = new THREE.InstancedMesh(postCapGeo, postCapMat, POST_COUNT);
+
+    for (let i = 0; i < POST_COUNT; i++) {
+      const t = (i / POST_COUNT) * 0.95 + 0.02;
+      const pos = roadCurve.getPointAt(t);
+      const tangent = roadCurve.getTangentAt(t).normalize();
+      const right = new THREE.Vector3().crossVectors(tangent, upVector).normalize();
+      
+      const side = (i % 2 === 0) ? 1 : -1;
+      const px = pos.x + right.x * side * (ROAD_WIDTH / 2 + 0.8);
+      const pz = pos.z + right.z * side * (ROAD_WIDTH / 2 + 0.8);
+
+      dummy.position.set(px, 0.45, pz);
+      dummy.scale.set(1, 1, 1);
+      dummy.rotation.set(0, 0, 0);
+      dummy.updateMatrix();
+      postBaseInst.setMatrixAt(i, dummy.matrix);
+
+      dummy.position.set(px, 0.85, pz);
+      dummy.updateMatrix();
+      postCapInst.setMatrixAt(i, dummy.matrix);
+    }
+    scene.add(postBaseInst, postCapInst);
+
     /* ═══════════════════════════════════════
-       3D VEHICLE LOADING & LIGHT GLOWS
+       3D VEHICLE LOADING, LIGHTS & HEADLIGHT SPOTLIGHTS
        ═══════════════════════════════════════ */
     const carGroup = new THREE.Group();
     scene.add(carGroup);
@@ -402,7 +436,26 @@
     const tailGlowMesh = new THREE.Mesh(tailGlowGeo, tailGlowMat);
     tailGlowMesh.position.set(0, 0.48, -2.12);
 
+    // Dynamic Headlights (SpotLights projecting forward onto road)
+    const headlightLeft = new THREE.SpotLight(0xfff5dd, 0, 45, Math.PI / 6, 0.4, 1);
+    headlightLeft.position.set(-0.6, 0.55, 2.0);
+    const headlightRight = new THREE.SpotLight(0xfff5dd, 0, 45, Math.PI / 6, 0.4, 1);
+    headlightRight.position.set(0.6, 0.55, 2.0);
+
+    const targetLeft = new THREE.Object3D();
+    targetLeft.position.set(-0.6, 0.1, 15);
+    carGroup.add(targetLeft);
+    headlightLeft.target = targetLeft;
+
+    const targetRight = new THREE.Object3D();
+    targetRight.position.set(0.6, 0.1, 15);
+    carGroup.add(targetRight);
+    headlightRight.target = targetRight;
+
+    carGroup.add(headlightLeft, headlightRight);
+
     let frontWheels = [];
+    let innerCarMesh = null;
 
     const dracoLoader = new DRACOLoader();
     dracoLoader.setDecoderPath('https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/libs/draco/gltf/');
@@ -429,7 +482,8 @@
 
       const wrapper = new THREE.Group();
       wrapper.add(model);
-      wrapper.add(tailGlowMesh); // Attach tail glow directly to car wrapper
+      wrapper.add(tailGlowMesh);
+      innerCarMesh = wrapper;
 
       const maxDim = Math.max(size.x, size.y, size.z);
       const targetScale = 4.2 / maxDim;
@@ -471,7 +525,27 @@
     scene.add(dustParticles);
 
     /* ═══════════════════════════════════════
-       ANIMATION LOOP & DYNAMIC ATMOSPHERE
+       INTERACTIVE DRIVE CONTROLS (UP/DOWN SPEED MULTIPLIER)
+       ═══════════════════════════════════════ */
+    let speedMultiplier = 1.0;
+    let targetSpeedMultiplier = 1.0;
+
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowUp' || e.key === 'w' || e.key === 'W') {
+        targetSpeedMultiplier = 1.8; // Accelerate boost
+      } else if (e.key === 'ArrowDown' || e.key === 's' || e.key === 'S') {
+        targetSpeedMultiplier = 0.45; // Brake / slow cruise
+      }
+    });
+
+    window.addEventListener('keyup', (e) => {
+      if (['ArrowUp', 'w', 'W', 'ArrowDown', 's', 'S'].includes(e.key)) {
+        targetSpeedMultiplier = 1.0; // Return to standard cruise
+      }
+    });
+
+    /* ═══════════════════════════════════════
+       ANIMATION LOOP & CHASE CAMERA
        ═══════════════════════════════════════ */
     let progress = 0.02;
     const BASE_SPEED = 0.00018;
@@ -498,19 +572,31 @@
       smoothMouse.x += (mouse.x - smoothMouse.x) * 0.035;
       smoothMouse.y += (mouse.y - smoothMouse.y) * 0.035;
 
+      // Interpolate speed multiplier
+      speedMultiplier += (targetSpeedMultiplier - speedMultiplier) * 0.05;
+
       // Advance car along spline
-      progress += BASE_SPEED;
+      progress += BASE_SPEED * speedMultiplier;
       if (progress > 0.96) progress = 0.02;
 
-      // Update HUD stats
-      if (speedValEl) speedValEl.textContent = `${Math.round(64 + Math.sin(progress * 40) * 6)} MPH`;
+      // Update HUD stats dynamically
+      const currentSpeed = Math.round(64 * speedMultiplier + Math.sin(progress * 40) * 4);
+      if (speedValEl) speedValEl.textContent = `${currentSpeed} MPH`;
       if (distValEl) distValEl.textContent = `${(progress * 8.5).toFixed(1)} KM`;
 
-      // Interpolate time-of-day sky & fog color smoothly
-      if (progress < 0.4) {
-        currentSkyColor.copy(skyMorning).lerp(skySunset, progress / 0.4);
+      // Interpolate time-of-day sky & lighting parameters
+      if (progress < 0.38) {
+        const norm = progress / 0.38;
+        currentSkyColor.copy(skyMorning).lerp(skySunset, norm);
+        sun.intensity = 1.9 - norm * 0.5;
+        headlightLeft.intensity = norm * 4.0;
+        headlightRight.intensity = norm * 4.0;
       } else {
-        currentSkyColor.copy(skySunset).lerp(skyTwilight, (progress - 0.4) / 0.56);
+        const norm = (progress - 0.38) / 0.58;
+        currentSkyColor.copy(skySunset).lerp(skyTwilight, norm);
+        sun.intensity = 1.4 - norm * 0.9;
+        headlightLeft.intensity = 4.0 + norm * 8.0;
+        headlightRight.intensity = 4.0 + norm * 8.0;
       }
       scene.background = currentSkyColor;
       scene.fog.color = currentSkyColor;
@@ -523,16 +609,21 @@
       carGroup.position.copy(currentPos);
       carGroup.lookAt(aheadPos.x, aheadPos.y, aheadPos.z);
 
-      // Dynamic Steering calculation based on curve tangent delta
+      // Dynamic Steering & Body Roll physics calculation
       const currentTang = roadCurve.getTangentAt(progress).normalize();
       const aheadTang = roadCurve.getTangentAt(Math.min(progress + 0.008, 0.999)).normalize();
       const steerDelta = currentTang.x - aheadTang.x;
 
       frontWheels.forEach(w => {
-        w.rotation.y = steerDelta * 2.5;
+        w.rotation.y = steerDelta * 2.6;
       });
 
-      // Spawn dust particle behind rear wheels periodically when car is loaded
+      // Chassis body roll lean on sharp turns
+      if (innerCarMesh) {
+        innerCarMesh.rotation.z = -steerDelta * 0.8;
+      }
+
+      // Spawn dust particles behind rear wheels periodically
       if (carGroup.children.length > 0 && Math.random() < 0.45) {
         const positions = dustParticles.geometry.attributes.position.array;
         positions[particleIdx * 3] = currentPos.x + (Math.random() - 0.5) * 1.2;
