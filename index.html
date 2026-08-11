@@ -356,7 +356,8 @@
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     renderer.shadowMap.autoUpdate = false;
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 1.0;
+    renderer.toneMappingExposure = 0.95;
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
 
     const scene = new THREE.Scene();
     scene.fog = new THREE.FogExp2(new THREE.Color(0xd9e8d2), 0.0035);
@@ -389,7 +390,7 @@
 
     const BIOMES = {
       forest: {
-        ground: [0x3f7d46, 0x2c5a31],
+        ground: [0x4c7957, 0x355b43],
         skyTop: 0x6ea6d4, skyHorizon: 0xd9e8d2, sunColor: 0xfff2d6, sunIntensity: 1.75,
         ambient: 0.5, hemiSky: 0xb5e2e4, hemiGround: 0x4a6b4a, hemiIntensity: 0.6,
         fogDensity: 0.0055, night: 0,
@@ -401,13 +402,13 @@
         fogDensity: 0.0042, night: 0,
       },
       city: {
-        ground: [0x4a525c, 0x333a44],
+        ground: [0x505d69, 0x343e49],
         skyTop: 0x0b1020, skyHorizon: 0x31415c, sunColor: 0x8899bb, sunIntensity: 0.3,
         ambient: 0.3, hemiSky: 0x2a3a55, hemiGround: 0x141a22, hemiIntensity: 0.45,
         fogDensity: 0.007, night: 1,
       },
       desert: {
-        ground: [0xcd9a56, 0xa97c42],
+        ground: [0xc8945b, 0xa87846],
         skyTop: 0x3f82cc, skyHorizon: 0xf4dcae, sunColor: 0xffe6b8, sunIntensity: 1.95,
         ambient: 0.55, hemiSky: 0xd8c8a8, hemiGround: 0x8a6a42, hemiIntensity: 0.65,
         fogDensity: 0.0046, night: 0,
@@ -714,6 +715,7 @@
       ctx.fillRect(62, y, 4, 18);
     }
     const roadTex = new THREE.CanvasTexture(rCanvas);
+    roadTex.colorSpace = THREE.SRGBColorSpace;
     roadTex.wrapS = THREE.RepeatWrapping;
     roadTex.wrapT = THREE.RepeatWrapping;
 
@@ -818,15 +820,17 @@
     const groundCX = (minX + maxX) / 2;
     const groundCZ = (minZ + maxZ) / 2;
 
-    const colA = new THREE.Color(), colB = new THREE.Color(), colC = new THREE.Color(), colD = new THREE.Color();
+    const colA = new THREE.Color(), colB = new THREE.Color(), colC = new THREE.Color(), colD = new THREE.Color(), colCity = new THREE.Color();
     function biomeColorAt(t, out, idx) {
       const i = Math.floor((((t % 1) + 1) % 1) * ARC_COUNT) % ARC_COUNT;
       return out.setHex(BIOMES[arcBiomes[i]].ground[idx || 0]);
     }
-    function terrainColorAt(t, x, z) {
+    function terrainColorAt(t, x, z, trackDist = Infinity) {
       biomeColorAt(t, colA);
-      biomeColorAt(t + 0.03, colB);
-      biomeColorAt(t - 0.03 + 1, colC);
+      // Blend a little farther across arc boundaries so a district arrives
+      // gradually instead of creating a hard green/gray color cut.
+      biomeColorAt(t + 0.06, colB);
+      biomeColorAt(t - 0.06 + 1, colC);
       biomeColorAt(t, colD, 1);
       // base tone blended across arc boundaries, darker tone mixed in by terrain noise
       const nz = 0.5 + 0.5 * Math.sin(x * 0.08 + 1.7) * Math.cos(z * 0.1 + 0.9);
@@ -834,6 +838,16 @@
       colA.g = colA.g * 0.5 + colB.g * 0.25 + colC.g * 0.25;
       colA.b = colA.b * 0.5 + colB.b * 0.25 + colC.b * 0.25;
       colA.lerp(colD, 0.45 * nz);
+
+      // A city district owns a wider roadside envelope than the other biomes;
+      // this prevents green forest or sand colors from leaking between its
+      // buildings and makes the district feel like one intentional place.
+      const arcIndex = Math.floor((((t % 1) + 1) % 1) * ARC_COUNT) % ARC_COUNT;
+      if (arcBiomes[arcIndex] === 'city') {
+        colCity.setHex(BIOMES.city.ground[0]);
+        const cityZone = 1 - smoothstep01(trackDist, 22, 100);
+        colA.lerp(colCity, cityZone * 0.7);
+      }
       return colA;
     }
 
@@ -847,7 +861,7 @@
       const z = gPos.getZ(i) + groundCZ;
       const { h, n } = vertexTerrain(x, z);
       gPos.setY(i, h);
-      const c = terrainColorAt(n.t, x, z);
+      const c = terrainColorAt(n.t, x, z, n.dist);
       gCol[i * 3] = c.r; gCol[i * 3 + 1] = c.g; gCol[i * 3 + 2] = c.b;
     }
     groundGeo.setAttribute('color', new THREE.BufferAttribute(gCol, 3));
@@ -1006,6 +1020,9 @@
         // Beach props belong on the landward side, opposite the outward shore.
         const radial = new THREE.Vector3(pos.x - loopCenter.x, 0, pos.z - loopCenter.z).normalize();
         side = -Math.sign(_rightV.dot(radial) || 1);
+      } else if (sideBias === -2) {
+        // Explicit negative roadside placement; -1 is reserved for beach logic.
+        side = -1;
       } else {
         side = sideBias;
       }
@@ -1081,37 +1098,82 @@
     palmTrunkInst.computeBoundingSphere(); palmCrownInst.computeBoundingSphere();
     scene.add(palmTrunkInst, palmCrownInst);
 
-    // ── City: buildings + streetlights ──
+    // ── City: a restrained roadside district ──
+    // Buildings use one shared slate facade palette. Windows are deliberately
+    // small and low-contrast so the city reads as architecture, not a wall of
+    // glowing rectangles.
     const bCanvas = document.createElement('canvas');
-    bCanvas.width = 128; bCanvas.height = 192;
+    bCanvas.width = 160; bCanvas.height = 256;
     const bctx = bCanvas.getContext('2d');
-    bctx.fillStyle = '#161b22';
-    bctx.fillRect(0, 0, 128, 192);
-    for (let r = 0; r < 10; r++) {
-      for (let c = 0; c < 6; c++) {
-        if (Math.random() < 0.55) continue;
-        bctx.fillStyle = ['#ffd98a', '#e8f2ff', '#7fd4ff', '#ffb37a'][Math.floor(Math.random() * 4)];
-        bctx.globalAlpha = 0.45 + Math.random() * 0.55;
-        bctx.fillRect(10 + c * 20, 10 + r * 18, 10, 12);
+    bctx.fillStyle = '#202b36';
+    bctx.fillRect(0, 0, 160, 256);
+    for (let row = 0; row < 14; row++) {
+      bctx.fillStyle = row % 2 ? '#263440' : '#222f3b';
+      bctx.fillRect(0, row * 18, 160, 17);
+      for (let col = 0; col < 7; col++) {
+        if (Math.random() < 0.38) continue;
+        const windowColor = Math.random() < 0.7 ? '#c7d3d5' : '#d5bd86';
+        bctx.fillStyle = windowColor;
+        bctx.globalAlpha = 0.5 + Math.random() * 0.25;
+        bctx.fillRect(13 + col * 22, 5 + row * 18, 9, 11);
         bctx.globalAlpha = 1;
       }
     }
     const bTex = new THREE.CanvasTexture(bCanvas);
-    bTex.wrapS = THREE.RepeatWrapping;
-    bTex.wrapT = THREE.RepeatWrapping;
+    bTex.colorSpace = THREE.SRGBColorSpace;
     const buildingMat = new THREE.MeshStandardMaterial({
-      map: bTex, emissiveMap: bTex, emissive: 0xffffff, emissiveIntensity: 1.45,
-      roughness: 0.55, metalness: 0.25,
+      map: bTex,
+      emissiveMap: bTex,
+      emissive: 0xffe1a8,
+      emissiveIntensity: 0,
+      roughness: 0.82,
+      metalness: 0.08,
     });
-    const BUILDING_COUNT = 90;
+    const BUILDING_COUNT = 48;
     const buildingInst = new THREE.InstancedMesh(new THREE.BoxGeometry(1, 1, 1), buildingMat, BUILDING_COUNT);
     buildingInst.castShadow = true;
+    buildingInst.receiveShadow = true;
     const cityArcs = arcsOf('city');
+
+    // Sidewalk ribbons give the city a deliberate edge and keep buildings
+    // visually separated from the driving lane.
+    const sidewalkMat = new THREE.MeshStandardMaterial({ color: 0x7e8990, roughness: 0.96, metalness: 0.01 });
+    const sidewalkGroup = new THREE.Group();
+    for (const arc of cityArcs) {
+      const segments = 64;
+      for (const side of [-1, 1]) {
+        const verts = [], indices = [];
+        for (let i = 0; i <= segments; i++) {
+          const t = arc.from + (i / segments) * (arc.to - arc.from);
+          const pos = roadCurve.getPointAt(t);
+          const tangent = roadCurve.getTangentAt(t).normalize();
+          const right = new THREE.Vector3().crossVectors(tangent, upVector).normalize();
+          const inner = ROAD_WIDTH / 2 + 1.2;
+          const outer = ROAD_WIDTH / 2 + 5.8;
+          verts.push(pos.x + right.x * side * inner, 0.205, pos.z + right.z * side * inner);
+          verts.push(pos.x + right.x * side * outer, 0.205, pos.z + right.z * side * outer);
+          if (i < segments) {
+            const a = i * 2;
+            indices.push(a, a + 1, a + 2, a + 1, a + 3, a + 2);
+          }
+        }
+        const geo = new THREE.BufferGeometry();
+        geo.setAttribute('position', new THREE.Float32BufferAttribute(verts, 3));
+        geo.setIndex(indices);
+        geo.computeVertexNormals();
+        const sidewalk = new THREE.Mesh(geo, sidewalkMat);
+        sidewalk.receiveShadow = true;
+        sidewalkGroup.add(sidewalk);
+      }
+    }
+    scene.add(sidewalkGroup);
+
     placed = 0;
     for (let i = 0; i < BUILDING_COUNT && cityArcs.length; i++) {
-      const p = placeProp(randT(cityArcs[Math.floor(propRng() * cityArcs.length)]), ROAD_WIDTH / 2 + 8, 42, 1);
-      if (p.underWater) continue;
-      const w = 7 + propRng() * 9, d = 7 + propRng() * 9, h = 8 + propRng() * 30;
+      const arc = cityArcs[Math.floor(propRng() * cityArcs.length)];
+      const side = i % 2 === 0 ? 1 : -2;
+      const p = placeProp(randT(arc), ROAD_WIDTH / 2 + 20, 68, side);
+      const w = 5.2 + propRng() * 5.2, d = 5.2 + propRng() * 6.2, h = 7 + propRng() * 13;
       dummy.rotation.set(0, propRng() * Math.PI, 0);
       dummy.position.set(p.x, p.h + h / 2, p.z);
       dummy.scale.set(w, h, d);
@@ -1127,7 +1189,7 @@
     const lampPoleGeo = new THREE.CylinderGeometry(0.06, 0.09, 5.6, 6);
     const lampPoleMat = new THREE.MeshStandardMaterial({ color: 0x2a2f36, roughness: 0.5, metalness: 0.7 });
     const lampHeadGeo = new THREE.SphereGeometry(0.22, 8, 6);
-    const lampHeadMat = new THREE.MeshStandardMaterial({ color: 0xffd27a, emissive: 0xffd27a, emissiveIntensity: 3.2, roughness: 0.4 });
+    const lampHeadMat = new THREE.MeshStandardMaterial({ color: 0xffd27a, emissive: 0xffd27a, emissiveIntensity: 0, roughness: 0.72, metalness: 0.05 });
     const lampPoleInst = new THREE.InstancedMesh(lampPoleGeo, lampPoleMat, LAMP_COUNT);
     const lampHeadInst = new THREE.InstancedMesh(lampHeadGeo, lampHeadMat, LAMP_COUNT);
     placed = 0;
@@ -1135,7 +1197,7 @@
       const n = Math.round(LAMP_COUNT * (arc.to - arc.from));
       for (let j = 0; j < n && placed < LAMP_COUNT; j++) {
         const t = arc.from + ((j + 0.5) / n) * (arc.to - arc.from);
-        const p = placeProp(t, ROAD_WIDTH / 2 + 3.2, ROAD_WIDTH / 2 + 3.2, j % 2 === 0 ? 1 : -1);
+        const p = placeProp(t, ROAD_WIDTH / 2 + 3.2, ROAD_WIDTH / 2 + 3.2, j % 2 === 0 ? 1 : -2);
         if (p.underWater) continue;
         dummy.rotation.set(0, 0, 0);
         dummy.scale.set(1, 1, 1);
@@ -1194,6 +1256,232 @@
     for (let i = placed; i < BUSH_COUNT; i++) { hideMatrix(); bushInst.setMatrixAt(i, dummy.matrix); }
     desertRockInst.computeBoundingSphere(); bushInst.computeBoundingSphere();
     scene.add(desertRockInst, bushInst);
+
+    /* ═══════════════════════════════════════
+       LIVING WORLD LAYERS — lightweight animated life
+       ═══════════════════════════════════════ */
+    const cityTraffic = [];
+    const cityPedestrians = [];
+    const forestDeer = [];
+    const beachPeople = [];
+    const beachUmbrellas = [];
+    const beachBoats = [];
+
+    const lifeSkin = new THREE.MeshStandardMaterial({ color: 0xc88767, roughness: 0.9 });
+    const lifeDark = new THREE.MeshStandardMaterial({ color: 0x27313a, roughness: 0.9 });
+    const lifePants = new THREE.MeshStandardMaterial({ color: 0x344352, roughness: 0.92 });
+    const pedestrianShirts = [0x4f7890, 0xb8755c, 0xc3a15f, 0x6c8b62].map(hex => new THREE.MeshStandardMaterial({ color: hex, roughness: 0.88 }));
+    const personBodyGeo = new THREE.BoxGeometry(0.34, 0.62, 0.24);
+    const personHeadGeo = new THREE.SphereGeometry(0.17, 8, 6);
+    const personLegGeo = new THREE.BoxGeometry(0.1, 0.38, 0.11);
+    const personArmGeo = new THREE.BoxGeometry(0.08, 0.38, 0.09);
+
+    function makePerson(shirtMat, scale = 1) {
+      const person = new THREE.Group();
+      const body = new THREE.Mesh(personBodyGeo, shirtMat);
+      body.position.y = 0.58;
+      const head = new THREE.Mesh(personHeadGeo, lifeSkin);
+      head.position.y = 1.04;
+      const hair = new THREE.Mesh(personHeadGeo, lifeDark);
+      hair.scale.set(1.02, 0.42, 1.02);
+      hair.position.set(0, 1.15, -0.015);
+      const leftLeg = new THREE.Mesh(personLegGeo, lifePants);
+      leftLeg.position.set(-0.09, 0.18, 0);
+      const rightLeg = new THREE.Mesh(personLegGeo, lifePants);
+      rightLeg.position.set(0.09, 0.18, 0);
+      const leftArm = new THREE.Mesh(personArmGeo, shirtMat);
+      leftArm.position.set(-0.25, 0.6, 0);
+      leftArm.rotation.z = -0.18;
+      const rightArm = new THREE.Mesh(personArmGeo, shirtMat);
+      rightArm.position.set(0.25, 0.6, 0);
+      rightArm.rotation.z = 0.18;
+      person.add(body, head, hair, leftLeg, rightLeg, leftArm, rightArm);
+      person.scale.setScalar(scale);
+      person.traverse(child => { if (child.isMesh) child.castShadow = true; });
+      return person;
+    }
+
+    function roadFrame(t) {
+      const pos = roadCurve.getPointAt(t);
+      const tangent = roadCurve.getTangentAt(t).normalize();
+      const right = new THREE.Vector3().crossVectors(tangent, upVector).normalize();
+      return { pos, tangent, right };
+    }
+    function roadOffset(t, offset, side) {
+      const frame = roadFrame(t);
+      const x = frame.pos.x + frame.right.x * side * offset;
+      const z = frame.pos.z + frame.right.z * side * offset;
+      return { ...frame, x, z, h: vertexTerrain(x, z).h };
+    }
+    function shoreSide(t) {
+      const frame = roadFrame(t);
+      const radial = new THREE.Vector3(frame.pos.x - loopCenter.x, 0, frame.pos.z - loopCenter.z).normalize();
+      return Math.sign(frame.right.dot(radial) || 1);
+    }
+
+    // City traffic: small, quiet vehicles keep the road alive without competing
+    // with the player's Ferrari or turning the scene into a racing game.
+    const trafficBodyGeo = new THREE.BoxGeometry(1.15, 0.38, 2.15);
+    const trafficCabinGeo = new THREE.BoxGeometry(0.88, 0.34, 0.95);
+    const trafficWindowMat = new THREE.MeshStandardMaterial({ color: 0x17242d, roughness: 0.46, metalness: 0.2 });
+    const trafficColors = [0x587e91, 0xb76554, 0xc6a45f, 0x73818b];
+    function makeTraffic(color) {
+      const vehicle = new THREE.Group();
+      const body = new THREE.Mesh(trafficBodyGeo, new THREE.MeshStandardMaterial({ color, roughness: 0.72, metalness: 0.12 }));
+      const cabin = new THREE.Mesh(trafficCabinGeo, trafficWindowMat);
+      body.position.y = 0.38;
+      cabin.position.set(0, 0.69, -0.08);
+      vehicle.add(body, cabin);
+      vehicle.traverse(child => { if (child.isMesh) child.castShadow = true; });
+      return vehicle;
+    }
+    const cityArcsLife = cityArcs;
+    for (let i = 0; i < 10 && cityArcsLife.length; i++) {
+      const arc = cityArcsLife[i % cityArcsLife.length];
+      const entry = {
+        arc,
+        t: arc.from + propRng() * (arc.to - arc.from),
+        lane: i % 2 === 0 ? 1.55 : -1.55,
+        speed: 0.000045 + propRng() * 0.000035,
+        vehicle: makeTraffic(trafficColors[i % trafficColors.length]),
+      };
+      scene.add(entry.vehicle);
+      cityTraffic.push(entry);
+    }
+
+    // City pedestrians occupy the sidewalks and loop through their district.
+    for (let i = 0; i < 18 && cityArcsLife.length; i++) {
+      const arc = cityArcsLife[i % cityArcsLife.length];
+      const entry = {
+        arc,
+        t: arc.from + propRng() * (arc.to - arc.from),
+        side: i % 2 === 0 ? 1 : -1,
+        speed: 0.000018 + propRng() * 0.000018,
+        phase: propRng() * Math.PI * 2,
+        person: makePerson(pedestrianShirts[i % pedestrianShirts.length], 0.78 + propRng() * 0.18),
+      };
+      scene.add(entry.person);
+      cityPedestrians.push(entry);
+    }
+
+    // Nature life: deer remain sparse, calm, and close enough to read from the road.
+    const deerBodyGeo = new THREE.BoxGeometry(1.25, 0.56, 0.46);
+    const deerHeadGeo = new THREE.BoxGeometry(0.42, 0.42, 0.34);
+    const deerLegGeo = new THREE.CylinderGeometry(0.055, 0.075, 0.65, 5);
+    const deerMat = new THREE.MeshStandardMaterial({ color: 0x806047, roughness: 0.95, flatShading: true });
+    const deerDarkMat = new THREE.MeshStandardMaterial({ color: 0x463528, roughness: 0.95, flatShading: true });
+    function makeDeer() {
+      const deer = new THREE.Group();
+      const body = new THREE.Mesh(deerBodyGeo, deerMat);
+      body.position.y = 1.02;
+      const head = new THREE.Mesh(deerHeadGeo, deerMat);
+      head.position.set(0, 1.34, 0.55);
+      const tail = new THREE.Mesh(new THREE.ConeGeometry(0.16, 0.3, 5), deerDarkMat);
+      tail.rotation.x = -Math.PI / 2;
+      tail.position.set(0, 1.17, -0.7);
+      deer.add(body, head, tail);
+      for (const x of [-0.4, 0.4]) for (const z of [-0.25, 0.25]) {
+        const leg = new THREE.Mesh(deerLegGeo, deerDarkMat);
+        leg.position.set(x, 0.52, z);
+        deer.add(leg);
+      }
+      deer.traverse(child => { if (child.isMesh) child.castShadow = true; });
+      return deer;
+    }
+    const forestArcsLife = forestArcs;
+    for (let i = 0; i < 5 && forestArcsLife.length; i++) {
+      const arc = forestArcsLife[i % forestArcsLife.length];
+      const entry = {
+        arc,
+        t: arc.from + propRng() * (arc.to - arc.from),
+        side: i % 2 === 0 ? 1 : -1,
+        offset: 13 + propRng() * 13,
+        phase: propRng() * Math.PI * 2,
+        deer: makeDeer(),
+      };
+      scene.add(entry.deer);
+      forestDeer.push(entry);
+    }
+
+    // Fireflies use one tiny point cloud instead of dozens of individual meshes.
+    const fireflyCount = 42;
+    const fireflyPos = new Float32Array(fireflyCount * 3);
+    const fireflyBaseY = new Float32Array(fireflyCount);
+    const fireflyMat = new THREE.PointsMaterial({ color: 0xffe9a4, size: 0.28, transparent: true, opacity: 0, depthWrite: false });
+    for (let i = 0; i < fireflyCount; i++) {
+      const arc = forestArcsLife.length ? forestArcsLife[i % forestArcsLife.length] : arcs[0];
+      const t = arc.from + propRng() * (arc.to - arc.from);
+      const p = roadOffset(t, 8 + propRng() * 28, propRng() > 0.5 ? 1 : -1);
+      fireflyPos[i * 3] = p.x;
+      fireflyPos[i * 3 + 1] = p.h + 1.2 + propRng() * 4.8;
+      fireflyBaseY[i] = fireflyPos[i * 3 + 1];
+      fireflyPos[i * 3 + 2] = p.z;
+    }
+    const fireflyGeo = new THREE.BufferGeometry();
+    fireflyGeo.setAttribute('position', new THREE.BufferAttribute(fireflyPos, 3));
+    const fireflies = new THREE.Points(fireflyGeo, fireflyMat);
+    fireflies.frustumCulled = false;
+    scene.add(fireflies);
+
+    // Beach life: bright, simple silhouettes near the waterline and slow boats.
+    const beachArcsLife = beachArcs;
+    const beachShirts = [0xe17858, 0x5b9eb5, 0xf0c76e, 0xf1e2c2].map(hex => new THREE.MeshStandardMaterial({ color: hex, roughness: 0.86 }));
+    for (let i = 0; i < 14 && beachArcsLife.length; i++) {
+      const arc = beachArcsLife[i % beachArcsLife.length];
+      const entry = {
+        arc,
+        t: arc.from + propRng() * (arc.to - arc.from),
+        side: shoreSide(arc.from + (arc.to - arc.from) * 0.5),
+        offset: 10 + propRng() * 7,
+        phase: propRng() * Math.PI * 2,
+        person: makePerson(beachShirts[i % beachShirts.length], 0.72 + propRng() * 0.2),
+      };
+      scene.add(entry.person);
+      beachPeople.push(entry);
+    }
+
+    const umbrellaPoleGeo = new THREE.CylinderGeometry(0.035, 0.045, 1.65, 6);
+    const umbrellaGeo = new THREE.ConeGeometry(0.9, 0.32, 10);
+    const umbrellaPoleMat = new THREE.MeshStandardMaterial({ color: 0x6b5140, roughness: 0.9 });
+    const umbrellaMats = [0xe17858, 0x5b9eb5, 0xf0c76e].map(hex => new THREE.MeshStandardMaterial({ color: hex, roughness: 0.84, flatShading: true }));
+    for (let i = 0; i < 8 && beachArcsLife.length; i++) {
+      const arc = beachArcsLife[i % beachArcsLife.length];
+      const t = arc.from + propRng() * (arc.to - arc.from);
+      const side = shoreSide(t);
+      const p = roadOffset(t, 12 + propRng() * 5, side);
+      const umbrella = new THREE.Group();
+      const pole = new THREE.Mesh(umbrellaPoleGeo, umbrellaPoleMat);
+      pole.position.y = 0.82;
+      const canopy = new THREE.Mesh(umbrellaGeo, umbrellaMats[i % umbrellaMats.length]);
+      canopy.position.y = 1.65;
+      umbrella.add(pole, canopy);
+      umbrella.position.set(p.x, p.h, p.z);
+      umbrella.rotation.y = propRng() * Math.PI;
+      umbrella.traverse(child => { if (child.isMesh) child.castShadow = true; });
+      scene.add(umbrella);
+      beachUmbrellas.push({ umbrella, phase: propRng() * Math.PI * 2 });
+    }
+
+    const boatHullGeo = new THREE.BoxGeometry(2.6, 0.34, 0.9);
+    const boatCabinGeo = new THREE.BoxGeometry(0.85, 0.34, 0.55);
+    const boatMat = new THREE.MeshStandardMaterial({ color: 0xf0f0e7, roughness: 0.78 });
+    const boatAccentMat = new THREE.MeshStandardMaterial({ color: 0x3f89a8, roughness: 0.7 });
+    for (let i = 0; i < 3 && beachArcsLife.length; i++) {
+      const arc = beachArcsLife[i % beachArcsLife.length];
+      const t = arc.from + propRng() * (arc.to - arc.from);
+      const side = shoreSide(t);
+      const p = roadOffset(t, 48 + propRng() * 28, side);
+      const boat = new THREE.Group();
+      const hull = new THREE.Mesh(boatHullGeo, boatMat);
+      const cabin = new THREE.Mesh(boatCabinGeo, boatAccentMat);
+      cabin.position.set(-0.25, 0.32, 0);
+      boat.add(hull, cabin);
+      boat.position.set(p.x, WATER_LEVEL + 0.35, p.z);
+      boat.rotation.y = Math.atan2(p.tangent.x, p.tangent.z);
+      boat.traverse(child => { if (child.isMesh) child.castShadow = true; });
+      scene.add(boat);
+      beachBoats.push({ boat, arc, t, side, phase: propRng() * Math.PI * 2 });
+    }
 
     // ── Kilometer posts around the whole loop ──
     const POST_COUNT = 36;
@@ -1537,6 +1825,53 @@
         bird.position.x += Math.sin(time * 0.2 + idx) * 0.04;
       });
 
+      // Animate each living-world layer on its own small loop. Objects stay
+      // attached to the same terrain sampler as the road, so nothing floats.
+      cityTraffic.forEach((entry, idx) => {
+        entry.t += entry.speed * dt;
+        if (entry.t > entry.arc.to) entry.t = entry.arc.from;
+        const p = roadOffset(entry.t, Math.abs(entry.lane), Math.sign(entry.lane));
+        entry.vehicle.position.set(p.x, p.h, p.z);
+        entry.vehicle.lookAt(p.pos.x + p.tangent.x * 4, p.h, p.pos.z + p.tangent.z * 4);
+      });
+      cityPedestrians.forEach((entry, idx) => {
+        entry.t += entry.speed * dt;
+        if (entry.t > entry.arc.to) entry.t = entry.arc.from;
+        const p = roadOffset(entry.t, ROAD_WIDTH / 2 + 6.8, entry.side);
+        entry.person.position.set(p.x, p.h + Math.abs(Math.sin(time * 3.2 + entry.phase)) * 0.025, p.z);
+        entry.person.rotation.y = Math.atan2(p.tangent.x, p.tangent.z) + (entry.side > 0 ? Math.PI / 2 : -Math.PI / 2);
+      });
+      forestDeer.forEach((entry, idx) => {
+        const p = roadOffset(entry.t, entry.offset, entry.side);
+        entry.deer.position.set(p.x, p.h + Math.sin(time * 0.9 + entry.phase) * 0.035, p.z);
+        entry.deer.rotation.y = Math.atan2(p.tangent.x, p.tangent.z) + (entry.side > 0 ? -0.65 : 0.65);
+        entry.deer.rotation.z = Math.sin(time * 0.7 + entry.phase) * 0.025;
+      });
+      beachPeople.forEach(entry => {
+        entry.t += 0.000008 * dt;
+        if (entry.t > entry.arc.to) entry.t = entry.arc.from;
+        const p = roadOffset(entry.t, entry.offset, entry.side);
+        entry.person.position.set(p.x, p.h + Math.abs(Math.sin(time * 2.2 + entry.phase)) * 0.04, p.z);
+        entry.person.rotation.y = Math.atan2(p.tangent.x, p.tangent.z);
+      });
+      beachUmbrellas.forEach((entry, idx) => {
+        entry.umbrella.rotation.z = Math.sin(time * 0.35 + entry.phase) * 0.025;
+      });
+      beachBoats.forEach(entry => {
+        entry.t += 0.000006 * dt;
+        if (entry.t > entry.arc.to) entry.t = entry.arc.from;
+        const p = roadOffset(entry.t, 48, entry.side);
+        entry.boat.position.x = p.x;
+        entry.boat.position.z = p.z;
+        entry.boat.position.y = WATER_LEVEL + 0.35 + Math.sin(time * 0.8 + entry.phase) * 0.08;
+        entry.boat.rotation.y = Math.atan2(p.tangent.x, p.tangent.z);
+      });
+      const fireflyArray = fireflyGeo.attributes.position.array;
+      for (let i = 0; i < fireflyCount; i++) {
+        fireflyArray[i * 3 + 1] = fireflyBaseY[i] + Math.sin(time * 0.9 + i) * 0.35;
+      }
+      fireflyGeo.attributes.position.needsUpdate = true;
+
       const currentSpeed = Math.round(64 * speedMultiplier + Math.sin(progress * 40) * 4);
       if (speedValEl) speedValEl.textContent = `${currentSpeed} MPH`;
       if (distValEl) distValEl.textContent = `${((progress * loopLength) / 1000).toFixed(1)} KM`;
@@ -1582,10 +1917,13 @@
 
       // Headlights come on when it is genuinely dark
       const dark = Math.max(skyState.night, skyState.storm * 0.65);
+      cityPedestrians.forEach(entry => { entry.person.visible = dark < 0.78; });
+      beachPeople.forEach(entry => { entry.person.visible = dark < 0.62; });
+      fireflyMat.opacity = Math.min(0.9, dark * 0.95);
       headlightLeft.intensity = dark * 14;
       headlightRight.intensity = dark * 14;
-      lampHeadMat.emissiveIntensity = 0.05 + 3.0 * dark;
-      buildingMat.emissiveIntensity = 0.1 + 1.35 * dark;
+      lampHeadMat.emissiveIntensity = 0.02 + 1.8 * dark;
+      buildingMat.emissiveIntensity = 0.02 + 0.78 * dark;
       waterMat.uniforms.uTime.value = time;
 
       // Rain & snow — follow the car, recycle forever
