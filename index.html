@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0" />
   <meta name="description" content="Aarav Kolgaonkar — software engineer and full-stack builder. Crafting performant, thoughtful digital experiences." />
-  <meta name="theme-color" content="#0a0a0f" />
+  <meta name="theme-color" content="#000000" />
   <link rel="canonical" href="https://aaravkolgaonkar.dev/" />
 
   <!-- OpenGraph / Facebook -->
@@ -21,7 +21,7 @@
   <meta name="twitter:image" content="https://aaravkolgaonkar.dev/og-image.jpg" />
 
   <!-- Favicon -->
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><circle cx=%2250%22 cy=%2250%22 r=%2242%22 fill=%22%238b5cf6%22/></svg>" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><circle cx=%2250%22 cy=%2250%22 r=%2242%22 fill=%22%23ffffff%22/></svg>" />
 
   <!-- JSON-LD Structured Data -->
   <script type="application/ld+json">
@@ -46,18 +46,17 @@
     /* ── Design tokens ── */
     :root {
       color-scheme: dark;
-      --bg: #0a0a0f;
-      --text: #f0f0f5;
-      --muted: #7a7a8e;
-      --line: rgba(255, 255, 255, 0.08);
-      --accent: #8b5cf6;
-      --accent-soft: rgba(139, 92, 246, 0.25);
-      --cyan: #06b6d4;
-      --rose: #f43f5e;
-      --amber: #f59e0b;
-      --glass: rgba(255, 255, 255, 0.04);
-      --glass-border: rgba(255, 255, 255, 0.08);
-      --glass-hover: rgba(255, 255, 255, 0.08);
+      --bg: #000000;
+      --text: #ffffff;
+      --muted: #888888;
+      --line: rgba(255, 255, 255, 0.1);
+      --accent: #ffffff;
+      --accent-soft: rgba(255, 255, 255, 0.2);
+      
+      --glass: rgba(20, 20, 20, 0.4);
+      --glass-border: rgba(255, 255, 255, 0.15);
+      --glass-border-highlight: rgba(255, 255, 255, 0.4);
+      --glass-hover: rgba(40, 40, 40, 0.5);
     }
 
     /* ── Reset ── */
@@ -69,73 +68,72 @@
     ::selection { background: var(--accent-soft); }
     :focus-visible { outline: 1px solid var(--accent); outline-offset: 3px; }
 
-    /* ── Gradient orbs ── */
-    .orb {
-      position: fixed; border-radius: 50%; pointer-events: none;
-      filter: blur(100px); opacity: 0.5; will-change: transform;
+    /* ── Liquid Glass Background ── */
+    .liquid-bg {
+      position: fixed; inset: -100px; /* Bleed edge to avoid clip */
+      pointer-events: none;
+      filter: url(#liquid-filter);
+      background: var(--bg);
+      z-index: 0;
     }
+
+    .orb {
+      position: absolute; border-radius: 50%;
+      will-change: transform;
+      background: #ffffff;
+    }
+    
     .orb-1 {
-      width: 600px; height: 600px; top: -15%; left: -10%;
-      background: radial-gradient(circle, var(--accent) 0%, transparent 70%);
+      width: 45vw; height: 45vw; top: 10%; left: 10%;
+      background: radial-gradient(circle, #ffffff 0%, #888888 60%, transparent 80%);
       animation: drift1 25s ease-in-out infinite;
     }
     .orb-2 {
-      width: 500px; height: 500px; bottom: -10%; right: -8%;
-      background: radial-gradient(circle, var(--cyan) 0%, transparent 70%);
+      width: 50vw; height: 50vw; bottom: 5%; right: 5%;
+      background: radial-gradient(circle, #aaaaaa 0%, #444444 60%, transparent 80%);
       animation: drift2 30s ease-in-out infinite;
     }
     .orb-3 {
-      width: 400px; height: 400px; top: 10%; right: 15%;
-      background: radial-gradient(circle, var(--rose) 0%, transparent 70%);
-      animation: drift3 22s ease-in-out infinite; opacity: 0.3;
+      width: 35vw; height: 35vw; top: 30%; right: 25%;
+      background: radial-gradient(circle, #ffffff 0%, #666666 60%, transparent 80%);
+      animation: drift3 22s ease-in-out infinite;
     }
     .orb-4 {
-      width: 350px; height: 350px; bottom: 20%; left: 10%;
-      background: radial-gradient(circle, var(--amber) 0%, transparent 70%);
-      animation: drift4 28s ease-in-out infinite; opacity: 0.25;
-    }
-    .orb-5 {
-      width: 300px; height: 300px; top: 40%; left: 45%;
-      background: radial-gradient(circle, #7c3aed 0%, transparent 70%);
-      animation: drift5 35s ease-in-out infinite; opacity: 0.2;
+      width: 40vw; height: 40vw; bottom: 20%; left: 20%;
+      background: radial-gradient(circle, #dddddd 0%, #555555 60%, transparent 80%);
+      animation: drift4 28s ease-in-out infinite;
     }
 
     @keyframes drift1 {
       0%, 100% { transform: translate(0, 0) scale(1); }
-      25% { transform: translate(40px, 30px) scale(1.05); }
-      50% { transform: translate(-20px, 60px) scale(0.95); }
-      75% { transform: translate(30px, -20px) scale(1.02); }
+      33% { transform: translate(15vw, 10vh) scale(1.1); }
+      66% { transform: translate(-5vw, 15vh) scale(0.9); }
     }
     @keyframes drift2 {
       0%, 100% { transform: translate(0, 0) scale(1); }
-      25% { transform: translate(-50px, -30px) scale(1.08); }
-      50% { transform: translate(30px, -60px) scale(0.92); }
-      75% { transform: translate(-20px, 20px) scale(1.04); }
+      33% { transform: translate(-15vw, -10vh) scale(1.15); }
+      66% { transform: translate(10vw, -20vh) scale(0.85); }
     }
     @keyframes drift3 {
       0%, 100% { transform: translate(0, 0) scale(1); }
-      33% { transform: translate(-30px, 40px) scale(1.1); }
-      66% { transform: translate(40px, -30px) scale(0.9); }
+      33% { transform: translate(-10vw, 15vh) scale(1.2); }
+      66% { transform: translate(15vw, -10vh) scale(0.9); }
     }
     @keyframes drift4 {
       0%, 100% { transform: translate(0, 0) scale(1); }
-      33% { transform: translate(50px, -40px) scale(1.06); }
-      66% { transform: translate(-30px, 50px) scale(0.94); }
-    }
-    @keyframes drift5 {
-      0%, 100% { transform: translate(0, 0) scale(1); }
-      50% { transform: translate(-40px, -30px) scale(1.12); }
+      33% { transform: translate(15vw, -15vh) scale(1.1); }
+      66% { transform: translate(-10vw, 20vh) scale(0.95); }
     }
 
     /* ── Overlays ── */
     .grain {
-      position: fixed; inset: 0; z-index: 1; pointer-events: none; opacity: .06;
+      position: fixed; inset: 0; z-index: 1; pointer-events: none; opacity: .12;
       background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.95' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.3'/%3E%3C/svg%3E");
-      mix-blend-mode: soft-light;
+      mix-blend-mode: screen;
     }
     .vignette {
       position: fixed; inset: 0; z-index: 1; pointer-events: none;
-      background: radial-gradient(ellipse at 50% 50%, transparent 40%, rgba(5, 5, 10, 0.55) 100%);
+      background: radial-gradient(ellipse at 50% 50%, transparent 30%, rgba(0, 0, 0, 0.8) 100%);
     }
 
     /* ── Page layout ── */
@@ -145,93 +143,97 @@
       gap: 24px; padding: 40px; pointer-events: none;
     }
 
+    /* ── Glass Panels Base ── */
+    .glass-panel {
+      background: var(--glass);
+      border: 1px solid var(--glass-border);
+      border-top: 1px solid var(--glass-border-highlight);
+      backdrop-filter: blur(40px) saturate(150%);
+      -webkit-backdrop-filter: blur(40px) saturate(150%);
+      box-shadow: 0 30px 60px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    }
+
     /* ── Identity card ── */
     .identity {
       pointer-events: auto; appearance: none; cursor: pointer; position: relative;
-      padding: 32px 44px; text-align: center; border-radius: 28px;
-      background: var(--glass); border: 1px solid var(--glass-border);
-      backdrop-filter: blur(24px) saturate(180%); -webkit-backdrop-filter: blur(24px) saturate(180%);
+      padding: 32px 48px; text-align: center; border-radius: 32px;
       transition: background 0.35s, border-color 0.35s, transform 0.35s, box-shadow 0.35s;
       opacity: 0; animation: arrive 0.8s cubic-bezier(.16, 1, .3, 1) 0.2s forwards;
     }
     .identity:hover, .identity[aria-expanded="true"] {
-      background: var(--glass-hover); border-color: rgba(139, 92, 246, 0.25);
-      transform: translateY(-3px);
-      box-shadow: 0 12px 40px rgba(139, 92, 246, 0.12), 0 0 0 1px rgba(139, 92, 246, 0.1);
+      background: var(--glass-hover); 
+      border-top-color: #fff;
+      transform: translateY(-4px);
+      box-shadow: 0 40px 80px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.3);
     }
     .role {
       display: block; color: var(--muted); font-size: 13px; font-weight: 500;
-      letter-spacing: 0.12em; text-transform: uppercase;
+      letter-spacing: 0.15em; text-transform: uppercase;
       font-family: "DM Mono", monospace; line-height: 1.2;
     }
     .name {
-      display: block; margin-top: 10px; font-size: 32px; font-weight: 700; letter-spacing: -0.03em;
+      display: block; margin-top: 10px; font-size: 34px; font-weight: 700; letter-spacing: -0.04em;
       font-family: "Space Grotesk", "DM Sans", sans-serif;
-      background: linear-gradient(135deg, #ffffff 20%, var(--accent) 60%, var(--cyan));
+      background: linear-gradient(135deg, #ffffff 30%, #999999);
       -webkit-background-clip: text; background-clip: text; color: transparent;
     }
     .plus {
-      position: absolute; right: 18px; top: 50%; transform: translateY(-50%);
+      position: absolute; right: 20px; top: 50%; transform: translateY(-50%);
       color: var(--accent); opacity: 0; font-size: 18px;
       transition: opacity 0.3s, transform 0.3s;
     }
-    .identity:hover .plus { opacity: 0.6; transform: translateY(-50%) rotate(90deg); }
-    .identity[aria-expanded="true"] .plus { opacity: 0.6; transform: translateY(-50%) rotate(45deg); }
+    .identity:hover .plus { opacity: 0.8; transform: translateY(-50%) rotate(90deg); }
+    .identity[aria-expanded="true"] .plus { opacity: 0.8; transform: translateY(-50%) rotate(45deg); }
 
     /* ── Nav links ── */
     .links {
-      display: flex; align-items: center; gap: 8px; list-style: none; padding: 0;
+      display: flex; align-items: center; gap: 10px; list-style: none; padding: 0;
       pointer-events: auto; opacity: 0;
       animation: arrive 0.8s cubic-bezier(.16, 1, .3, 1) 0.4s forwards;
     }
     .links a {
-      display: flex; align-items: center; gap: 6px; padding: 10px 18px; border-radius: 999px;
-      color: var(--muted); font-size: 14px; font-weight: 500;
-      background: var(--glass); border: 1px solid var(--glass-border);
-      backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+      display: flex; align-items: center; gap: 6px; padding: 12px 20px; border-radius: 999px;
+      color: #aaaaaa; font-size: 14px; font-weight: 500;
       transition: color 0.25s, background 0.25s, border-color 0.25s, transform 0.25s, box-shadow 0.25s;
     }
     .links a:hover, .links a:focus-visible {
       color: var(--text); background: rgba(255, 255, 255, 0.1);
-      border-color: rgba(139, 92, 246, 0.3); transform: translateY(-2px);
-      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25), 0 0 16px var(--accent-soft);
+      border-top-color: var(--glass-border-highlight); transform: translateY(-2px);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
     }
-    .arrow { color: var(--accent); font-size: 12px; transition: transform 0.2s; }
-    .links a:hover .arrow { transform: translate(2px, -2px); }
+    .arrow { color: #ffffff; font-size: 12px; transition: transform 0.2s; opacity: 0.5; }
+    .links a:hover .arrow { transform: translate(2px, -2px); opacity: 1; }
 
     /* ── About / Info panel ── */
     .info {
       position: fixed; left: 50%; top: 50%;
       transform: translate(-50%, 20px);
-      width: min(380px, calc(100vw - 40px)); z-index: 10;
-      padding: 24px 28px; border-radius: 22px;
-      background: rgba(12, 12, 20, 0.85); border: 1px solid var(--glass-border);
-      backdrop-filter: blur(24px) saturate(180%); -webkit-backdrop-filter: blur(24px) saturate(180%);
+      width: min(400px, calc(100vw - 40px)); z-index: 10;
+      padding: 28px 32px; border-radius: 28px;
       opacity: 0; pointer-events: none;
-      transition: opacity 0.3s cubic-bezier(0.16, 1, 0.3, 1), transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4), 0 0 40px rgba(139, 92, 246, 0.06);
+      transition: opacity 0.4s cubic-bezier(0.16, 1, 0.3, 1), transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
     }
-    .info.open { opacity: 1; transform: translate(-50%, 40px); pointer-events: auto; }
-    .info p { margin: 0; color: rgba(240, 240, 245, 0.7); font-size: 14px; line-height: 1.6; }
+    .info.open { opacity: 1; transform: translate(-50%, 50px); pointer-events: auto; }
+    .info p { margin: 0; color: #cccccc; font-size: 14px; line-height: 1.6; font-weight: 500; }
     .info-label {
-      display: flex; align-items: center; gap: 8px; margin-bottom: 12px;
-      color: var(--accent); font: 600 11px/1 "DM Mono", monospace;
-      letter-spacing: 0.12em; text-transform: uppercase;
+      display: flex; align-items: center; gap: 8px; margin-bottom: 16px;
+      color: #ffffff; font: 600 11px/1 "DM Mono", monospace;
+      letter-spacing: 0.15em; text-transform: uppercase;
     }
     .info-label::before {
-      content: ""; width: 7px; height: 7px; border-radius: 50%;
-      background: var(--accent); box-shadow: 0 0 10px var(--accent); flex: none;
+      content: ""; width: 6px; height: 6px; border-radius: 50%;
+      background: #ffffff; box-shadow: 0 0 10px #ffffff; flex: none;
     }
     .info a {
-      display: inline-flex; align-items: center; gap: 4px;
-      margin-top: 16px; color: var(--accent); font-size: 13px; font-weight: 500;
-      transition: color 0.2s;
+      display: inline-flex; align-items: center; gap: 6px;
+      margin-top: 20px; color: #ffffff; font-size: 13px; font-weight: 600;
+      transition: opacity 0.2s; opacity: 0.7;
     }
-    .info a:hover { color: var(--cyan); }
+    .info a:hover { opacity: 1; }
 
     /* ── Entrance animation ── */
     @keyframes arrive {
-      from { opacity: 0; transform: translateY(16px); filter: blur(8px); }
+      from { opacity: 0; transform: translateY(20px); filter: blur(12px); }
       to { opacity: 1; transform: translateY(0); filter: blur(0); }
     }
 
@@ -245,51 +247,52 @@
     /* ── GitHub activity popup ── */
     .gh-pop {
       position: fixed; left: 50%; top: 50%;
-      width: 800px; max-width: calc(100vw - 32px); padding: 18px 20px 16px; border-radius: 22px;
-      background: rgba(12, 12, 20, 0.92); border: 1px solid var(--glass-border);
-      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.55), 0 0 30px rgba(139, 92, 246, 0.06);
-      backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px);
-      visibility: hidden; opacity: 0; transform: translateY(8px) scale(0.98); transform-origin: bottom center;
-      transition: opacity 0.22s ease, transform 0.22s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.22s;
+      width: 820px; max-width: calc(100vw - 32px); padding: 20px 24px 18px; border-radius: 28px;
+      visibility: hidden; opacity: 0; transform: translateY(10px) scale(0.98); transform-origin: bottom center;
+      transition: opacity 0.3s ease, transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.3s;
       pointer-events: auto; z-index: 10;
     }
     .gh-pop.show { visibility: visible; opacity: 1; transform: translateY(0) scale(1); }
-    .gh-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
+    .gh-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 16px; }
     .gh-title {
       display: flex; align-items: center; gap: 8px;
-      font: 600 12px/1 "DM Mono", monospace; letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent);
+      font: 600 12px/1 "DM Mono", monospace; letter-spacing: 0.15em; text-transform: uppercase; color: #ffffff;
     }
-    .gh-title::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 8px var(--accent); }
+    .gh-title::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: #ffffff; box-shadow: 0 0 10px #ffffff; }
     .gh-link { display: inline-flex; align-items: center; gap: 4px; color: var(--muted); font-size: 12px; transition: color 0.2s; }
-    .gh-link:hover { color: var(--accent); }
-    .gh-stats { display: flex; gap: 10px; margin-bottom: 14px; }
+    .gh-link:hover { color: #ffffff; }
+    .gh-stats { display: flex; gap: 12px; margin-bottom: 18px; }
     .gh-stat {
-      flex: 1; padding: 10px 12px; border-radius: 14px;
-      background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.06);
+      flex: 1; padding: 12px 16px; border-radius: 16px;
+      background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08);
+      border-top-color: rgba(255, 255, 255, 0.15);
     }
-    .gh-stat b { display: block; font: 700 18px/1.2 "Space Grotesk", sans-serif; color: var(--text); font-variant-numeric: tabular-nums; }
-    .gh-stat span { display: block; margin-top: 4px; font: 500 9.5px/1 "DM Mono", monospace; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
+    .gh-stat b { display: block; font: 700 20px/1.2 "Space Grotesk", sans-serif; color: var(--text); font-variant-numeric: tabular-nums; }
+    .gh-stat span { display: block; margin-top: 4px; font: 500 10px/1 "DM Mono", monospace; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
     .gh-heat { position: relative; padding-bottom: 6px; }
-    .gh-scroll { overflow-x: auto; margin-left: 26px; scrollbar-width: thin; scrollbar-color: rgba(255, 255, 255, 0.2) transparent; }
+    .gh-scroll { overflow-x: auto; margin-left: 28px; scrollbar-width: thin; scrollbar-color: rgba(255, 255, 255, 0.2) transparent; }
     .gh-scroll::-webkit-scrollbar { height: 6px; }
-    .gh-scroll::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.18); border-radius: 3px; }
+    .gh-scroll::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.2); border-radius: 3px; }
     .gh-scroll::-webkit-scrollbar-track { background: transparent; }
     .gh-months { display: grid; grid-auto-flow: column; grid-auto-columns: 12px; gap: 3px; height: 16px; margin-bottom: 4px; }
-    .gh-months span { font: 500 9px/16px "DM Mono", monospace; letter-spacing: 0.04em; color: var(--muted); }
-    .gh-rows { position: absolute; left: 0; top: 20px; display: grid; grid-template-rows: repeat(7, 12px); gap: 3px; font: 500 9px/12px "DM Mono", monospace; color: var(--muted); }
+    .gh-months span { font: 500 10px/16px "DM Mono", monospace; letter-spacing: 0.05em; color: var(--muted); }
+    .gh-rows { position: absolute; left: 0; top: 20px; display: grid; grid-template-rows: repeat(7, 12px); gap: 3px; font: 500 10px/12px "DM Mono", monospace; color: var(--muted); }
     .gh-grid { display: grid; grid-auto-flow: column; grid-template-rows: repeat(7, 12px); gap: 3px; width: max-content; }
     .gh-cell { width: 12px; height: 12px; border-radius: 3px; background: rgba(255, 255, 255, 0.08); }
-    .gh-cell.l1 { background: #5b21b6; }
-    .gh-cell.l2 { background: #7c3aed; }
-    .gh-cell.l3 { background: #8b5cf6; }
-    .gh-cell.l4 { background: #a78bfa; box-shadow: 0 0 7px rgba(167, 139, 250, 0.5); }
-    .gh-legend { display: flex; align-items: center; justify-content: flex-end; gap: 4px; margin-top: 10px; font: 500 9px/1 "DM Mono", monospace; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); }
+    
+    /* Monochrome heatmap */
+    .gh-cell.l1 { background: rgba(255, 255, 255, 0.25); }
+    .gh-cell.l2 { background: rgba(255, 255, 255, 0.5); }
+    .gh-cell.l3 { background: rgba(255, 255, 255, 0.75); }
+    .gh-cell.l4 { background: #ffffff; box-shadow: 0 0 8px rgba(255, 255, 255, 0.6); }
+    
+    .gh-legend { display: flex; align-items: center; justify-content: flex-end; gap: 4px; margin-top: 12px; font: 500 10px/1 "DM Mono", monospace; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); }
     .gh-legend .gh-cell { width: 10px; height: 10px; }
     .gh-tip {
-      position: fixed; z-index: 50; padding: 6px 10px; border-radius: 8px;
-      background: rgba(6, 6, 12, 0.95); border: 1px solid rgba(255, 255, 255, 0.1);
-      color: var(--text); font: 500 11px/1.3 "DM Sans", sans-serif; pointer-events: none;
-      opacity: 0; transition: opacity 0.15s; box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4); white-space: nowrap;
+      position: fixed; z-index: 50; padding: 8px 12px; border-radius: 8px;
+      background: #ffffff; border: 1px solid rgba(255, 255, 255, 0.1);
+      color: #000000; font: 600 11px/1.3 "DM Sans", sans-serif; pointer-events: none;
+      opacity: 0; transition: opacity 0.15s; box-shadow: 0 10px 24px rgba(0, 0, 0, 0.5); white-space: nowrap;
     }
     .gh-tip.show { opacity: 1; }
     .gh-empty { color: var(--muted); font-size: 13px; padding: 24px 0; text-align: center; }
@@ -297,30 +300,47 @@
     /* ── Responsive ── */
     @media (max-width: 600px) {
       .page { padding: 24px; gap: 16px; }
-      .identity { padding: 24px 28px; border-radius: 22px; }
-      .name { font-size: 24px; }
+      .identity { padding: 28px 32px; border-radius: 26px; }
+      .name { font-size: 26px; }
       .role { font-size: 11px; }
-      .links { gap: 6px; flex-wrap: wrap; justify-content: center; }
-      .links a { padding: 8px 14px; font-size: 12px; }
-      .info { width: calc(100vw - 32px); }
-      .orb { filter: blur(80px); opacity: 0.35; }
+      .links { gap: 8px; flex-wrap: wrap; justify-content: center; }
+      .links a { padding: 10px 16px; font-size: 13px; }
+      .info { width: calc(100vw - 32px); padding: 24px; }
     }
   </style>
 </head>
 <body>
-  <!-- Gradient orbs -->
-  <div class="orb orb-1"></div>
-  <div class="orb orb-2"></div>
-  <div class="orb orb-3"></div>
-  <div class="orb orb-4"></div>
-  <div class="orb orb-5"></div>
+  
+  <!-- SVG Filter for Liquid Effect -->
+  <svg width="0" height="0" style="position: absolute;">
+    <filter id="liquid-filter">
+      <!-- Blur the elements -->
+      <feGaussianBlur in="SourceGraphic" stdDeviation="40" result="blur" />
+      <!-- Sharpen the edges to create a liquid merge effect. Contrast heavily in alpha channel -->
+      <feColorMatrix in="blur" mode="matrix" values="
+        1 0 0 0 0  
+        0 1 0 0 0  
+        0 0 1 0 0  
+        0 0 0 80 -35" result="liquid" />
+      <!-- Composite to render -->
+      <feComposite in="SourceGraphic" in2="liquid" operator="atop"/>
+    </filter>
+  </svg>
+
+  <!-- Liquid orbs -->
+  <div class="liquid-bg">
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+    <div class="orb orb-4"></div>
+  </div>
 
   <!-- Overlays -->
-  <div class="grain"></div>
   <div class="vignette"></div>
+  <div class="grain"></div>
 
   <!-- GitHub popup -->
-  <div class="gh-pop" id="ghPop" role="region" aria-label="GitHub contribution activity">
+  <div class="gh-pop glass-panel" id="ghPop" role="region" aria-label="GitHub contribution activity">
     <div class="gh-head">
       <span class="gh-title">GitHub Activity</span>
       <a class="gh-link" href="https://github.com/arv20" target="_blank" rel="noopener">profile ↗</a>
@@ -335,7 +355,7 @@
   <div class="gh-tip" id="ghTip" aria-hidden="true"></div>
 
   <!-- About panel -->
-  <aside class="info" id="info" aria-hidden="true">
+  <aside class="info glass-panel" id="info" aria-hidden="true">
     <span class="info-label">About</span>
     <p>Software engineer and full-stack builder. Focused on craft, performance, and creating thoughtful digital experiences — from JavaFX tools to AI-integrated systems.</p>
     <a href="https://github.com/arv20" target="_blank" rel="noopener">View GitHub Projects <span aria-hidden="true">↗</span></a>
@@ -343,7 +363,7 @@
 
   <!-- Main UI -->
   <main class="page">
-    <button class="identity" id="identity" type="button" aria-expanded="false" aria-controls="info">
+    <button class="identity glass-panel" id="identity" type="button" aria-expanded="false" aria-controls="info">
       <span class="role">engineer · builder · creator</span>
       <span class="name">aarav kolgaonkar</span>
       <span class="plus" aria-hidden="true">+</span>
@@ -351,10 +371,10 @@
     <nav aria-label="Social links">
       <ul class="links">
         <li class="link-github">
-          <a href="https://github.com/arv20" target="_blank" rel="noopener">github <span class="arrow" aria-hidden="true">↗</span></a>
+          <a class="glass-panel" href="https://github.com/arv20" target="_blank" rel="noopener">github <span class="arrow" aria-hidden="true">↗</span></a>
         </li>
-        <li><a href="https://www.linkedin.com/in/aarav-kolgaonkar-b1264b369/" target="_blank" rel="noopener">linkedin <span class="arrow" aria-hidden="true">↗</span></a></li>
-        <li><a href="mailto:aarav.kolgaonkar@gmail.com">email <span class="arrow" aria-hidden="true">↗</span></a></li>
+        <li><a class="glass-panel" href="https://www.linkedin.com/in/aarav-kolgaonkar-b1264b369/" target="_blank" rel="noopener">linkedin <span class="arrow" aria-hidden="true">↗</span></a></li>
+        <li><a class="glass-panel" href="mailto:aarav.kolgaonkar@gmail.com">email <span class="arrow" aria-hidden="true">↗</span></a></li>
       </ul>
     </nav>
   </main>
@@ -375,7 +395,7 @@
        SUBTLE MOUSE PARALLAX ON ORBS
        ═══════════════════ */
     const orbs = document.querySelectorAll('.orb');
-    const parallaxStrengths = [0.02, 0.015, 0.025, 0.018, 0.01];
+    const parallaxStrengths = [0.03, 0.02, 0.04, 0.025];
     let mouseX = 0, mouseY = 0, smoothX = 0, smoothY = 0;
 
     window.addEventListener('pointermove', (e) => {
@@ -387,7 +407,7 @@
       smoothX += (mouseX - smoothX) * 0.03;
       smoothY += (mouseY - smoothY) * 0.03;
       orbs.forEach((orb, i) => {
-        const s = parallaxStrengths[i] || 0.015;
+        const s = parallaxStrengths[i] || 0.02;
         orb.style.translate = `${smoothX * s * innerWidth}px ${smoothY * s * innerHeight}px`;
       });
       requestAnimationFrame(updateParallax);
