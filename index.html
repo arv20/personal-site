@@ -39,22 +39,27 @@
   <title>Aarav K — Engineer & Builder</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
   <style>
     :root {
       color-scheme: dark;
-      --ink: #0e1713;
-      --text: #f4f4f0;
-      --muted: #96a39b;
-      --line: rgba(255, 255, 255, 0.16);
-      --accent: #7ec8a0;
-      --accent-glow: rgba(126, 200, 160, 0.35);
+      --ink: #0d1512;
+      --text: #f5f7f2;
+      --muted: #9aa8a0;
+      --line: rgba(255, 255, 255, 0.14);
+      --accent: #8ad6a4;
+      --accent-strong: #b9ecc9;
+      --accent-glow: rgba(138, 214, 164, 0.35);
+      --panel: rgba(13, 21, 18, 0.55);
     }
     * { box-sizing: border-box; }
     html, body { width: 100%; height: 100%; margin: 0; overflow: hidden; background: var(--ink); touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
     body { color: var(--text); font-family: "DM Sans", system-ui, -apple-system, sans-serif; -webkit-font-smoothing: antialiased; }
     a, button { color: inherit; font: inherit; }
     a { text-decoration: none; }
+    ::selection { background: rgba(138, 214, 164, 0.28); }
+    :focus-visible { outline: 1px solid var(--accent); outline-offset: 3px; }
+    body { overscroll-behavior: none; }
     
     #scene { position: fixed; inset: 0; width: 100%; height: 100%; z-index: 0; }
     .grain {
@@ -65,6 +70,10 @@
     .vignette {
       position: fixed; inset: 0; z-index: 1; pointer-events: none;
       background: radial-gradient(ellipse at 50% 50%, transparent 45%, rgba(10, 18, 14, 0.45) 100%);
+    }
+    .scrim {
+      position: fixed; inset: auto 0 0 0; height: 170px; z-index: 1; pointer-events: none;
+      background: linear-gradient(to top, rgba(10, 18, 14, 0.6), transparent);
     }
 
     .ui {
@@ -77,7 +86,7 @@
     }
     .identity {
       appearance: none; border: 1px solid var(--line);
-      background: rgba(14, 22, 17, 0.45); border-radius: 16px;
+      background: var(--panel); border-radius: 18px;
       color: var(--text); padding: 12px 18px; text-align: left; cursor: pointer;
       transition: background 0.25s, border-color 0.25s, transform 0.25s, box-shadow 0.25s;
       backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
@@ -87,7 +96,12 @@
       transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,0.25), 0 0 16px var(--accent-glow);
     }
     .role { display: block; color: var(--muted); font-size: 13px; font-weight: 400; line-height: 1.2; letter-spacing: 0.02em; }
-    .name { display: block; margin-top: 4px; font-size: 17px; font-weight: 600; letter-spacing: -0.02em; }
+    .name {
+      display: block; margin-top: 4px; font-size: 18px; font-weight: 600; letter-spacing: -0.02em;
+      font-family: "Space Grotesk", "DM Sans", sans-serif;
+      background: linear-gradient(90deg, #ffffff 30%, var(--accent-strong));
+      -webkit-background-clip: text; background-clip: text; color: transparent;
+    }
     .plus { position: absolute; right: 14px; top: 50%; opacity: 0; transform: translateY(-50%); color: var(--accent); transition: opacity 0.25s, transform 0.25s; }
     .identity:hover .plus { opacity: 1; transform: translateY(-50%) rotate(90deg); }
 
@@ -101,7 +115,8 @@
     }
     .links a:hover, .links a:focus-visible {
       color: var(--text); background: rgba(255, 255, 255, 0.12);
-      border-color: rgba(255, 255, 255, 0.25); transform: translateY(-2px); outline: none;
+      border-color: rgba(255, 255, 255, 0.28); transform: translateY(-2px); outline: none;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3), 0 0 14px var(--accent-glow);
     }
     .arrow { color: var(--accent); font-size: 13px; transform: translate(-1px, 1px); transition: transform 0.2s; }
     .links a:hover .arrow { transform: translate(2px, -2px); }
@@ -110,11 +125,14 @@
       position: fixed; top: clamp(20px, 3vw, 44px); right: clamp(20px, 3vw, 44px); z-index: 2;
       color: rgba(244, 244, 240, 0.85); font: 500 11px/1 "DM Mono", monospace;
       letter-spacing: 0.1em; text-transform: uppercase;
-      background: rgba(14, 22, 17, 0.45); padding: 8px 16px; border-radius: 999px;
+      background: var(--panel); padding: 9px 16px 10px; border-radius: 999px;
       border: 1px solid rgba(255, 255, 255, 0.12); backdrop-filter: blur(12px);
       display: flex; align-items: center; gap: 12px; pointer-events: auto;
     }
-    .stat-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 8px var(--accent); }
+    .stat-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 8px var(--accent); animation: dotpulse 2.6s ease-in-out infinite; }
+    @keyframes dotpulse { 0%, 100% { box-shadow: 0 0 4px var(--accent); } 50% { box-shadow: 0 0 12px var(--accent); } }
+    .hud-gauge { position: absolute; left: 0; bottom: 0; height: 2px; width: 22%; border-radius: 0 3px 3px 0; background: linear-gradient(90deg, var(--accent), var(--accent-strong)); box-shadow: 0 0 8px var(--accent-glow); transition: width 0.25s ease; }
+    #speedVal, #distVal { font-family: "Space Grotesk", "DM Mono", monospace; font-variant-numeric: tabular-nums; }
     .btn-audio {
       background: none; border: none; color: inherit; font: inherit; cursor: pointer;
       padding: 0; letter-spacing: inherit; text-transform: inherit; display: inline-flex; align-items: center; gap: 4px;
@@ -129,8 +147,10 @@
     .touch-btn {
       appearance: none; border: 1px solid rgba(255,255,255,0.2); background: rgba(14, 22, 17, 0.65);
       color: var(--text); font: 600 12px/1 "DM Mono", monospace; padding: 12px 18px; border-radius: 999px;
-      backdrop-filter: blur(12px); active: scale(0.95);
+      backdrop-filter: blur(12px); transition: transform 0.1s ease, background 0.2s, border-color 0.2s, box-shadow 0.2s;
     }
+    .touch-btn:active { transform: scale(0.94); }
+    .touch-btn.gas:active { box-shadow: 0 0 14px var(--accent-glow); }
     .touch-btn.gas { border-color: var(--accent); color: var(--accent); }
 
     .info {
@@ -144,7 +164,8 @@
     }
     .info.open { opacity: 1; transform: translateY(0); pointer-events: auto; }
     .info p { margin: 0; color: #d6ded8; font-size: 14px; line-height: 1.55; }
-    .info-label { display: block; margin-bottom: 10px; color: var(--accent); font: 600 11px/1 "DM Mono", monospace; letter-spacing: 0.1em; text-transform: uppercase; }
+    .info-label { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; color: var(--accent); font: 600 11px/1 "DM Mono", monospace; letter-spacing: 0.1em; text-transform: uppercase; }
+    .info-label::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 8px var(--accent); flex: none; }
     .info a { display: inline-flex; align-items: center; gap: 4px; margin-top: 14px; color: var(--accent); font-size: 13px; font-weight: 500; }
     
     .hint {
@@ -166,8 +187,60 @@
       transform: scale(1.15); box-shadow: 0 0 10px var(--accent-glow);
     }
     
-    @keyframes arrive { to { opacity: 1; transform: translateY(0) translateX(var(--tx, 0)); } }
+    @keyframes arrive {
+      from { opacity: 0; transform: translateY(12px) translateX(var(--tx, 0)); filter: blur(8px); }
+      to { opacity: 1; transform: translateY(0) translateX(var(--tx, 0)); filter: blur(0); }
+    }
     .hint { --tx: -50%; }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
+    }
+
+    /* ── GitHub activity popup ── */
+    .gh-pop {
+      position: fixed; left: 50%; top: 50%;
+      width: 668px; max-width: calc(100vw - 32px); padding: 18px 20px 16px; border-radius: 18px;
+      background: rgba(13, 21, 18, 0.92); border: 1px solid rgba(255, 255, 255, 0.14);
+      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.55), 0 0 24px rgba(0, 0, 0, 0.3);
+      backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+      visibility: hidden; opacity: 0; transform: translateY(8px) scale(0.98); transform-origin: bottom right;
+      transition: opacity 0.22s ease, transform 0.22s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.22s;
+      pointer-events: auto; z-index: 10;
+    }
+    .gh-pop.show { visibility: visible; opacity: 1; transform: translateY(0) scale(1); }
+    .gh-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
+    .gh-title { display: flex; align-items: center; gap: 8px; font: 600 12px/1 "DM Mono", monospace; letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent); }
+    .gh-title::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 8px var(--accent); }
+    .gh-link { display: inline-flex; align-items: center; gap: 4px; color: var(--muted); font-size: 12px; transition: color 0.2s; }
+    .gh-link:hover { color: var(--accent); }
+    .gh-stats { display: flex; gap: 10px; margin-bottom: 14px; }
+    .gh-stat { flex: 1; padding: 10px 12px; border-radius: 12px; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.08); }
+    .gh-stat b { display: block; font: 700 18px/1.2 "Space Grotesk", sans-serif; color: var(--text); font-variant-numeric: tabular-nums; }
+    .gh-stat span { display: block; margin-top: 4px; font: 500 9.5px/1 "DM Mono", monospace; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
+    .gh-heat { position: relative; overflow-x: auto; padding-bottom: 6px; scrollbar-width: thin; scrollbar-color: rgba(255, 255, 255, 0.2) transparent; }
+    .gh-heat::-webkit-scrollbar { height: 6px; }
+    .gh-heat::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.18); border-radius: 3px; }
+    .gh-heat::-webkit-scrollbar-track { background: transparent; }
+    .gh-months { display: grid; grid-auto-flow: column; grid-auto-columns: 14px; gap: 3px; height: 16px; margin: 0 0 4px 26px; width: max-content; }
+    .gh-months span { font: 500 9px/16px "DM Mono", monospace; letter-spacing: 0.04em; color: var(--muted); }
+    .gh-rows { position: absolute; left: 0; top: 20px; display: grid; grid-template-rows: repeat(7, 11px); gap: 3px; font: 500 9px/11px "DM Mono", monospace; color: var(--muted); }
+    .gh-grid { display: grid; grid-auto-flow: column; grid-template-rows: repeat(7, 11px); gap: 3px; width: max-content; padding-left: 26px; }
+    .gh-cell { width: 11px; height: 11px; border-radius: 3px; background: rgba(255, 255, 255, 0.06); }
+    .gh-cell.l1 { background: #23593a; }
+    .gh-cell.l2 { background: #2f7d50; }
+    .gh-cell.l3 { background: #47a86b; }
+    .gh-cell.l4 { background: #7fe0a6; box-shadow: 0 0 6px rgba(127, 224, 166, 0.5); }
+    .gh-pop.show .gh-cell { animation: cellIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) backwards; animation-delay: var(--d, 0s); }
+    @keyframes cellIn { from { transform: scale(0); opacity: 0; } }
+    .gh-tip {
+      position: fixed; z-index: 50; padding: 6px 10px; border-radius: 8px;
+      background: rgba(6, 10, 8, 0.95); border: 1px solid rgba(255, 255, 255, 0.15);
+      color: var(--text); font: 500 11px/1.3 "DM Sans", sans-serif; pointer-events: none;
+      opacity: 0; transition: opacity 0.15s; box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4); white-space: nowrap;
+    }
+    .gh-tip.show { opacity: 1; }
+    .gh-empty { color: var(--muted); font-size: 13px; padding: 24px 0; text-align: center; }
     
     @media (max-width: 600px) {
       .ui { padding: 14px; flex-direction: column; align-items: flex-start; justify-content: flex-end; gap: 8px; }
@@ -187,6 +260,7 @@
   <canvas id="scene" aria-hidden="true"></canvas>
   <div class="grain"></div>
   <div class="vignette"></div>
+  <div class="scrim"></div>
   
   <div class="hint">
     <span>press</span>
@@ -196,6 +270,7 @@
   </div>
 
   <div class="hud-stats" id="hudStats">
+    <i class="hud-gauge" id="hudGauge" aria-hidden="true"></i>
     <span class="stat-dot"></span>
     <span id="speedVal">68 MPH</span>
     <span style="opacity:0.3">|</span>
@@ -207,6 +282,21 @@
   <div class="touch-controls">
     <button class="touch-btn gas" id="btnGas" type="button">GAS 🔺</button>
     <button class="touch-btn brake" id="btnBrake" type="button">BRAKE 🔻</button>
+  </div>
+
+  <div class="gh-tip" id="ghTip" aria-hidden="true"></div>
+
+  <div class="gh-pop" id="ghPop" role="region" aria-label="GitHub contribution activity">
+    <div class="gh-head">
+      <span class="gh-title">GitHub Activity</span>
+      <a class="gh-link" href="https://github.com/arv20" target="_blank" rel="noopener">profile ↗</a>
+    </div>
+    <div class="gh-stats">
+      <div class="gh-stat"><b id="ghTotal">–</b><span>Contributions</span></div>
+      <div class="gh-stat"><b id="ghCurStreak">–</b><span>Current streak</span></div>
+      <div class="gh-stat"><b id="ghBestStreak">–</b><span>Best streak</span></div>
+    </div>
+    <div class="gh-heat" id="ghHeat"></div>
   </div>
   
   <aside class="info" id="info" aria-hidden="true">
@@ -223,7 +313,9 @@
     </button>
     <nav aria-label="Social links">
       <ul class="links">
-        <li><a href="https://github.com/arv20" target="_blank" rel="noopener">github <span class="arrow" aria-hidden="true">↗</span></a></li>
+        <li class="link-github">
+          <a href="https://github.com/arv20" target="_blank" rel="noopener">github <span class="arrow" aria-hidden="true">↗</span></a>
+        </li>
         <li><a href="https://linkedin.com/in/" target="_blank" rel="noopener">linkedin <span class="arrow" aria-hidden="true">↗</span></a></li>
         <li><a href="mailto:aarav@example.com">email <span class="arrow" aria-hidden="true">↗</span></a></li>
       </ul>
@@ -822,6 +914,7 @@
 
     const speedValEl = document.querySelector('#speedVal');
     const distValEl = document.querySelector('#distVal');
+    const hudGauge = document.querySelector('#hudGauge');
 
     addEventListener('pointermove', e => {
       mouse.x = (e.clientX / innerWidth) * 2 - 1;
@@ -858,6 +951,7 @@
       const currentSpeed = Math.round(64 * speedMultiplier + Math.sin(progress * 40) * 4);
       if (speedValEl) speedValEl.textContent = `${currentSpeed} MPH`;
       if (distValEl) distValEl.textContent = `${(progress * 8.5).toFixed(1)} KM`;
+      if (hudGauge) hudGauge.style.width = `${((speedMultiplier - 0.45) / (1.8 - 0.45)) * 100}%`;
 
       if (progress < 0.38) {
         const norm = progress / 0.38;
@@ -951,6 +1045,7 @@
       renderer.setSize(innerWidth, innerHeight);
       camera.aspect = innerWidth / innerHeight;
       camera.updateProjectionMatrix();
+      if (ghPop && ghPop.classList.contains('show')) positionPop();
     });
 
     const identity = document.querySelector('#identity');
@@ -960,6 +1055,146 @@
       identity.setAttribute('aria-expanded', open);
       info.setAttribute('aria-hidden', !open);
     });
+
+    /* ═══════════════════
+       GITHUB CONTRIBUTION HEATMAP
+       ═══════════════════ */
+    const ghPop = document.querySelector('#ghPop');
+    const ghHeat = document.querySelector('#ghHeat');
+    const ghTip = document.querySelector('#ghTip');
+    const linkGh = document.querySelector('.link-github');
+
+    const DAY_MS = 86400000;
+    const MONTHS_SHORT = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const toISO = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    let heatLoaded = false;
+
+    function renderHeatmap(data) {
+      const entries = (data.contributions || [])
+        .map(c => ({ date: new Date(c.date + 'T00:00:00'), count: c.count }))
+        .filter(e => !isNaN(e.date.getTime()))
+        .sort((a, b) => a.date - b.date);
+
+      if (!entries.length) {
+        // No usable data — signal the fallback chain to try another source
+        throw new Error('no contribution data');
+      }
+
+      const totalEl = document.querySelector('#ghTotal');
+      totalEl.textContent = (typeof data.total === 'number' ? data.total : entries.reduce((s, e) => s + e.count, 0)).toLocaleString();
+
+      const activeDates = entries.filter(e => e.count > 0).map(e => e.date);
+      const activeSet = new Set(activeDates.map(toISO));
+
+      const today = new Date(); today.setHours(0, 0, 0, 0);
+      let cur = 0;
+      let cursor = new Date(today);
+      if (!activeSet.has(toISO(cursor))) cursor.setDate(cursor.getDate() - 1);
+      while (activeSet.has(toISO(cursor))) { cur++; cursor.setDate(cursor.getDate() - 1); }
+      document.querySelector('#ghCurStreak').textContent = cur;
+
+      let best = 0, run = 0, prev = null;
+      for (const d of activeDates) {
+        run = (prev && d - prev === DAY_MS) ? run + 1 : 1;
+        best = Math.max(best, run);
+        prev = d;
+      }
+      document.querySelector('#ghBestStreak').textContent = best;
+
+      const counts = new Map(entries.map(e => [toISO(e.date), e.count]));
+      const first = entries[0].date, last = entries[entries.length - 1].date;
+      const start = new Date(first); start.setDate(first.getDate() - first.getDay());
+      const end = new Date(last); end.setDate(last.getDate() + (6 - last.getDay()));
+      const weekCount = Math.round((end - start) / DAY_MS / 7) + 1;
+
+      let monthsHtml = '';
+      for (let w = 0; w < weekCount; w++) {
+        const sunday = new Date(start.getTime() + w * 7 * DAY_MS);
+        let label = '';
+        for (let d = 0; d < 7; d++) {
+          const day = new Date(sunday.getTime() + d * DAY_MS);
+          if (day.getDate() === 1) { label = MONTHS_SHORT[day.getMonth()]; break; }
+        }
+        monthsHtml += label ? `<span>${label}</span>` : '<span></span>';
+      }
+
+      ghHeat.innerHTML = `<div class="gh-months">${monthsHtml}</div><div class="gh-rows"><span></span><span>M</span><span></span><span>W</span><span></span><span>F</span><span></span></div><div class="gh-grid">`;
+
+      let cellsHtml = '';
+      for (let w = 0; w < weekCount; w++) {
+        for (let r = 0; r < 7; r++) {
+          const day = new Date(start.getTime() + (w * 7 + r) * DAY_MS);
+          const iso = toISO(day);
+          const count = counts.get(iso) || 0;
+          const lvl = count === 0 ? '' : count <= 3 ? 'l1' : count <= 7 ? 'l2' : count <= 12 ? 'l3' : 'l4';
+          cellsHtml += `<span class="gh-cell ${lvl}" style="--d:${(w * 0.015).toFixed(3)}s" data-date="${iso}" data-count="${count}"></span>`;
+        }
+      }
+      ghHeat.insertAdjacentHTML('beforeend', cellsHtml + '</div>');
+
+      ghHeat.addEventListener('mouseover', (e) => {
+        const cell = e.target.closest('.gh-cell');
+        if (!cell) return;
+        const count = +cell.dataset.count;
+        const d = new Date(cell.dataset.date + 'T00:00:00');
+        const label = d.toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+        ghTip.textContent = count > 0 ? `${count} contribution${count === 1 ? '' : 's'} on ${label}` : `No contributions on ${label}`;
+        ghTip.classList.add('show');
+        const r = cell.getBoundingClientRect();
+        const w = ghTip.offsetWidth;
+        ghTip.style.left = `${Math.max(8, Math.min(r.left + r.width / 2 - w / 2, innerWidth - w - 8))}px`;
+        ghTip.style.top = `${r.top - ghTip.offsetHeight - 8}px`;
+      });
+      ghHeat.addEventListener('mouseout', (e) => {
+        if (!(e.relatedTarget && e.relatedTarget.closest && e.relatedTarget.closest('.gh-cell'))) hideTip();
+      });
+      heatLoaded = true;
+    }
+
+    function hideTip() { ghTip.classList.remove('show'); }
+
+    function positionPop() {
+      const r = linkGh.getBoundingClientRect();
+      const pw = ghPop.offsetWidth;
+      const ph = ghPop.offsetHeight;
+      let left = Math.max(8, Math.min(r.right - pw, innerWidth - pw - 8));
+      let top = r.top - ph - 16;
+      if (top < 8) top = Math.min(r.bottom + 14, innerHeight - ph - 8);
+      ghPop.style.left = `${left}px`;
+      ghPop.style.top = `${top}px`;
+    }
+
+    function showPop() {
+      if (!heatLoaded) return;
+      positionPop();
+      ghPop.classList.add('show');
+    }
+    function hidePop() { ghPop.classList.remove('show'); hideTip(); }
+
+    let popTimer = null;
+    function scheduleHide() { clearTimeout(popTimer); popTimer = setTimeout(hidePop, 160); }
+    function cancelHide() { clearTimeout(popTimer); }
+
+    linkGh.addEventListener('mouseenter', () => { cancelHide(); showPop(); });
+    linkGh.addEventListener('mouseleave', scheduleHide);
+    linkGh.addEventListener('focusin', () => { cancelHide(); showPop(); });
+    linkGh.addEventListener('focusout', (e) => {
+      if (e.relatedTarget && ghPop.contains(e.relatedTarget)) return;
+      scheduleHide();
+    });
+    ghPop.addEventListener('mouseenter', cancelHide);
+    ghPop.addEventListener('mouseleave', scheduleHide);
+
+    fetch('data/github-contributions.json')
+      .then(r => { if (!r.ok) throw new Error(r.status); return r.json(); })
+      .then(renderHeatmap)
+      .catch(() => {
+        // Fallback: public contributions API (CORS-enabled), then graceful empty state
+        return fetch('https://github-contributions-api.jogruber.de/v4/arv20?y=last')
+          .then(r => { if (!r.ok) throw new Error(r.status); return r.json(); })
+          .then(renderHeatmap)
+          .catch(err => { console.warn('Failed to load contributions:', err); ghHeat.innerHTML = '<div class="gh-empty">Contribution data unavailable right now.</div>'; heatLoaded = true; });
+      });
   </script>
 </body>
 </html>
