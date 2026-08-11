@@ -773,20 +773,34 @@
     function smoothstep01(x, a, b) { const t = Math.min(Math.max((x - a) / (b - a), 0), 1); return t * t * (3 - 2 * t); }
     function circDist(a, b) { let d = Math.abs(a - b); return d > 0.5 ? 1 - d : d; }
 
-    const beachCenters = arcs.filter(a => a.biome === 'beach').map(a => (a.from + a.to) / 2);
+    const beachArcs = arcs.filter(a => a.biome === 'beach');
+    const WATER_LEVEL = -0.7;
 
-    // Terrain height at (x, z): hills that flatten near the track, plus a
-    // shoreline dip on the outward side of any beach arc (below the water plane).
+    // Return a strong value only while the nearest point on the road is inside
+    // a beach arc. The old center-distance test was inverted, so almost every
+    // non-beach vertex became a beach vertex and the whole map sank into water.
+    function beachInfluence(t) {
+      let influence = 0;
+      for (const arc of beachArcs) {
+        const center = (arc.from + arc.to) / 2;
+        const halfWidth = (arc.to - arc.from) / 2;
+        const d = circDist(t, center);
+        influence = Math.max(influence, 1 - smoothstep01(d, halfWidth * 0.72, halfWidth));
+      }
+      return influence;
+    }
+
+    // Terrain height at (x, z): hills flatten near the track, while a beach
+    // arc gets a broad, continuous slope toward the water on its outer side.
     function vertexTerrain(x, z) {
       const n = nearestTrack(x, z);
       let h = rawHeight(x, z) * hillFactor(n.dist);
-      let beachness = 0;
-      if (n.dist < 65) {
-        for (const c of beachCenters) beachness = Math.max(beachness, smoothstep01(circDist(n.t, c), 0.0, 0.085));
-        if (beachness > 0) {
-          const outward = Math.hypot(x - loopCenter.x, z - loopCenter.z) > Math.hypot(n.pos.x - loopCenter.x, n.pos.z - loopCenter.z);
-          // gentle shoreline: full dip only well past the road, ramping from the shoulder
-          if (outward) h -= beachness * 4.4 * smoothstep01(n.dist, 2.0, 14.0);
+      const beachness = beachInfluence(n.t);
+      if (beachness > 0.001 && n.dist < 120) {
+        const outward = Math.hypot(x - loopCenter.x, z - loopCenter.z) > Math.hypot(n.pos.x - loopCenter.x, n.pos.z - loopCenter.z);
+        if (outward) {
+          const shore = smoothstep01(n.dist, ROAD_WIDTH / 2 + 5, 30);
+          h = THREE.MathUtils.lerp(h, WATER_LEVEL - 1.4, shore * beachness);
         }
       }
       return { h, n, beachness };
@@ -823,13 +837,14 @@
       return colA;
     }
 
-    const groundGeo = new THREE.PlaneGeometry(groundW, groundH, 110, 110);
+    const groundGeo = new THREE.PlaneGeometry(groundW, groundH, 160, 160);
     groundGeo.rotateX(-Math.PI / 2);
     const gPos = groundGeo.attributes.position;
     const gCol = new Float32Array(gPos.count * 3);
     for (let i = 0; i < gPos.count; i++) {
-      const x = gPos.getX(i);
-      const z = gPos.getZ(i);
+      // PlaneGeometry vertices are local to groundMesh; all terrain math is world-space.
+      const x = gPos.getX(i) + groundCX;
+      const z = gPos.getZ(i) + groundCZ;
       const { h, n } = vertexTerrain(x, z);
       gPos.setY(i, h);
       const c = terrainColorAt(n.t, x, z);
@@ -842,7 +857,7 @@
       vertexColors: true,
       roughness: 0.94,
       metalness: 0.03,
-      flatShading: true
+      flatShading: false
     });
     const groundMesh = new THREE.Mesh(groundGeo, groundMat);
     groundMesh.position.set(groundCX, 0, groundCZ);
@@ -858,9 +873,9 @@
       side: THREE.DoubleSide,
       uniforms: {
         uTime: { value: 0 },
-        uColor: { value: new THREE.Color(0x2f86c4) },
-        uDeep: { value: new THREE.Color(0x0d3d63) },
-        uFoam: { value: new THREE.Color(0xbfe9f5) },
+        uColor: { value: new THREE.Color(0x3fa8e6) },
+        uDeep: { value: new THREE.Color(0x0b5688) },
+        uFoam: { value: new THREE.Color(0xd8f8ff) },
       },
       vertexShader: `
         uniform float uTime;
@@ -887,13 +902,43 @@
           float foam = pow(max(sin(vUv.x * 90.0 + uTime * 2.2) * sin(vUv.y * 80.0 - uTime * 1.7), 0.0), 10.0);
           col = mix(col, uFoam, foam * 0.5);
           float depthShade = smoothstep(0.0, 1.0, vWave + 0.2);
-          gl_FragColor = vec4(col, 0.72 + depthShade * 0.2);
+          gl_FragColor = vec4(col, 0.84 + depthShade * 0.12);
         }`,
     });
-    const waterMesh = new THREE.Mesh(new THREE.PlaneGeometry(groundW, groundH, 72, 72), waterMat);
-    waterMesh.rotation.x = -Math.PI / 2;
-    waterMesh.position.set(groundCX, -0.7, groundCZ);
-    scene.add(waterMesh);
+    // Water is generated as bounded strips beside beach arcs — never as a plane
+    // over the entire world. This keeps forest/city/desert land dry and readable.
+    const waterGroup = new THREE.Group();
+    for (const arc of beachArcs) {
+      const segments = 96;
+      const verts = [], uvs = [], indices = [];
+      for (let i = 0; i <= segments; i++) {
+        const t = arc.from + (i / segments) * (arc.to - arc.from);
+        const pos = roadCurve.getPointAt(t);
+        const tangent = roadCurve.getTangentAt(t).normalize();
+        const sideV = new THREE.Vector3().crossVectors(tangent, upVector).normalize();
+        const radial = new THREE.Vector3(pos.x - loopCenter.x, 0, pos.z - loopCenter.z).normalize();
+        if (sideV.dot(radial) < 0) sideV.multiplyScalar(-1);
+        // Leave a visible dry sand shoulder between the road and the water.
+        const inner = ROAD_WIDTH / 2 + 18;
+        const outer = Math.min(inner + 96, 128);
+        verts.push(pos.x + sideV.x * inner, WATER_LEVEL, pos.z + sideV.z * inner);
+        verts.push(pos.x + sideV.x * outer, WATER_LEVEL, pos.z + sideV.z * outer);
+        uvs.push(0, i / segments * 8, 1, i / segments * 8);
+        if (i < segments) {
+          const a = i * 2, b = a + 1, c = a + 2, d = a + 3;
+          indices.push(a, b, c, b, d, c);
+        }
+      }
+      const geo = new THREE.BufferGeometry();
+      geo.setAttribute('position', new THREE.Float32BufferAttribute(verts, 3));
+      geo.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2));
+      geo.setIndex(indices);
+      geo.computeVertexNormals();
+      const mesh = new THREE.Mesh(geo, waterMat);
+      mesh.receiveShadow = true;
+      waterGroup.add(mesh);
+    }
+    scene.add(waterGroup);
 
     /* ═══════════════════════════════════════
        RAIN & SNOW — weather particle systems
@@ -954,7 +999,16 @@
       const pos = roadCurve.getPointAt(t);
       const tangent = roadCurve.getTangentAt(t).normalize();
       _rightV.crossVectors(tangent, upVector).normalize();
-      const side = sideBias * (propRng() > 0.5 ? 1 : -1);
+      let side;
+      if (sideBias === 0) {
+        side = propRng() > 0.5 ? 1 : -1;
+      } else if (sideBias === -1) {
+        // Beach props belong on the landward side, opposite the outward shore.
+        const radial = new THREE.Vector3(pos.x - loopCenter.x, 0, pos.z - loopCenter.z).normalize();
+        side = -Math.sign(_rightV.dot(radial) || 1);
+      } else {
+        side = sideBias;
+      }
       const offset = minOff + propRng() * (maxOff - minOff);
       const x = pos.x + _rightV.x * side * offset;
       const z = pos.z + _rightV.z * side * offset;
@@ -982,7 +1036,7 @@
     const forestArcs = arcsOf('forest');
     let placed = 0;
     for (let i = 0; i < FOREST_COUNT && forestArcs.length; i++) {
-      const p = placeProp(randT(forestArcs[Math.floor(propRng() * forestArcs.length)]), ROAD_WIDTH / 2 + 3.5, 48, 1);
+      const p = placeProp(randT(forestArcs[Math.floor(propRng() * forestArcs.length)]), ROAD_WIDTH / 2 + 3.5, 48, 0);
       const scale = 0.75 + propRng() * 0.9;
       dummy.position.set(p.x, p.h + 0.65 * scale, p.z);
       dummy.scale.set(scale, scale, scale);
@@ -1006,21 +1060,21 @@
     const palmTrunkInst = new THREE.InstancedMesh(palmTrunkGeo, palmTrunkMat, PALM_COUNT);
     const palmCrownInst = new THREE.InstancedMesh(palmCrownGeo, palmCrownMat, PALM_COUNT);
     palmTrunkInst.castShadow = palmCrownInst.castShadow = true;
-    const beachArcs = arcsOf('beach');
+    const beachPropArcs = arcsOf('beach');
     placed = 0;
-    for (let i = 0; i < PALM_COUNT && beachArcs.length; i++) {
-      const p = placeProp(randT(beachArcs[Math.floor(propRng() * beachArcs.length)]), ROAD_WIDTH / 2 + 2.5, 24, -1);
+    for (let i = 0; i < PALM_COUNT && beachPropArcs.length; i++) {
+      const p = placeProp(randT(beachPropArcs[Math.floor(propRng() * beachPropArcs.length)]), ROAD_WIDTH / 2 + 2.5, 24, -1);
       if (p.underWater) continue;
       const s = 0.8 + propRng() * 0.8;
       dummy.rotation.set(0, propRng() * Math.PI, 0);
       dummy.position.set(p.x, p.h + 1.3 * s, p.z);
       dummy.scale.set(s, s, s);
       dummy.updateMatrix();
-      palmTrunkInst.setMatrixAt(i, dummy.matrix);
+      palmTrunkInst.setMatrixAt(placed, dummy.matrix);
       dummy.position.set(p.x, p.h + 2.9 * s, p.z);
       dummy.scale.set(s * 1.15, s * 0.9, s * 1.15);
       dummy.updateMatrix();
-      palmCrownInst.setMatrixAt(i, dummy.matrix);
+      palmCrownInst.setMatrixAt(placed, dummy.matrix);
       placed++;
     }
     for (let i = placed; i < PALM_COUNT; i++) { hideMatrix(); palmTrunkInst.setMatrixAt(i, dummy.matrix); palmCrownInst.setMatrixAt(i, dummy.matrix); }
@@ -1062,7 +1116,7 @@
       dummy.position.set(p.x, p.h + h / 2, p.z);
       dummy.scale.set(w, h, d);
       dummy.updateMatrix();
-      buildingInst.setMatrixAt(i, dummy.matrix);
+      buildingInst.setMatrixAt(placed, dummy.matrix);
       placed++;
     }
     for (let i = placed; i < BUILDING_COUNT; i++) { hideMatrix(); buildingInst.setMatrixAt(i, dummy.matrix); }
@@ -1082,10 +1136,12 @@
       for (let j = 0; j < n && placed < LAMP_COUNT; j++) {
         const t = arc.from + ((j + 0.5) / n) * (arc.to - arc.from);
         const p = placeProp(t, ROAD_WIDTH / 2 + 3.2, ROAD_WIDTH / 2 + 3.2, j % 2 === 0 ? 1 : -1);
-        if (p.underWater) { placed++; continue; }
+        if (p.underWater) continue;
         dummy.rotation.set(0, 0, 0);
         dummy.scale.set(1, 1, 1);
-        dummy.position.set(p.x, p.h, p.z);
+        // CylinderGeometry is centered at its origin; lift the pole so its
+        // bottom sits on the terrain instead of burying half the pole.
+        dummy.position.set(p.x, p.h + 2.8, p.z);
         dummy.updateMatrix();
         lampPoleInst.setMatrixAt(placed, dummy.matrix);
         dummy.position.set(p.x, p.h + 5.6, p.z);
@@ -1119,7 +1175,7 @@
       dummy.position.set(p.x, p.h + 0.3 * s, p.z);
       dummy.scale.set(s, s * (0.6 + propRng() * 0.5), s);
       dummy.updateMatrix();
-      desertRockInst.setMatrixAt(i, dummy.matrix);
+      desertRockInst.setMatrixAt(placed, dummy.matrix);
       placed++;
     }
     for (let i = placed; i < DESERT_ROCK_COUNT; i++) { hideMatrix(); desertRockInst.setMatrixAt(i, dummy.matrix); }
@@ -1132,7 +1188,7 @@
       dummy.position.set(p.x, p.h + 0.35 * s, p.z);
       dummy.scale.set(s, s * 0.6, s);
       dummy.updateMatrix();
-      bushInst.setMatrixAt(i, dummy.matrix);
+      bushInst.setMatrixAt(placed, dummy.matrix);
       placed++;
     }
     for (let i = placed; i < BUSH_COUNT; i++) { hideMatrix(); bushInst.setMatrixAt(i, dummy.matrix); }
