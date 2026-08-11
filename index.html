@@ -3,32 +3,32 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0" />
-  <meta name="description" content="Aarav Kolgaonkar — software engineer and full-stack builder. Explore an interactive 3D driving portfolio featuring a Ferrari on procedurally generated biomes, live weather, and real GitHub activity." />
-  <meta name="theme-color" content="#0e1713" />
+  <meta name="description" content="Aarav Kolgaonkar — software engineer and full-stack builder. Crafting performant, thoughtful digital experiences." />
+  <meta name="theme-color" content="#0a0a0f" />
   <link rel="canonical" href="https://aaravkolgaonkar.dev/" />
-  
+
   <!-- OpenGraph / Facebook -->
   <meta property="og:type" content="website" />
   <meta property="og:url" content="https://aaravkolgaonkar.dev" />
   <meta property="og:title" content="Aarav Kolgaonkar — Engineer & Builder" />
-  <meta property="og:description" content="Software engineer and full-stack builder. Explore an interactive 3D driving portfolio featuring a Ferrari on procedurally generated biomes, live weather, and real GitHub activity." />
+  <meta property="og:description" content="Software engineer and full-stack builder. Crafting performant, thoughtful digital experiences." />
   <meta property="og:image" content="https://aaravkolgaonkar.dev/og-image.jpg" />
-  
+
   <!-- Twitter Cards -->
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:title" content="Aarav Kolgaonkar — Engineer & Builder" />
-  <meta name="twitter:description" content="Software engineer and full-stack builder. Explore an interactive 3D driving portfolio featuring a Ferrari on procedurally generated biomes, live weather, and real GitHub activity." />
+  <meta name="twitter:description" content="Software engineer and full-stack builder. Crafting performant, thoughtful digital experiences." />
   <meta name="twitter:image" content="https://aaravkolgaonkar.dev/og-image.jpg" />
 
   <!-- Favicon -->
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🏎️</text></svg>" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><circle cx=%2250%22 cy=%2250%22 r=%2242%22 fill=%22%238b5cf6%22/></svg>" />
 
   <!-- JSON-LD Structured Data -->
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
     "@type": "Person",
-    "name": "Aarav K",
+    "name": "Aarav Kolgaonkar",
     "jobTitle": "Software Engineer",
     "url": "https://aaravkolgaonkar.dev",
     "sameAs": [
@@ -38,193 +38,235 @@
   }
   </script>
 
-  <title>Aarav K — Engineer & Builder</title>
+  <title>Aarav Kolgaonkar — Engineer & Builder</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
   <style>
+    /* ── Design tokens ── */
     :root {
       color-scheme: dark;
-      --ink: #0d1512;
-      --text: #f5f7f2;
-      --muted: #9aa8a0;
-      --line: rgba(255, 255, 255, 0.14);
-      --accent: #8ad6a4;
-      --accent-strong: #b9ecc9;
-      --accent-glow: rgba(138, 214, 164, 0.35);
-      --panel: rgba(13, 21, 18, 0.55);
+      --bg: #0a0a0f;
+      --text: #f0f0f5;
+      --muted: #7a7a8e;
+      --line: rgba(255, 255, 255, 0.08);
+      --accent: #8b5cf6;
+      --accent-soft: rgba(139, 92, 246, 0.25);
+      --cyan: #06b6d4;
+      --rose: #f43f5e;
+      --amber: #f59e0b;
+      --glass: rgba(255, 255, 255, 0.04);
+      --glass-border: rgba(255, 255, 255, 0.08);
+      --glass-hover: rgba(255, 255, 255, 0.08);
     }
-    * { box-sizing: border-box; }
-    html, body { width: 100%; height: 100%; margin: 0; overflow: hidden; background: var(--ink); touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+
+    /* ── Reset ── */
+    * { box-sizing: border-box; margin: 0; }
+    html, body { width: 100%; height: 100%; overflow: hidden; background: var(--bg); }
     body { color: var(--text); font-family: "DM Sans", system-ui, -apple-system, sans-serif; -webkit-font-smoothing: antialiased; }
     a, button { color: inherit; font: inherit; }
     a { text-decoration: none; }
-    ::selection { background: rgba(138, 214, 164, 0.28); }
+    ::selection { background: var(--accent-soft); }
     :focus-visible { outline: 1px solid var(--accent); outline-offset: 3px; }
-    body { overscroll-behavior: none; }
-    
-    #scene { position: fixed; inset: 0; width: 100%; height: 100%; z-index: 0; }
+
+    /* ── Gradient orbs ── */
+    .orb {
+      position: fixed; border-radius: 50%; pointer-events: none;
+      filter: blur(100px); opacity: 0.5; will-change: transform;
+    }
+    .orb-1 {
+      width: 600px; height: 600px; top: -15%; left: -10%;
+      background: radial-gradient(circle, var(--accent) 0%, transparent 70%);
+      animation: drift1 25s ease-in-out infinite;
+    }
+    .orb-2 {
+      width: 500px; height: 500px; bottom: -10%; right: -8%;
+      background: radial-gradient(circle, var(--cyan) 0%, transparent 70%);
+      animation: drift2 30s ease-in-out infinite;
+    }
+    .orb-3 {
+      width: 400px; height: 400px; top: 10%; right: 15%;
+      background: radial-gradient(circle, var(--rose) 0%, transparent 70%);
+      animation: drift3 22s ease-in-out infinite; opacity: 0.3;
+    }
+    .orb-4 {
+      width: 350px; height: 350px; bottom: 20%; left: 10%;
+      background: radial-gradient(circle, var(--amber) 0%, transparent 70%);
+      animation: drift4 28s ease-in-out infinite; opacity: 0.25;
+    }
+    .orb-5 {
+      width: 300px; height: 300px; top: 40%; left: 45%;
+      background: radial-gradient(circle, #7c3aed 0%, transparent 70%);
+      animation: drift5 35s ease-in-out infinite; opacity: 0.2;
+    }
+
+    @keyframes drift1 {
+      0%, 100% { transform: translate(0, 0) scale(1); }
+      25% { transform: translate(40px, 30px) scale(1.05); }
+      50% { transform: translate(-20px, 60px) scale(0.95); }
+      75% { transform: translate(30px, -20px) scale(1.02); }
+    }
+    @keyframes drift2 {
+      0%, 100% { transform: translate(0, 0) scale(1); }
+      25% { transform: translate(-50px, -30px) scale(1.08); }
+      50% { transform: translate(30px, -60px) scale(0.92); }
+      75% { transform: translate(-20px, 20px) scale(1.04); }
+    }
+    @keyframes drift3 {
+      0%, 100% { transform: translate(0, 0) scale(1); }
+      33% { transform: translate(-30px, 40px) scale(1.1); }
+      66% { transform: translate(40px, -30px) scale(0.9); }
+    }
+    @keyframes drift4 {
+      0%, 100% { transform: translate(0, 0) scale(1); }
+      33% { transform: translate(50px, -40px) scale(1.06); }
+      66% { transform: translate(-30px, 50px) scale(0.94); }
+    }
+    @keyframes drift5 {
+      0%, 100% { transform: translate(0, 0) scale(1); }
+      50% { transform: translate(-40px, -30px) scale(1.12); }
+    }
+
+    /* ── Overlays ── */
     .grain {
-      position: fixed; inset: 0; z-index: 1; pointer-events: none; opacity: .09;
+      position: fixed; inset: 0; z-index: 1; pointer-events: none; opacity: .06;
       background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.95' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.3'/%3E%3C/svg%3E");
       mix-blend-mode: soft-light;
     }
     .vignette {
       position: fixed; inset: 0; z-index: 1; pointer-events: none;
-      background: radial-gradient(ellipse at 50% 50%, transparent 45%, rgba(10, 18, 14, 0.45) 100%);
-    }
-    .scrim {
-      position: fixed; inset: auto 0 0 0; height: 170px; z-index: 1; pointer-events: none;
-      background: linear-gradient(to top, rgba(10, 18, 14, 0.6), transparent);
+      background: radial-gradient(ellipse at 50% 50%, transparent 40%, rgba(5, 5, 10, 0.55) 100%);
     }
 
-    .ui {
-      position: relative; z-index: 2; height: 100%; padding: clamp(20px, 3vw, 44px);
-      display: flex; justify-content: space-between; align-items: flex-end; pointer-events: none;
+    /* ── Page layout ── */
+    .page {
+      position: relative; z-index: 2; width: 100%; height: 100%;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      gap: 24px; padding: 40px; pointer-events: none;
     }
-    .identity, .links, .hud-stats {
-      pointer-events: auto; opacity: 0; transform: translateY(10px);
-      animation: arrive 0.9s cubic-bezier(.16, 1, .3, 1) 0.3s forwards;
-    }
+
+    /* ── Identity card ── */
     .identity {
-      appearance: none; border: 1px solid var(--line);
-      background: var(--panel); border-radius: 18px;
-      color: var(--text); padding: 12px 18px; text-align: left; cursor: pointer;
-      transition: background 0.25s, border-color 0.25s, transform 0.25s, box-shadow 0.25s;
-      backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+      pointer-events: auto; appearance: none; cursor: pointer; position: relative;
+      padding: 32px 44px; text-align: center; border-radius: 28px;
+      background: var(--glass); border: 1px solid var(--glass-border);
+      backdrop-filter: blur(24px) saturate(180%); -webkit-backdrop-filter: blur(24px) saturate(180%);
+      transition: background 0.35s, border-color 0.35s, transform 0.35s, box-shadow 0.35s;
+      opacity: 0; animation: arrive 0.8s cubic-bezier(.16, 1, .3, 1) 0.2s forwards;
     }
     .identity:hover, .identity[aria-expanded="true"] {
-      border-color: rgba(255, 255, 255, 0.3); background: rgba(20, 32, 24, 0.82);
-      transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,0.25), 0 0 16px var(--accent-glow);
+      background: var(--glass-hover); border-color: rgba(139, 92, 246, 0.25);
+      transform: translateY(-3px);
+      box-shadow: 0 12px 40px rgba(139, 92, 246, 0.12), 0 0 0 1px rgba(139, 92, 246, 0.1);
     }
-    .role { display: block; color: var(--muted); font-size: 13px; font-weight: 400; line-height: 1.2; letter-spacing: 0.02em; }
+    .role {
+      display: block; color: var(--muted); font-size: 13px; font-weight: 500;
+      letter-spacing: 0.12em; text-transform: uppercase;
+      font-family: "DM Mono", monospace; line-height: 1.2;
+    }
     .name {
-      display: block; margin-top: 4px; font-size: 18px; font-weight: 600; letter-spacing: -0.02em;
+      display: block; margin-top: 10px; font-size: 32px; font-weight: 700; letter-spacing: -0.03em;
       font-family: "Space Grotesk", "DM Sans", sans-serif;
-      background: linear-gradient(90deg, #ffffff 30%, var(--accent-strong));
+      background: linear-gradient(135deg, #ffffff 20%, var(--accent) 60%, var(--cyan));
       -webkit-background-clip: text; background-clip: text; color: transparent;
     }
-    .plus { position: absolute; right: 14px; top: 50%; opacity: 0; transform: translateY(-50%); color: var(--accent); transition: opacity 0.25s, transform 0.25s; }
-    .identity:hover .plus { opacity: 1; transform: translateY(-50%) rotate(90deg); }
+    .plus {
+      position: absolute; right: 18px; top: 50%; transform: translateY(-50%);
+      color: var(--accent); opacity: 0; font-size: 18px;
+      transition: opacity 0.3s, transform 0.3s;
+    }
+    .identity:hover .plus { opacity: 0.6; transform: translateY(-50%) rotate(90deg); }
+    .identity[aria-expanded="true"] .plus { opacity: 0.6; transform: translateY(-50%) rotate(45deg); }
 
-    .links { display: flex; align-items: center; gap: 6px; list-style: none; margin: 0; padding: 0; }
+    /* ── Nav links ── */
+    .links {
+      display: flex; align-items: center; gap: 8px; list-style: none; padding: 0;
+      pointer-events: auto; opacity: 0;
+      animation: arrive 0.8s cubic-bezier(.16, 1, .3, 1) 0.4s forwards;
+    }
     .links a {
-      display: flex; align-items: center; gap: 6px; padding: 10px 14px; border-radius: 999px;
-      color: rgba(244, 244, 240, 0.75); font-size: 14px; font-weight: 500;
-      background: rgba(14, 22, 17, 0.4); border: 1px solid rgba(255, 255, 255, 0.08);
-      transition: color 0.2s, background 0.2s, border-color 0.2s, transform 0.2s;
-      backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+      display: flex; align-items: center; gap: 6px; padding: 10px 18px; border-radius: 999px;
+      color: var(--muted); font-size: 14px; font-weight: 500;
+      background: var(--glass); border: 1px solid var(--glass-border);
+      backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+      transition: color 0.25s, background 0.25s, border-color 0.25s, transform 0.25s, box-shadow 0.25s;
     }
     .links a:hover, .links a:focus-visible {
-      color: var(--text); background: rgba(255, 255, 255, 0.12);
-      border-color: rgba(255, 255, 255, 0.28); transform: translateY(-2px); outline: none;
-      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3), 0 0 14px var(--accent-glow);
+      color: var(--text); background: rgba(255, 255, 255, 0.1);
+      border-color: rgba(139, 92, 246, 0.3); transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25), 0 0 16px var(--accent-soft);
     }
-    .arrow { color: var(--accent); font-size: 13px; transform: translate(-1px, 1px); transition: transform 0.2s; }
+    .arrow { color: var(--accent); font-size: 12px; transition: transform 0.2s; }
     .links a:hover .arrow { transform: translate(2px, -2px); }
 
-    .hud-stats {
-      position: fixed; top: clamp(20px, 3vw, 44px); right: clamp(20px, 3vw, 44px); z-index: 2;
-      color: rgba(244, 244, 240, 0.85); font: 500 11px/1 "DM Mono", monospace;
-      letter-spacing: 0.1em; text-transform: uppercase;
-      background: var(--panel); padding: 9px 16px 10px; border-radius: 999px;
-      border: 1px solid rgba(255, 255, 255, 0.12); backdrop-filter: blur(12px);
-      display: flex; align-items: center; gap: 12px; pointer-events: auto;
-    }
-    .stat-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 8px var(--accent); animation: dotpulse 2.6s ease-in-out infinite; }
-    @keyframes dotpulse { 0%, 100% { box-shadow: 0 0 4px var(--accent); } 50% { box-shadow: 0 0 12px var(--accent); } }
-    .hud-gauge { position: absolute; left: 0; bottom: 0; height: 2px; width: 22%; border-radius: 0 3px 3px 0; background: linear-gradient(90deg, var(--accent), var(--accent-strong)); box-shadow: 0 0 8px var(--accent-glow); transition: width 0.25s ease; }
-    #speedVal, #distVal { font-family: "Space Grotesk", "DM Mono", monospace; font-variant-numeric: tabular-nums; }
-    .btn-audio {
-      background: none; border: none; color: inherit; font: inherit; cursor: pointer;
-      padding: 0; letter-spacing: inherit; text-transform: inherit; display: inline-flex; align-items: center; gap: 4px;
-      opacity: 0.75; transition: opacity 0.2s, color 0.2s;
-    }
-    .btn-audio:hover { opacity: 1; color: var(--accent); }
-    .biome-badge {
-      font: 700 10px/1 "DM Mono", monospace; letter-spacing: 0.14em;
-      padding: 3px 7px; border-radius: 6px; color: #dff3e4;
-      background: rgba(72, 187, 120, 0.16); border: 1px solid rgba(114, 221, 156, 0.35);
-    }
-
-    .touch-controls {
-      display: none; position: fixed; bottom: 90px; right: 20px; z-index: 3;
-      gap: 10px; pointer-events: auto;
-    }
-    .touch-controls.touch-capable { display: flex; }
-    .touch-btn {
-      appearance: none; border: 1px solid rgba(255,255,255,0.2); background: rgba(14, 22, 17, 0.65);
-      color: var(--text); font: 600 12px/1 "DM Mono", monospace; padding: 12px 18px; border-radius: 999px;
-      backdrop-filter: blur(12px); transition: transform 0.1s ease, background 0.2s, border-color 0.2s, box-shadow 0.2s;
-    }
-    .touch-btn:active { transform: scale(0.94); }
-    .touch-btn.gas:active { box-shadow: 0 0 14px var(--accent-glow); }
-    .touch-btn.gas { border-color: var(--accent); color: var(--accent); }
-
+    /* ── About / Info panel ── */
     .info {
-      position: absolute; left: clamp(20px, 3vw, 44px); bottom: clamp(96px, 11vw, 130px);
-      width: min(340px, calc(100vw - 40px)); z-index: 3; padding: 20px 22px;
-      background: rgba(14, 22, 17, 0.88); border: 1px solid var(--line); border-radius: 16px;
-      backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
-      opacity: 0; transform: translateY(12px); pointer-events: none;
-      transition: opacity 0.25s cubic-bezier(0.16, 1, 0.3, 1), transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-      box-shadow: 0 16px 36px rgba(0,0,0,0.35);
+      position: fixed; left: 50%; top: 50%;
+      transform: translate(-50%, 20px);
+      width: min(380px, calc(100vw - 40px)); z-index: 10;
+      padding: 24px 28px; border-radius: 22px;
+      background: rgba(12, 12, 20, 0.85); border: 1px solid var(--glass-border);
+      backdrop-filter: blur(24px) saturate(180%); -webkit-backdrop-filter: blur(24px) saturate(180%);
+      opacity: 0; pointer-events: none;
+      transition: opacity 0.3s cubic-bezier(0.16, 1, 0.3, 1), transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4), 0 0 40px rgba(139, 92, 246, 0.06);
     }
-    .info.open { opacity: 1; transform: translateY(0); pointer-events: auto; }
-    .info p { margin: 0; color: #d6ded8; font-size: 14px; line-height: 1.55; }
-    .info-label { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; color: var(--accent); font: 600 11px/1 "DM Mono", monospace; letter-spacing: 0.1em; text-transform: uppercase; }
-    .info-label::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 8px var(--accent); flex: none; }
-    .info a { display: inline-flex; align-items: center; gap: 4px; margin-top: 14px; color: var(--accent); font-size: 13px; font-weight: 500; }
-    
-    .hint {
-      position: fixed; top: clamp(20px, 3vw, 44px); left: 50%; z-index: 2;
-      color: rgba(244, 244, 240, 0.65); font: 500 11px/1 "DM Mono", monospace;
-      letter-spacing: 0.1em; text-transform: uppercase; transform: translateX(-50%);
-      opacity: 0; animation: arrive 0.9s ease 0.6s forwards; pointer-events: none;
-      background: rgba(14, 22, 17, 0.45); padding: 6px 14px; border-radius: 999px;
-      border: 1px solid rgba(255, 255, 255, 0.12); backdrop-filter: blur(10px);
-      display: flex; align-items: center; gap: 6px;
+    .info.open { opacity: 1; transform: translate(-50%, 40px); pointer-events: auto; }
+    .info p { margin: 0; color: rgba(240, 240, 245, 0.7); font-size: 14px; line-height: 1.6; }
+    .info-label {
+      display: flex; align-items: center; gap: 8px; margin-bottom: 12px;
+      color: var(--accent); font: 600 11px/1 "DM Mono", monospace;
+      letter-spacing: 0.12em; text-transform: uppercase;
     }
-    kbd {
-      display: inline-block; padding: 2px 5px; font-family: inherit; font-size: 10px;
-      color: var(--accent); background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.2);
-      border-radius: 4px; transition: background 0.15s, border-color 0.15s, color 0.15s, transform 0.15s;
+    .info-label::before {
+      content: ""; width: 7px; height: 7px; border-radius: 50%;
+      background: var(--accent); box-shadow: 0 0 10px var(--accent); flex: none;
     }
-    kbd.active {
-      background: var(--accent); color: #0e1713; border-color: var(--accent);
-      transform: scale(1.15); box-shadow: 0 0 10px var(--accent-glow);
+    .info a {
+      display: inline-flex; align-items: center; gap: 4px;
+      margin-top: 16px; color: var(--accent); font-size: 13px; font-weight: 500;
+      transition: color 0.2s;
     }
-    
+    .info a:hover { color: var(--cyan); }
+
+    /* ── Entrance animation ── */
     @keyframes arrive {
-      from { opacity: 0; transform: translateY(12px) translateX(var(--tx, 0)); filter: blur(8px); }
-      to { opacity: 1; transform: translateY(0) translateX(var(--tx, 0)); filter: blur(0); }
+      from { opacity: 0; transform: translateY(16px); filter: blur(8px); }
+      to { opacity: 1; transform: translateY(0); filter: blur(0); }
     }
-    .hint { --tx: -50%; }
-    .hint.hidden { opacity: 0 !important; pointer-events: none; transition: opacity 0.6s ease; }
 
     @media (prefers-reduced-motion: reduce) {
-      *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important; animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+      }
     }
 
     /* ── GitHub activity popup ── */
     .gh-pop {
       position: fixed; left: 50%; top: 50%;
-      width: 800px; max-width: calc(100vw - 32px); padding: 18px 20px 16px; border-radius: 18px;
-      background: rgba(13, 21, 18, 0.92); border: 1px solid rgba(255, 255, 255, 0.14);
-      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.55), 0 0 24px rgba(0, 0, 0, 0.3);
-      backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
-      visibility: hidden; opacity: 0; transform: translateY(8px) scale(0.98); transform-origin: bottom right;
+      width: 800px; max-width: calc(100vw - 32px); padding: 18px 20px 16px; border-radius: 22px;
+      background: rgba(12, 12, 20, 0.92); border: 1px solid var(--glass-border);
+      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.55), 0 0 30px rgba(139, 92, 246, 0.06);
+      backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px);
+      visibility: hidden; opacity: 0; transform: translateY(8px) scale(0.98); transform-origin: bottom center;
       transition: opacity 0.22s ease, transform 0.22s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.22s;
       pointer-events: auto; z-index: 10;
     }
     .gh-pop.show { visibility: visible; opacity: 1; transform: translateY(0) scale(1); }
     .gh-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
-    .gh-title { display: flex; align-items: center; gap: 8px; font: 600 12px/1 "DM Mono", monospace; letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent); }
+    .gh-title {
+      display: flex; align-items: center; gap: 8px;
+      font: 600 12px/1 "DM Mono", monospace; letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent);
+    }
     .gh-title::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 8px var(--accent); }
     .gh-link { display: inline-flex; align-items: center; gap: 4px; color: var(--muted); font-size: 12px; transition: color 0.2s; }
     .gh-link:hover { color: var(--accent); }
     .gh-stats { display: flex; gap: 10px; margin-bottom: 14px; }
-    .gh-stat { flex: 1; padding: 10px 12px; border-radius: 12px; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.08); }
+    .gh-stat {
+      flex: 1; padding: 10px 12px; border-radius: 14px;
+      background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.06);
+    }
     .gh-stat b { display: block; font: 700 18px/1.2 "Space Grotesk", sans-serif; color: var(--text); font-variant-numeric: tabular-nums; }
     .gh-stat span { display: block; margin-top: 4px; font: 500 9.5px/1 "DM Mono", monospace; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
     .gh-heat { position: relative; padding-bottom: 6px; }
@@ -236,92 +278,48 @@
     .gh-months span { font: 500 9px/16px "DM Mono", monospace; letter-spacing: 0.04em; color: var(--muted); }
     .gh-rows { position: absolute; left: 0; top: 20px; display: grid; grid-template-rows: repeat(7, 12px); gap: 3px; font: 500 9px/12px "DM Mono", monospace; color: var(--muted); }
     .gh-grid { display: grid; grid-auto-flow: column; grid-template-rows: repeat(7, 12px); gap: 3px; width: max-content; }
-    .gh-cell { width: 12px; height: 12px; border-radius: 3px; background: rgba(255, 255, 255, 0.11); }
-    .gh-cell.l1 { background: #1b7a45; }
-    .gh-cell.l2 { background: #2ba85e; }
-    .gh-cell.l3 { background: #44d67d; }
-    .gh-cell.l4 { background: #7bffae; box-shadow: 0 0 7px rgba(123, 255, 174, 0.6); }
+    .gh-cell { width: 12px; height: 12px; border-radius: 3px; background: rgba(255, 255, 255, 0.08); }
+    .gh-cell.l1 { background: #5b21b6; }
+    .gh-cell.l2 { background: #7c3aed; }
+    .gh-cell.l3 { background: #8b5cf6; }
+    .gh-cell.l4 { background: #a78bfa; box-shadow: 0 0 7px rgba(167, 139, 250, 0.5); }
     .gh-legend { display: flex; align-items: center; justify-content: flex-end; gap: 4px; margin-top: 10px; font: 500 9px/1 "DM Mono", monospace; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); }
     .gh-legend .gh-cell { width: 10px; height: 10px; }
     .gh-tip {
       position: fixed; z-index: 50; padding: 6px 10px; border-radius: 8px;
-      background: rgba(6, 10, 8, 0.95); border: 1px solid rgba(255, 255, 255, 0.15);
+      background: rgba(6, 6, 12, 0.95); border: 1px solid rgba(255, 255, 255, 0.1);
       color: var(--text); font: 500 11px/1.3 "DM Sans", sans-serif; pointer-events: none;
       opacity: 0; transition: opacity 0.15s; box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4); white-space: nowrap;
     }
     .gh-tip.show { opacity: 1; }
     .gh-empty { color: var(--muted); font-size: 13px; padding: 24px 0; text-align: center; }
-    
-    @media (max-width: 600px) {
-      .ui { padding: 14px; flex-direction: column; align-items: flex-start; justify-content: flex-end; gap: 8px; }
-      .links { gap: 6px; flex-wrap: wrap; justify-content: flex-start; }
-      .links a { padding: 6px 10px; font-size: 12px; }
-      .role { font-size: 11px; }
-      .name { font-size: 14px; }
-      .touch-controls.touch-capable { display: flex; position: fixed; bottom: 115px; right: 14px; gap: 6px; z-index: 3; }
-      .touch-btn { padding: 8px 12px; font-size: 11px; }
-      .hud-stats { top: 14px; right: 14px; font-size: 10px; padding: 6px 12px; gap: 8px; }
-      .info { bottom: 120px; left: 14px; width: calc(100vw - 28px); }
-    }
 
-    /* ── Loading screen ── */
-    #loadingScreen {
-      position: fixed; inset: 0; z-index: 100;
-      background: var(--ink);
-      display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px;
-      transition: opacity 0.6s ease;
+    /* ── Responsive ── */
+    @media (max-width: 600px) {
+      .page { padding: 24px; gap: 16px; }
+      .identity { padding: 24px 28px; border-radius: 22px; }
+      .name { font-size: 24px; }
+      .role { font-size: 11px; }
+      .links { gap: 6px; flex-wrap: wrap; justify-content: center; }
+      .links a { padding: 8px 14px; font-size: 12px; }
+      .info { width: calc(100vw - 32px); }
+      .orb { filter: blur(80px); opacity: 0.35; }
     }
-    #loadingScreen.hidden { opacity: 0; pointer-events: none; }
-    .loader-emoji { font-size: 48px; animation: loaderPulse 1.8s ease-in-out infinite; }
-    .loader-text { color: var(--muted); font: 500 11px/1 "DM Mono", monospace; letter-spacing: 0.12em; text-transform: uppercase; }
-    .loader-bar { width: 120px; height: 2px; border-radius: 2px; background: rgba(255,255,255,0.1); overflow: hidden; }
-    .loader-bar-inner { width: 40%; height: 100%; border-radius: 2px; background: linear-gradient(90deg, var(--accent), var(--accent-strong)); animation: loaderSlide 1.2s ease-in-out infinite; }
-    @keyframes loaderPulse { 0%, 100% { transform: scale(1); opacity: 0.7; } 50% { transform: scale(1.1); opacity: 1; } }
-    @keyframes loaderSlide { 0% { transform: translateX(-100%); } 100% { transform: translateX(350%); } }
   </style>
 </head>
 <body>
-  <div id="loadingScreen">
-    <span class="loader-emoji">🏎️</span>
-    <div class="loader-bar"><div class="loader-bar-inner"></div></div>
-    <span class="loader-text">Loading experience…</span>
-  </div>
+  <!-- Gradient orbs -->
+  <div class="orb orb-1"></div>
+  <div class="orb orb-2"></div>
+  <div class="orb orb-3"></div>
+  <div class="orb orb-4"></div>
+  <div class="orb orb-5"></div>
 
-  <canvas id="scene" aria-hidden="true"></canvas>
+  <!-- Overlays -->
   <div class="grain"></div>
   <div class="vignette"></div>
-  <div class="scrim"></div>
-  
-  <div class="hint">
-    <span>press</span>
-    <kbd id="kUp">▲ W</kbd>
-    <kbd id="kDown">▼ S</kbd>
-    <span>to accelerate / brake</span>
-  </div>
 
-  <div class="hud-stats" id="hudStats">
-    <i class="hud-gauge" id="hudGauge" aria-hidden="true" title="Throttle"></i>
-    <span class="stat-dot"></span>
-    <span id="speedVal">68 MPH</span>
-    <span style="opacity:0.3">|</span>
-    <span id="distVal">01.2 KM</span>
-    <span style="opacity:0.3">|</span>
-    <span id="lapVal">L1</span>
-    <span style="opacity:0.3">|</span>
-    <span id="biomeVal" class="biome-badge">FOREST</span>
-    <span style="opacity:0.3">|</span>
-    <span id="wthrVal" title="Live weather — Columbus, OH">☀️ 72°F</span>
-    <span style="opacity:0.3">|</span>
-    <button id="btnAudio" class="btn-audio" type="button" aria-label="Toggle engine sound">SOUND 🔇</button>
-  </div>
-
-  <div class="touch-controls">
-    <button class="touch-btn gas" id="btnGas" type="button">GAS 🔺</button>
-    <button class="touch-btn brake" id="btnBrake" type="button">BRAKE 🔻</button>
-  </div>
-
-  <div class="gh-tip" id="ghTip" aria-hidden="true"></div>
-
+  <!-- GitHub popup -->
   <div class="gh-pop" id="ghPop" role="region" aria-label="GitHub contribution activity">
     <div class="gh-head">
       <span class="gh-title">GitHub Activity</span>
@@ -334,17 +332,20 @@
     </div>
     <div class="gh-heat" id="ghHeat"></div>
   </div>
-  
+  <div class="gh-tip" id="ghTip" aria-hidden="true"></div>
+
+  <!-- About panel -->
   <aside class="info" id="info" aria-hidden="true">
     <span class="info-label">About</span>
-    <p>Software engineer and full-stack builder. Focused on craft, performance, and creating thoughtful digital experiences — from JavaFX tools to AI-integrated systems and this interactive 3D portfolio.</p>
+    <p>Software engineer and full-stack builder. Focused on craft, performance, and creating thoughtful digital experiences — from JavaFX tools to AI-integrated systems.</p>
     <a href="https://github.com/arv20" target="_blank" rel="noopener">View GitHub Projects <span aria-hidden="true">↗</span></a>
   </aside>
 
-  <main class="ui">
+  <!-- Main UI -->
+  <main class="page">
     <button class="identity" id="identity" type="button" aria-expanded="false" aria-controls="info">
       <span class="role">engineer · builder · creator</span>
-      <span class="name">aarav k</span>
+      <span class="name">aarav kolgaonkar</span>
       <span class="plus" aria-hidden="true">+</span>
     </button>
     <nav aria-label="Social links">
@@ -358,1782 +359,10 @@
     </nav>
   </main>
 
-  <script type="importmap">
-  {
-    "imports": {
-      "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
-      "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
-    }
-  }
-  </script>
-  <script type="module">
-    import * as THREE from 'three';
-    import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
-    import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
-    import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
-    import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
-    import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
-    import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
-    import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
-
-    /* ═══════════════════════════════════════
-       RENDERER & POST PIPELINE
-       ═══════════════════════════════════════ */
-    const canvas = document.querySelector('#scene');
-    const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: "high-performance" });
-    renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
-    renderer.setSize(innerWidth, innerHeight);
-    renderer.shadowMap.enabled = true;
-    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-    renderer.shadowMap.autoUpdate = false;
-    renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 0.95;
-    renderer.outputColorSpace = THREE.SRGBColorSpace;
-
-    const scene = new THREE.Scene();
-    scene.fog = new THREE.FogExp2(new THREE.Color(0xd9e8d2), 0.0035);
-
-    const camera = new THREE.PerspectiveCamera(52, innerWidth / innerHeight, 0.1, 500);
-
-    // Studio environment map → glossy paint and rich materials
-    const pmrem = new THREE.PMREMGenerator(renderer);
-    scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
-
-    // Bloom post-processing — makes neon, headlights and glows pop
-    const composer = new EffectComposer(renderer);
-    composer.addPass(new RenderPass(scene, camera));
-    const bloomPass = new UnrealBloomPass(new THREE.Vector2(innerWidth, innerHeight), 0.45, 0.5, 1.05);
-    composer.addPass(bloomPass);
-    composer.addPass(new OutputPass());
-
-    /* ═══════════════════════════════════════
-       BIOME SYSTEM — seeded arcs around the loop
-       ═══════════════════════════════════════ */
-    function mulberry32(seed) {
-      let a = seed >>> 0;
-      return function () {
-        a |= 0; a = (a + 0x6D2B79F5) | 0;
-        let t = Math.imul(a ^ (a >>> 15), 1 | a);
-        t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
-        return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-      };
-    }
-
-    const BIOMES = {
-      forest: {
-        ground: [0x4c7957, 0x355b43],
-        skyTop: 0x6ea6d4, skyHorizon: 0xd9e8d2, sunColor: 0xfff2d6, sunIntensity: 1.75,
-        ambient: 0.5, hemiSky: 0xb5e2e4, hemiGround: 0x4a6b4a, hemiIntensity: 0.6,
-        fogDensity: 0.0055, night: 0,
-      },
-      beach: {
-        ground: [0xd8c28b, 0xbfa272],
-        skyTop: 0x4e9ddc, skyHorizon: 0xcdeaf0, sunColor: 0xfff8e2, sunIntensity: 2.15,
-        ambient: 0.6, hemiSky: 0xbfe8f2, hemiGround: 0x8a7a55, hemiIntensity: 0.7,
-        fogDensity: 0.0042, night: 0,
-      },
-      city: {
-        ground: [0x505d69, 0x343e49],
-        skyTop: 0x0b1020, skyHorizon: 0x31415c, sunColor: 0x8899bb, sunIntensity: 0.3,
-        ambient: 0.3, hemiSky: 0x2a3a55, hemiGround: 0x141a22, hemiIntensity: 0.45,
-        fogDensity: 0.007, night: 1,
-      },
-      desert: {
-        ground: [0xc8945b, 0xa87846],
-        skyTop: 0x3f82cc, skyHorizon: 0xf4dcae, sunColor: 0xffe6b8, sunIntensity: 1.95,
-        ambient: 0.55, hemiSky: 0xd8c8a8, hemiGround: 0x8a6a42, hemiIntensity: 0.65,
-        fogDensity: 0.0046, night: 0,
-      },
-    };
-
-    const BIOME_LABELS = { forest: 'FOREST', beach: 'BEACH', city: 'CITY', desert: 'DESERT' };
-
-    // Randomized arc assignment: 6 arcs around the loop, city + beach guaranteed,
-    // no two adjacent arcs share a biome.
-    const ARC_COUNT = 6;
-    const biomeRng = mulberry32((Math.random() * 0xffffffff) >>> 0);
-    const pool = ['forest', 'beach', 'city', 'desert'];
-    const arcBiomes = new Array(ARC_COUNT);
-    const fixedIdx = [Math.floor(biomeRng() * ARC_COUNT), Math.floor(biomeRng() * ARC_COUNT)];
-    if (fixedIdx[0] === fixedIdx[1]) fixedIdx[1] = (fixedIdx[1] + 1) % ARC_COUNT;
-    arcBiomes[fixedIdx[0]] = 'beach';
-    arcBiomes[fixedIdx[1]] = 'city';
-    for (let i = 0; i < ARC_COUNT; i++) {
-      if (arcBiomes[i]) continue;
-      let b;
-      do {
-        b = pool[Math.floor(biomeRng() * pool.length)];
-      } while (b === arcBiomes[(i + ARC_COUNT - 1) % ARC_COUNT] || b === arcBiomes[(i + 1) % ARC_COUNT]);
-      arcBiomes[i] = b;
-    }
-    const arcs = arcBiomes.map((biome, i) => ({ biome, from: i / ARC_COUNT, to: (i + 1) / ARC_COUNT }));
-
-    // Smoothly-lerped sky / light state — targets now come from live Ohio weather
-    const skyState = {
-      top: new THREE.Color(BIOMES.forest.skyTop),
-      horizon: new THREE.Color(BIOMES.forest.skyHorizon),
-      sun: new THREE.Color(BIOMES.forest.sunColor),
-      sunIntensity: BIOMES.forest.sunIntensity,
-      ambient: BIOMES.forest.ambient,
-      hemi: BIOMES.forest.hemiIntensity,
-      fogDensity: BIOMES.forest.fogDensity,
-      night: BIOMES.forest.night,
-      clouds: 0.2,
-      cloudColor: new THREE.Color(0xffffff),
-      rain: 0,
-      snow: 0,
-      storm: 0,
-    };
-
-    /* ═══════════════════════════════════════
-       LIVE OHIO WEATHER — the sky is whatever it is right now in Columbus
-       ═══════════════════════════════════════ */
-    const OHIO = { lat: 39.9612, lon: -82.9988 }; // Columbus, Ohio
-    const weatherState = { code: 1, isDay: 1, temp: 72, cond: 'partly_day' };
-    const CC = (hex) => new THREE.Color(hex);
-    const WEATHER_PALETTES = {
-      clear_day: { top: CC(0x3f8fd4), horizon: CC(0xcfe6f2), sun: CC(0xfff6df), sunIntensity: 2.1, night: 0, fogDensity: 0.0022, ambient: 0.55, hemi: 0.65, clouds: 0.06, cloudColor: CC(0xffffff), rain: 0, snow: 0, storm: 0 },
-      partly_day: { top: CC(0x5a9bd4), horizon: CC(0xd3e2ea), sun: CC(0xfff2d8), sunIntensity: 1.7, night: 0, fogDensity: 0.0026, ambient: 0.5, hemi: 0.6, clouds: 0.45, cloudColor: CC(0xffffff), rain: 0, snow: 0, storm: 0 },
-      overcast: { top: CC(0x8a959e), horizon: CC(0xc9ced1), sun: CC(0xe8ecf0), sunIntensity: 0.5, night: 0, fogDensity: 0.0034, ambient: 0.62, hemi: 0.55, clouds: 0.92, cloudColor: CC(0xa8b4bc), rain: 0, snow: 0, storm: 0 },
-      fog: { top: CC(0x9aa2a6), horizon: CC(0xcdd2d0), sun: CC(0xe6eaeb), sunIntensity: 0.45, night: 0, fogDensity: 0.0085, ambient: 0.7, hemi: 0.6, clouds: 0.5, cloudColor: CC(0xa8b4b4), rain: 0, snow: 0, storm: 0 },
-      rain: { top: CC(0x4c5a68), horizon: CC(0x93a0ab), sun: CC(0xd8e2ea), sunIntensity: 0.3, night: 0, fogDensity: 0.0046, ambient: 0.5, hemi: 0.55, clouds: 1, cloudColor: CC(0x8f9aa3), rain: 1, snow: 0, storm: 0 },
-      thunderstorm: { top: CC(0x232a36), horizon: CC(0x5b6775), sun: CC(0xb8c4d0), sunIntensity: 0.15, night: 0.45, fogDensity: 0.0052, ambient: 0.4, hemi: 0.4, clouds: 1, cloudColor: CC(0x4a5562), rain: 1, snow: 0, storm: 1 },
-      snow: { top: CC(0xaebdc6), horizon: CC(0xe2e9ec), sun: CC(0xffffff), sunIntensity: 0.55, night: 0, fogDensity: 0.0038, ambient: 0.6, hemi: 0.62, clouds: 0.95, cloudColor: CC(0xdde6ea), rain: 0, snow: 1, storm: 0 },
-      clear_night: { top: CC(0x0a101f), horizon: CC(0x1a2538), sun: CC(0x9fb0cc), sunIntensity: 0.12, night: 1, fogDensity: 0.0024, ambient: 0.32, hemi: 0.4, clouds: 0.05, cloudColor: CC(0x3a465c), rain: 0, snow: 0, storm: 0 },
-      partly_night: { top: CC(0x0d1526), horizon: CC(0x25304a), sun: CC(0x9fb0cc), sunIntensity: 0.12, night: 0.8, fogDensity: 0.0027, ambient: 0.3, hemi: 0.38, clouds: 0.45, cloudColor: CC(0x3a465c), rain: 0, snow: 0, storm: 0 },
-    };
-
-    function classifyWeather(code, isDay) {
-      if (code === 0) return isDay ? 'clear_day' : 'clear_night';
-      if (code <= 2) return isDay ? 'partly_day' : 'partly_night';
-      if (code === 3) return 'overcast';
-      if (code === 45 || code === 48) return 'fog';
-      if (code >= 95) return 'thunderstorm';
-      if ((code >= 71 && code <= 77) || code === 85 || code === 86) return 'snow';
-      if (code >= 51 && code <= 67) return 'rain';
-      if (code >= 80 && code <= 82) return 'rain';
-      return isDay ? 'partly_day' : 'partly_night';
-    }
-    function nightify(p) {
-      return {
-        top: p.top.clone().multiplyScalar(0.42),
-        horizon: p.horizon.clone().multiplyScalar(0.6),
-        sun: p.sun.clone().multiplyScalar(0.7),
-        sunIntensity: p.sunIntensity * 0.32,
-        night: Math.max(p.night, 0.55),
-        fogDensity: p.fogDensity * 1.2,
-        ambient: p.ambient * 0.7,
-        hemi: p.hemi * 0.75,
-        clouds: p.clouds,
-        cloudColor: p.cloudColor.clone(),
-        rain: p.rain, snow: p.snow, storm: p.storm,
-      };
-    }
-    const weatherPaletteCache = {};
-    function weatherTarget(cond, isDay) {
-      let p = WEATHER_PALETTES[cond] || WEATHER_PALETTES.partly_day;
-      if (!isDay && (cond === 'overcast' || cond === 'fog' || cond === 'rain' || cond === 'thunderstorm' || cond === 'snow')) {
-        const key = cond + '_night';
-        if (!weatherPaletteCache[key]) weatherPaletteCache[key] = nightify(p);
-        p = weatherPaletteCache[key];
-      }
-      return p;
-    }
-    const COND_EMOJI = { clear_day: '☀️', clear_night: '🌙', partly_day: '⛅', partly_night: '☁️', overcast: '☁️', fog: '🌫️', rain: '🌧️', thunderstorm: '⛈️', snow: '❄️' };
-
-    async function fetchWeather() {
-      try {
-        const r = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${OHIO.lat}&longitude=${OHIO.lon}&current=weather_code,is_day,temperature_2m&temperature_unit=fahrenheit&timezone=America%2FNew_York`);
-        if (!r.ok) throw new Error(r.status);
-        const j = await r.json();
-        if (j && j.current) {
-          weatherState.code = j.current.weather_code ?? weatherState.code;
-          weatherState.isDay = j.current.is_day ?? 1;
-          weatherState.temp = Math.round(j.current.temperature_2m ?? 72);
-          weatherState.cond = classifyWeather(weatherState.code, weatherState.isDay);
-        }
-      } catch (err) {
-        console.warn('Weather fetch failed, keeping default sky:', err);
-      }
-    }
-    fetchWeather();
-    setInterval(fetchWeather, 10 * 60 * 1000);
-
-    /* ═══════════════════════════════════════
-       SKY DOME — gradient, sun disc, night stars
-       ═══════════════════════════════════════ */
-    const sunDir = new THREE.Vector3(0.32, 0.42, -0.5).normalize();
-    const skyMat = new THREE.ShaderMaterial({
-      side: THREE.BackSide,
-      depthWrite: false,
-      uniforms: {
-        topColor: { value: new THREE.Color(BIOMES.forest.skyTop) },
-        horizonColor: { value: new THREE.Color(BIOMES.forest.skyHorizon) },
-        sunDirU: { value: sunDir.clone() },
-        sunColor: { value: new THREE.Color(BIOMES.forest.sunColor) },
-        sunIntensityU: { value: BIOMES.forest.sunIntensity },
-        nightFactor: { value: 0 },
-        cloudCover: { value: 0.2 },
-        cloudColor: { value: new THREE.Color(0xffffff) },
-        timeU: { value: 0 },
-      },
-      vertexShader: `
-        varying vec3 vDir;
-        void main() {
-          vDir = normalize(position);
-          gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-        }`,
-      fragmentShader: `
-        varying vec3 vDir;
-        uniform vec3 topColor;
-        uniform vec3 horizonColor;
-        uniform vec3 sunDirU;
-        uniform vec3 sunColor;
-        uniform float sunIntensityU;
-        uniform float nightFactor;
-        uniform float cloudCover;
-        uniform vec3 cloudColor;
-        uniform float timeU;
-        float hash13(vec3 p) { p = fract(p * 0.3183099 + 0.1); p *= 17.0; return fract(p.x * p.y * p.z * (p.x + p.y + p.z)); }
-        float hash21(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
-        float noise21(vec2 p) {
-          vec2 i = floor(p); vec2 f = fract(p);
-          f = f * f * (3.0 - 2.0 * f);
-          return mix(mix(hash21(i), hash21(i + vec2(1.0, 0.0)), f.x),
-                     mix(hash21(i + vec2(0.0, 1.0)), hash21(i + vec2(1.0, 1.0)), f.x), f.y);
-        }
-        float fbm21(vec2 p) {
-          float v = 0.0; float a = 0.5;
-          for (int i = 0; i < 4; i++) { v += a * noise21(p); p = p * 2.03 + vec2(7.3); a *= 0.5; }
-          return v;
-        }
-        void main() {
-          vec3 d = normalize(vDir);
-          float h = clamp(d.y, 0.0, 1.0);
-          vec3 col = mix(horizonColor, topColor, pow(h, 0.55));
-          col = mix(vec3(0.05, 0.07, 0.1), col, smoothstep(-0.12, 0.1, d.y));
-          float s = max(dot(d, sunDirU), 0.0);
-          col += sunColor * sunIntensityU * (1.0 - cloudCover * 0.95) * (pow(s, 900.0) * 2.4 + pow(s, 40.0) * 0.32 + pow(s, 5.0) * 0.05);
-          if (d.y > 0.03) {
-            float star = step(0.99915, hash13(floor(d * 800.0 + timeU * 4.0))) * (1.0 - cloudCover * 0.85);
-            col += vec3(0.9, 0.95, 1.0) * star * nightFactor * (0.3 + 0.7 * d.y);
-          }
-          float band = smoothstep(0.02, 0.28, d.y) * (1.0 - smoothstep(0.28, 0.62, d.y));
-          float cloudN = fbm21(d.xz * 2.4 + vec2(timeU * 0.012, 0.0));
-          float cloudM = band * cloudCover * smoothstep(0.32, 0.82, cloudN);
-          col = mix(col, cloudColor, cloudM * 0.96);
-          gl_FragColor = vec4(col, 1.0);
-        }`,
-    });
-    const skyDome = new THREE.Mesh(new THREE.SphereGeometry(420, 32, 16), skyMat);
-    skyDome.renderOrder = -1;
-    scene.add(skyDome);
-
-    /* ═══════════════════════════════════════
-       ENVIRONMENT LIGHTING (biome-driven)
-       ═══════════════════════════════════════ */
-    const ambientLight = new THREE.AmbientLight(0xdbe8df, 0.5);
-    scene.add(ambientLight);
-
-    const hemiLight = new THREE.HemisphereLight(0xb5e2e4, 0x4a6b4a, 0.6);
-    scene.add(hemiLight);
-
-    const sun = new THREE.DirectionalLight(0xfff6e5, 1.75);
-    sun.position.set(120, 150, -90);
-    sun.castShadow = true;
-    sun.shadow.mapSize.width = 2048;
-    sun.shadow.mapSize.height = 2048;
-    sun.shadow.camera.near = 10;
-    sun.shadow.camera.far = 400;
-    const shadowDim = 70;
-    sun.shadow.camera.left = -shadowDim;
-    sun.shadow.camera.right = shadowDim;
-    sun.shadow.camera.top = shadowDim;
-    sun.shadow.camera.bottom = -shadowDim;
-    sun.shadow.bias = -0.0003;
-    scene.add(sun);
-
-    /* ═══════════════════════════════════════
-       CLOSED-LOOP ROAD SPLINE & TIRE SKID MARKS
-       ═══════════════════════════════════════ */
-    const ROAD_SEGMENTS = 1600;
-    const ROAD_WIDTH = 6.5;
-
-    // A sealed circuit — 14 control points shaped into a winding kidney
-    // that never self-intersects, so the drive loops forever with no seam.
-    const LOOP_POINTS = [
-      [0, 0], [46, -20], [98, -14], [142, 14],
-      [160, 62], [146, 110], [106, 140], [56, 152],
-      [6, 142], [-36, 110], [-56, 62], [-44, 16],
-      [-10, -22], [38, -44],
-    ];
-    const roadControlPoints = LOOP_POINTS.map(p => new THREE.Vector3(p[0], 0.1, p[1]));
-    const roadCurve = new THREE.CatmullRomCurve3(roadControlPoints, true, 'catmullrom', 0.5);
-    const loopLength = roadCurve.getLength();
-    const loopCenter = new THREE.Vector3();
-    roadControlPoints.forEach(p => loopCenter.add(p));
-    loopCenter.divideScalar(roadControlPoints.length);
-
-    const roadVerts = [];
-    const roadUvs = [];
-    const roadIndices = [];
-    const upVector = new THREE.Vector3(0, 1, 0);
-
-    const skidVerts = [];
-    const skidIndices = [];
-
-    for (let i = 0; i <= ROAD_SEGMENTS; i++) {
-      const t = i / ROAD_SEGMENTS;
-      const pos = roadCurve.getPointAt(t);
-      const tangent = roadCurve.getTangentAt(t).normalize();
-      const right = new THREE.Vector3().crossVectors(tangent, upVector).normalize();
-
-      const lx = pos.x - right.x * (ROAD_WIDTH / 2);
-      const lz = pos.z - right.z * (ROAD_WIDTH / 2);
-      const rx = pos.x + right.x * (ROAD_WIDTH / 2);
-      const rz = pos.z + right.z * (ROAD_WIDTH / 2);
-
-      roadVerts.push(lx, 0.14, lz);
-      roadVerts.push(rx, 0.14, rz);
-
-      // v-repeat is a multiple of the dash pattern so the seam is invisible
-      roadUvs.push(0, t * 128);
-      roadUvs.push(1, t * 128);
-
-      if (i < ROAD_SEGMENTS) {
-        const a = i * 2, b = i * 2 + 1, c = (i + 1) * 2, d = (i + 1) * 2 + 1;
-        roadIndices.push(a, b, c, b, d, c);
-
-        const tAhead = (i + 1) / ROAD_SEGMENTS;
-        const tangAhead = roadCurve.getTangentAt(tAhead).normalize();
-        const curveAngle = Math.abs(tangent.x - tangAhead.x);
-
-        if (curveAngle > 0.0028) {
-          const sIdx = skidVerts.length / 3;
-          const slx = pos.x - right.x * 1.55;
-          const slz = pos.z - right.z * 1.55;
-          const srx = pos.x + right.x * 1.55;
-          const srz = pos.z + right.z * 1.55;
-
-          const nPos = roadCurve.getPointAt(tAhead);
-          const nTang = roadCurve.getTangentAt(tAhead).normalize();
-          const nRight = new THREE.Vector3().crossVectors(nTang, upVector).normalize();
-          const nslx = nPos.x - nRight.x * 1.55;
-          const nslz = nPos.z - nRight.z * 1.55;
-          const nsrx = nPos.x + nRight.x * 1.55;
-          const nsrz = nPos.z + nRight.z * 1.55;
-
-          skidVerts.push(slx, 0.146, slz, srx, 0.146, srz, nslx, 0.146, nslz, nsrx, 0.146, nsrz);
-          skidIndices.push(sIdx, sIdx + 1, sIdx + 2, sIdx + 1, sIdx + 3, sIdx + 2);
-        }
-      }
-    }
-
-    const roadGeo = new THREE.BufferGeometry();
-    roadGeo.setAttribute('position', new THREE.Float32BufferAttribute(roadVerts, 3));
-    roadGeo.setAttribute('uv', new THREE.Float32BufferAttribute(roadUvs, 2));
-    roadGeo.setIndex(roadIndices);
-    roadGeo.computeVertexNormals();
-
-    const rCanvas = document.createElement('canvas');
-    rCanvas.width = 128; rCanvas.height = 256;
-    const ctx = rCanvas.getContext('2d');
-    ctx.fillStyle = '#262729';
-    ctx.fillRect(0, 0, 128, 256);
-    ctx.fillStyle = '#cfd2d4';
-    ctx.fillRect(2, 0, 3, 256);
-    ctx.fillRect(123, 0, 3, 256);
-    ctx.fillStyle = '#e6b400';
-    for (let y = 0; y < 256; y += 32) {
-      ctx.fillRect(62, y, 4, 18);
-    }
-    const roadTex = new THREE.CanvasTexture(rCanvas);
-    roadTex.colorSpace = THREE.SRGBColorSpace;
-    roadTex.wrapS = THREE.RepeatWrapping;
-    roadTex.wrapT = THREE.RepeatWrapping;
-
-    const roadMat = new THREE.MeshStandardMaterial({
-      map: roadTex,
-      roughness: 0.88,
-      metalness: 0.04,
-      side: THREE.DoubleSide,
-      polygonOffset: true,
-      polygonOffsetFactor: -1
-    });
-    const roadMesh = new THREE.Mesh(roadGeo, roadMat);
-    roadMesh.receiveShadow = true;
-    scene.add(roadMesh);
-
-    if (skidVerts.length > 0) {
-      const skidGeo = new THREE.BufferGeometry();
-      skidGeo.setAttribute('position', new THREE.Float32BufferAttribute(skidVerts, 3));
-      skidGeo.setIndex(skidIndices);
-      const skidMat = new THREE.MeshBasicMaterial({
-        color: 0x111315,
-        transparent: true,
-        opacity: 0.38,
-        side: THREE.DoubleSide,
-        polygonOffset: true,
-        polygonOffsetFactor: -2
-      });
-      const skidMesh = new THREE.Mesh(skidGeo, skidMat);
-      scene.add(skidMesh);
-    }
-
-    /* ═══════════════════════════════════════
-       TRACK DISTANCE FIELD & TERRAIN
-       ═══════════════════════════════════════ */
-    const TRACK_N = 420;
-    const trackSamples = [];
-    for (let i = 0; i < TRACK_N; i++) {
-      const t = i / TRACK_N;
-      trackSamples.push({ t, pos: roadCurve.getPointAt(t), tangent: roadCurve.getTangentAt(t).clone().normalize() });
-    }
-
-    function nearestTrack(x, z) {
-      let best = trackSamples[0], bd = Infinity;
-      for (let i = 0; i < TRACK_N; i++) {
-        const sp = trackSamples[i];
-        const dx = sp.pos.x - x, dz = sp.pos.z - z;
-        const d = dx * dx + dz * dz;
-        if (d < bd) { bd = d; best = sp; }
-      }
-      return { t: best.t, dist: Math.sqrt(bd), pos: best.pos, tangent: best.tangent };
-    }
-
-    function hillFactor(dist) { return Math.min(Math.max((dist - 7.5) * 0.07, 0), 1); }
-    function rawHeight(x, z) {
-      return Math.sin(x * 0.035) * Math.cos(z * 0.025) * 7.5 + Math.sin(x * 0.07 + z * 0.04) * 3.2;
-    }
-    function smoothstep01(x, a, b) { const t = Math.min(Math.max((x - a) / (b - a), 0), 1); return t * t * (3 - 2 * t); }
-    function circDist(a, b) { let d = Math.abs(a - b); return d > 0.5 ? 1 - d : d; }
-
-    const beachArcs = arcs.filter(a => a.biome === 'beach');
-    const WATER_LEVEL = -0.7;
-
-    // Return a strong value only while the nearest point on the road is inside
-    // a beach arc. The old center-distance test was inverted, so almost every
-    // non-beach vertex became a beach vertex and the whole map sank into water.
-    function beachInfluence(t) {
-      let influence = 0;
-      for (const arc of beachArcs) {
-        const center = (arc.from + arc.to) / 2;
-        const halfWidth = (arc.to - arc.from) / 2;
-        const d = circDist(t, center);
-        influence = Math.max(influence, 1 - smoothstep01(d, halfWidth * 0.72, halfWidth));
-      }
-      return influence;
-    }
-
-    // Terrain height at (x, z): hills flatten near the track, while a beach
-    // arc gets a broad, continuous slope toward the water on its outer side.
-    function vertexTerrain(x, z) {
-      const n = nearestTrack(x, z);
-      let h = rawHeight(x, z) * hillFactor(n.dist);
-      const beachness = beachInfluence(n.t);
-      if (beachness > 0.001 && n.dist < 120) {
-        const outward = Math.hypot(x - loopCenter.x, z - loopCenter.z) > Math.hypot(n.pos.x - loopCenter.x, n.pos.z - loopCenter.z);
-        if (outward) {
-          const shore = smoothstep01(n.dist, ROAD_WIDTH / 2 + 5, 30);
-          h = THREE.MathUtils.lerp(h, WATER_LEVEL - 1.4, shore * beachness);
-        }
-      }
-      return { h, n, beachness };
-    }
-
-    // Ground bounds: loop bbox + margin
-    let minX = Infinity, maxX = -Infinity, minZ = Infinity, maxZ = -Infinity;
-    LOOP_POINTS.forEach(p => {
-      minX = Math.min(minX, p[0]); maxX = Math.max(maxX, p[0]);
-      minZ = Math.min(minZ, p[1]); maxZ = Math.max(maxZ, p[1]);
-    });
-    const GROUND_MARGIN = 150;
-    const groundW = maxX - minX + GROUND_MARGIN * 2;
-    const groundH = maxZ - minZ + GROUND_MARGIN * 2;
-    const groundCX = (minX + maxX) / 2;
-    const groundCZ = (minZ + maxZ) / 2;
-
-    const colA = new THREE.Color(), colB = new THREE.Color(), colC = new THREE.Color(), colD = new THREE.Color(), colCity = new THREE.Color();
-    function biomeColorAt(t, out, idx) {
-      const i = Math.floor((((t % 1) + 1) % 1) * ARC_COUNT) % ARC_COUNT;
-      return out.setHex(BIOMES[arcBiomes[i]].ground[idx || 0]);
-    }
-    function terrainColorAt(t, x, z, trackDist = Infinity) {
-      biomeColorAt(t, colA);
-      // Blend a little farther across arc boundaries so a district arrives
-      // gradually instead of creating a hard green/gray color cut.
-      biomeColorAt(t + 0.06, colB);
-      biomeColorAt(t - 0.06 + 1, colC);
-      biomeColorAt(t, colD, 1);
-      // base tone blended across arc boundaries, darker tone mixed in by terrain noise
-      const nz = 0.5 + 0.5 * Math.sin(x * 0.08 + 1.7) * Math.cos(z * 0.1 + 0.9);
-      colA.r = colA.r * 0.5 + colB.r * 0.25 + colC.r * 0.25;
-      colA.g = colA.g * 0.5 + colB.g * 0.25 + colC.g * 0.25;
-      colA.b = colA.b * 0.5 + colB.b * 0.25 + colC.b * 0.25;
-      colA.lerp(colD, 0.45 * nz);
-
-      // A city district owns a wider roadside envelope than the other biomes;
-      // this prevents green forest or sand colors from leaking between its
-      // buildings and makes the district feel like one intentional place.
-      const arcIndex = Math.floor((((t % 1) + 1) % 1) * ARC_COUNT) % ARC_COUNT;
-      if (arcBiomes[arcIndex] === 'city') {
-        colCity.setHex(BIOMES.city.ground[0]);
-        const cityZone = 1 - smoothstep01(trackDist, 22, 100);
-        colA.lerp(colCity, cityZone * 0.7);
-      }
-      return colA;
-    }
-
-    const groundGeo = new THREE.PlaneGeometry(groundW, groundH, 160, 160);
-    groundGeo.rotateX(-Math.PI / 2);
-    const gPos = groundGeo.attributes.position;
-    const gCol = new Float32Array(gPos.count * 3);
-    for (let i = 0; i < gPos.count; i++) {
-      // PlaneGeometry vertices are local to groundMesh; all terrain math is world-space.
-      const x = gPos.getX(i) + groundCX;
-      const z = gPos.getZ(i) + groundCZ;
-      const { h, n } = vertexTerrain(x, z);
-      gPos.setY(i, h);
-      const c = terrainColorAt(n.t, x, z, n.dist);
-      gCol[i * 3] = c.r; gCol[i * 3 + 1] = c.g; gCol[i * 3 + 2] = c.b;
-    }
-    groundGeo.setAttribute('color', new THREE.BufferAttribute(gCol, 3));
-    groundGeo.computeVertexNormals();
-
-    const groundMat = new THREE.MeshStandardMaterial({
-      vertexColors: true,
-      roughness: 0.94,
-      metalness: 0.03,
-      flatShading: false
-    });
-    const groundMesh = new THREE.Mesh(groundGeo, groundMat);
-    groundMesh.position.set(groundCX, 0, groundCZ);
-    groundMesh.receiveShadow = true;
-    scene.add(groundMesh);
-
-    /* ═══════════════════════════════════════
-       OCEAN — animated, only visible where beach terrain dips below
-       ═══════════════════════════════════════ */
-    const waterMat = new THREE.ShaderMaterial({
-      transparent: true,
-      depthWrite: false,
-      side: THREE.DoubleSide,
-      uniforms: {
-        uTime: { value: 0 },
-        uColor: { value: new THREE.Color(0x3fa8e6) },
-        uDeep: { value: new THREE.Color(0x0b5688) },
-        uFoam: { value: new THREE.Color(0xd8f8ff) },
-      },
-      vertexShader: `
-        uniform float uTime;
-        varying vec2 vUv;
-        varying float vWave;
-        void main() {
-          vUv = uv;
-          vec3 p = position;
-          float w = sin(p.x * 0.14 + uTime * 0.9) * 0.16 + cos(p.z * 0.11 + uTime * 0.65) * 0.16;
-          p.y += w;
-          vWave = w;
-          gl_Position = projectionMatrix * modelViewMatrix * vec4(p, 1.0);
-        }`,
-      fragmentShader: `
-        uniform vec3 uColor;
-        uniform vec3 uDeep;
-        uniform vec3 uFoam;
-        uniform float uTime;
-        varying vec2 vUv;
-        varying float vWave;
-        void main() {
-          float m = sin(vUv.x * 42.0 + vUv.y * 31.0 + uTime * 1.4) * 0.5 + 0.5;
-          vec3 col = mix(uDeep, uColor, m);
-          float foam = pow(max(sin(vUv.x * 90.0 + uTime * 2.2) * sin(vUv.y * 80.0 - uTime * 1.7), 0.0), 10.0);
-          col = mix(col, uFoam, foam * 0.5);
-          float depthShade = smoothstep(0.0, 1.0, vWave + 0.2);
-          gl_FragColor = vec4(col, 0.84 + depthShade * 0.12);
-        }`,
-    });
-    // Water is generated as bounded strips beside beach arcs — never as a plane
-    // over the entire world. This keeps forest/city/desert land dry and readable.
-    const waterGroup = new THREE.Group();
-    for (const arc of beachArcs) {
-      const segments = 96;
-      const verts = [], uvs = [], indices = [];
-      for (let i = 0; i <= segments; i++) {
-        const t = arc.from + (i / segments) * (arc.to - arc.from);
-        const pos = roadCurve.getPointAt(t);
-        const tangent = roadCurve.getTangentAt(t).normalize();
-        const sideV = new THREE.Vector3().crossVectors(tangent, upVector).normalize();
-        const radial = new THREE.Vector3(pos.x - loopCenter.x, 0, pos.z - loopCenter.z).normalize();
-        if (sideV.dot(radial) < 0) sideV.multiplyScalar(-1);
-        // Leave a visible dry sand shoulder between the road and the water.
-        const inner = ROAD_WIDTH / 2 + 18;
-        const outer = Math.min(inner + 96, 128);
-        verts.push(pos.x + sideV.x * inner, WATER_LEVEL, pos.z + sideV.z * inner);
-        verts.push(pos.x + sideV.x * outer, WATER_LEVEL, pos.z + sideV.z * outer);
-        uvs.push(0, i / segments * 8, 1, i / segments * 8);
-        if (i < segments) {
-          const a = i * 2, b = a + 1, c = a + 2, d = a + 3;
-          indices.push(a, b, c, b, d, c);
-        }
-      }
-      const geo = new THREE.BufferGeometry();
-      geo.setAttribute('position', new THREE.Float32BufferAttribute(verts, 3));
-      geo.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2));
-      geo.setIndex(indices);
-      geo.computeVertexNormals();
-      const mesh = new THREE.Mesh(geo, waterMat);
-      mesh.receiveShadow = true;
-      waterGroup.add(mesh);
-    }
-    scene.add(waterGroup);
-
-    /* ═══════════════════════════════════════
-       RAIN & SNOW — weather particle systems
-       ═══════════════════════════════════════ */
-    const RAIN_COUNT = 1400;
-    const rainPos = new Float32Array(RAIN_COUNT * 6);
-    for (let i = 0; i < RAIN_COUNT; i++) {
-      const x = (Math.random() - 0.5) * 150;
-      const z = (Math.random() - 0.5) * 150;
-      const y = Math.random() * 40 - 4;
-      rainPos[i * 6] = x; rainPos[i * 6 + 1] = y; rainPos[i * 6 + 2] = z;
-      rainPos[i * 6 + 3] = x; rainPos[i * 6 + 4] = y - 0.6; rainPos[i * 6 + 5] = z;
-    }
-    const rainGeo = new THREE.BufferGeometry();
-    rainGeo.setAttribute('position', new THREE.BufferAttribute(rainPos, 3));
-    const rainMat = new THREE.LineBasicMaterial({ color: 0xa8c4dc, transparent: true, opacity: 0.5 });
-    const rainLines = new THREE.LineSegments(rainGeo, rainMat);
-    rainLines.frustumCulled = false;
-    rainLines.visible = false;
-    const rainGroup = new THREE.Group();
-    rainGroup.add(rainLines);
-    scene.add(rainGroup);
-
-    const snowTexCanvas = document.createElement('canvas');
-    snowTexCanvas.width = snowTexCanvas.height = 32;
-    const sctx = snowTexCanvas.getContext('2d');
-    const grad = sctx.createRadialGradient(16, 16, 1, 16, 16, 15);
-    grad.addColorStop(0, 'rgba(255,255,255,0.95)');
-    grad.addColorStop(1, 'rgba(255,255,255,0)');
-    sctx.fillStyle = grad;
-    sctx.fillRect(0, 0, 32, 32);
-    const snowTex = new THREE.CanvasTexture(snowTexCanvas);
-    const SNOW_COUNT = 1100;
-    const snowPos = new Float32Array(SNOW_COUNT * 3);
-    for (let i = 0; i < SNOW_COUNT; i++) {
-      snowPos[i * 3] = (Math.random() - 0.5) * 160;
-      snowPos[i * 3 + 1] = Math.random() * 45;
-      snowPos[i * 3 + 2] = (Math.random() - 0.5) * 160;
-    }
-    const snowGeo = new THREE.BufferGeometry();
-    snowGeo.setAttribute('position', new THREE.BufferAttribute(snowPos, 3));
-    const snowMat = new THREE.PointsMaterial({
-      map: snowTex, color: 0xffffff, size: 0.5, transparent: true, opacity: 0.9, depthWrite: false,
-    });
-    const snowPoints = new THREE.Points(snowGeo, snowMat);
-    snowPoints.frustumCulled = false;
-    snowPoints.visible = false;
-    scene.add(snowPoints);
-
-    /* ═══════════════════════════════════════
-       PER-BIOME PROPS — instanced, terrain-grounded
-       ═══════════════════════════════════════ */
-    const dummy = new THREE.Object3D();
-    const propRng = mulberry32(0x5eed5eed ^ ((Math.random() * 0xffffffff) >>> 0));
-    const _rightV = new THREE.Vector3();
-
-    function placeProp(t, minOff, maxOff, sideBias) {
-      const pos = roadCurve.getPointAt(t);
-      const tangent = roadCurve.getTangentAt(t).normalize();
-      _rightV.crossVectors(tangent, upVector).normalize();
-      let side;
-      if (sideBias === 0) {
-        side = propRng() > 0.5 ? 1 : -1;
-      } else if (sideBias === -1) {
-        // Beach props belong on the landward side, opposite the outward shore.
-        const radial = new THREE.Vector3(pos.x - loopCenter.x, 0, pos.z - loopCenter.z).normalize();
-        side = -Math.sign(_rightV.dot(radial) || 1);
-      } else if (sideBias === -2) {
-        // Explicit negative roadside placement; -1 is reserved for beach logic.
-        side = -1;
-      } else {
-        side = sideBias;
-      }
-      const offset = minOff + propRng() * (maxOff - minOff);
-      const x = pos.x + _rightV.x * side * offset;
-      const z = pos.z + _rightV.z * side * offset;
-      const g = vertexTerrain(x, z);
-      return { x, z, h: g.h, underWater: g.h < -0.55 };
-    }
-    function hideMatrix() {
-      dummy.position.set(0, 0, 0);
-      dummy.rotation.set(0, 0, 0);
-      dummy.scale.set(0.001, 0.001, 0.001);
-      dummy.updateMatrix();
-    }
-    const arcsOf = (name) => arcs.filter(a => a.biome === name);
-    const randT = (arc) => arc.from + propRng() * (arc.to - arc.from);
-
-    // ── Forest: pines ──
-    const FOREST_COUNT = 260;
-    const trunkGeo = new THREE.CylinderGeometry(0.14, 0.22, 1.3, 5);
-    const trunkMat = new THREE.MeshLambertMaterial({ color: 0x483424 });
-    const pineGeo = new THREE.ConeGeometry(1.0, 2.4, 6);
-    const pineMat = new THREE.MeshStandardMaterial({ color: 0x27592e, flatShading: true, roughness: 0.85 });
-    const trunkInst = new THREE.InstancedMesh(trunkGeo, trunkMat, FOREST_COUNT);
-    const pineInst = new THREE.InstancedMesh(pineGeo, pineMat, FOREST_COUNT);
-    trunkInst.castShadow = pineInst.castShadow = true;
-    const forestArcs = arcsOf('forest');
-    let placed = 0;
-    for (let i = 0; i < FOREST_COUNT && forestArcs.length; i++) {
-      const p = placeProp(randT(forestArcs[Math.floor(propRng() * forestArcs.length)]), ROAD_WIDTH / 2 + 3.5, 48, 0);
-      const scale = 0.75 + propRng() * 0.9;
-      dummy.position.set(p.x, p.h + 0.65 * scale, p.z);
-      dummy.scale.set(scale, scale, scale);
-      dummy.updateMatrix();
-      trunkInst.setMatrixAt(i, dummy.matrix);
-      dummy.position.set(p.x, p.h + 1.95 * scale, p.z);
-      dummy.updateMatrix();
-      pineInst.setMatrixAt(i, dummy.matrix);
-      placed++;
-    }
-    for (let i = placed; i < FOREST_COUNT; i++) { hideMatrix(); trunkInst.setMatrixAt(i, dummy.matrix); pineInst.setMatrixAt(i, dummy.matrix); }
-    trunkInst.computeBoundingSphere(); pineInst.computeBoundingSphere();
-    scene.add(trunkInst, pineInst);
-
-    // ── Beach: palms + rocks on the dry side ──
-    const PALM_COUNT = 60;
-    const palmTrunkGeo = new THREE.CylinderGeometry(0.12, 0.22, 2.6, 5);
-    const palmTrunkMat = new THREE.MeshStandardMaterial({ color: 0x7a5a35, roughness: 0.9 });
-    const palmCrownGeo = new THREE.ConeGeometry(1.7, 0.55, 6);
-    const palmCrownMat = new THREE.MeshStandardMaterial({ color: 0x2f8f4a, flatShading: true, roughness: 0.85 });
-    const palmTrunkInst = new THREE.InstancedMesh(palmTrunkGeo, palmTrunkMat, PALM_COUNT);
-    const palmCrownInst = new THREE.InstancedMesh(palmCrownGeo, palmCrownMat, PALM_COUNT);
-    palmTrunkInst.castShadow = palmCrownInst.castShadow = true;
-    const beachPropArcs = arcsOf('beach');
-    placed = 0;
-    for (let i = 0; i < PALM_COUNT && beachPropArcs.length; i++) {
-      const p = placeProp(randT(beachPropArcs[Math.floor(propRng() * beachPropArcs.length)]), ROAD_WIDTH / 2 + 2.5, 24, -1);
-      if (p.underWater) continue;
-      const s = 0.8 + propRng() * 0.8;
-      dummy.rotation.set(0, propRng() * Math.PI, 0);
-      dummy.position.set(p.x, p.h + 1.3 * s, p.z);
-      dummy.scale.set(s, s, s);
-      dummy.updateMatrix();
-      palmTrunkInst.setMatrixAt(placed, dummy.matrix);
-      dummy.position.set(p.x, p.h + 2.9 * s, p.z);
-      dummy.scale.set(s * 1.15, s * 0.9, s * 1.15);
-      dummy.updateMatrix();
-      palmCrownInst.setMatrixAt(placed, dummy.matrix);
-      placed++;
-    }
-    for (let i = placed; i < PALM_COUNT; i++) { hideMatrix(); palmTrunkInst.setMatrixAt(i, dummy.matrix); palmCrownInst.setMatrixAt(i, dummy.matrix); }
-    palmTrunkInst.computeBoundingSphere(); palmCrownInst.computeBoundingSphere();
-    scene.add(palmTrunkInst, palmCrownInst);
-
-    // ── City: a restrained roadside district ──
-    // Buildings use one shared slate facade palette. Windows are deliberately
-    // small and low-contrast so the city reads as architecture, not a wall of
-    // glowing rectangles.
-    const bCanvas = document.createElement('canvas');
-    bCanvas.width = 160; bCanvas.height = 256;
-    const bctx = bCanvas.getContext('2d');
-    bctx.fillStyle = '#202b36';
-    bctx.fillRect(0, 0, 160, 256);
-    for (let row = 0; row < 14; row++) {
-      bctx.fillStyle = row % 2 ? '#263440' : '#222f3b';
-      bctx.fillRect(0, row * 18, 160, 17);
-      for (let col = 0; col < 7; col++) {
-        if (Math.random() < 0.38) continue;
-        const windowColor = Math.random() < 0.7 ? '#c7d3d5' : '#d5bd86';
-        bctx.fillStyle = windowColor;
-        bctx.globalAlpha = 0.5 + Math.random() * 0.25;
-        bctx.fillRect(13 + col * 22, 5 + row * 18, 9, 11);
-        bctx.globalAlpha = 1;
-      }
-    }
-    const bTex = new THREE.CanvasTexture(bCanvas);
-    bTex.colorSpace = THREE.SRGBColorSpace;
-    const buildingMat = new THREE.MeshStandardMaterial({
-      map: bTex,
-      emissiveMap: bTex,
-      emissive: 0xffe1a8,
-      emissiveIntensity: 0,
-      roughness: 0.82,
-      metalness: 0.08,
-    });
-    const BUILDING_COUNT = 48;
-    const buildingInst = new THREE.InstancedMesh(new THREE.BoxGeometry(1, 1, 1), buildingMat, BUILDING_COUNT);
-    buildingInst.castShadow = true;
-    buildingInst.receiveShadow = true;
-    const cityArcs = arcsOf('city');
-
-    // Sidewalk ribbons give the city a deliberate edge and keep buildings
-    // visually separated from the driving lane.
-    const sidewalkMat = new THREE.MeshStandardMaterial({ color: 0x7e8990, roughness: 0.96, metalness: 0.01 });
-    const sidewalkGroup = new THREE.Group();
-    for (const arc of cityArcs) {
-      const segments = 64;
-      for (const side of [-1, 1]) {
-        const verts = [], indices = [];
-        for (let i = 0; i <= segments; i++) {
-          const t = arc.from + (i / segments) * (arc.to - arc.from);
-          const pos = roadCurve.getPointAt(t);
-          const tangent = roadCurve.getTangentAt(t).normalize();
-          const right = new THREE.Vector3().crossVectors(tangent, upVector).normalize();
-          const inner = ROAD_WIDTH / 2 + 1.2;
-          const outer = ROAD_WIDTH / 2 + 5.8;
-          verts.push(pos.x + right.x * side * inner, 0.205, pos.z + right.z * side * inner);
-          verts.push(pos.x + right.x * side * outer, 0.205, pos.z + right.z * side * outer);
-          if (i < segments) {
-            const a = i * 2;
-            indices.push(a, a + 1, a + 2, a + 1, a + 3, a + 2);
-          }
-        }
-        const geo = new THREE.BufferGeometry();
-        geo.setAttribute('position', new THREE.Float32BufferAttribute(verts, 3));
-        geo.setIndex(indices);
-        geo.computeVertexNormals();
-        const sidewalk = new THREE.Mesh(geo, sidewalkMat);
-        sidewalk.receiveShadow = true;
-        sidewalkGroup.add(sidewalk);
-      }
-    }
-    scene.add(sidewalkGroup);
-
-    placed = 0;
-    for (let i = 0; i < BUILDING_COUNT && cityArcs.length; i++) {
-      const arc = cityArcs[Math.floor(propRng() * cityArcs.length)];
-      const side = i % 2 === 0 ? 1 : -2;
-      const p = placeProp(randT(arc), ROAD_WIDTH / 2 + 20, 68, side);
-      const w = 5.2 + propRng() * 5.2, d = 5.2 + propRng() * 6.2, h = 7 + propRng() * 13;
-      dummy.rotation.set(0, propRng() * Math.PI, 0);
-      dummy.position.set(p.x, p.h + h / 2, p.z);
-      dummy.scale.set(w, h, d);
-      dummy.updateMatrix();
-      buildingInst.setMatrixAt(placed, dummy.matrix);
-      placed++;
-    }
-    for (let i = placed; i < BUILDING_COUNT; i++) { hideMatrix(); buildingInst.setMatrixAt(i, dummy.matrix); }
-    buildingInst.computeBoundingSphere();
-    scene.add(buildingInst);
-
-    const LAMP_COUNT = 64;
-    const lampPoleGeo = new THREE.CylinderGeometry(0.06, 0.09, 5.6, 6);
-    const lampPoleMat = new THREE.MeshStandardMaterial({ color: 0x2a2f36, roughness: 0.5, metalness: 0.7 });
-    const lampHeadGeo = new THREE.SphereGeometry(0.22, 8, 6);
-    const lampHeadMat = new THREE.MeshStandardMaterial({ color: 0xffd27a, emissive: 0xffd27a, emissiveIntensity: 0, roughness: 0.72, metalness: 0.05 });
-    const lampPoleInst = new THREE.InstancedMesh(lampPoleGeo, lampPoleMat, LAMP_COUNT);
-    const lampHeadInst = new THREE.InstancedMesh(lampHeadGeo, lampHeadMat, LAMP_COUNT);
-    placed = 0;
-    for (const arc of cityArcs) {
-      const n = Math.round(LAMP_COUNT * (arc.to - arc.from));
-      for (let j = 0; j < n && placed < LAMP_COUNT; j++) {
-        const t = arc.from + ((j + 0.5) / n) * (arc.to - arc.from);
-        const p = placeProp(t, ROAD_WIDTH / 2 + 3.2, ROAD_WIDTH / 2 + 3.2, j % 2 === 0 ? 1 : -2);
-        if (p.underWater) continue;
-        dummy.rotation.set(0, 0, 0);
-        dummy.scale.set(1, 1, 1);
-        // CylinderGeometry is centered at its origin; lift the pole so its
-        // bottom sits on the terrain instead of burying half the pole.
-        dummy.position.set(p.x, p.h + 2.8, p.z);
-        dummy.updateMatrix();
-        lampPoleInst.setMatrixAt(placed, dummy.matrix);
-        dummy.position.set(p.x, p.h + 5.6, p.z);
-        dummy.updateMatrix();
-        lampHeadInst.setMatrixAt(placed, dummy.matrix);
-        placed++;
-      }
-    }
-    for (let i = placed; i < LAMP_COUNT; i++) { hideMatrix(); lampPoleInst.setMatrixAt(i, dummy.matrix); lampHeadInst.setMatrixAt(i, dummy.matrix); }
-    lampPoleInst.computeBoundingSphere(); lampHeadInst.computeBoundingSphere();
-    scene.add(lampPoleInst, lampHeadInst);
-
-    // ── Desert: rocks + dry bushes ──
-    const DESERT_ROCK_COUNT = 40;
-    const rockGeo = new THREE.DodecahedronGeometry(0.7, 0);
-    const rockMat = new THREE.MeshStandardMaterial({ color: 0x8a7a5f, flatShading: true, roughness: 0.95 });
-    const desertRockInst = new THREE.InstancedMesh(rockGeo, rockMat, DESERT_ROCK_COUNT);
-    desertRockInst.castShadow = true;
-    const bushGeo = new THREE.IcosahedronGeometry(0.7, 0);
-    const bushMat = new THREE.MeshStandardMaterial({ color: 0x6d7a4a, flatShading: true, roughness: 0.9 });
-    const BUSH_COUNT = 55;
-    const bushInst = new THREE.InstancedMesh(bushGeo, bushMat, BUSH_COUNT);
-    bushInst.castShadow = true;
-    const desertArcs = arcsOf('desert');
-    placed = 0;
-    for (let i = 0; i < DESERT_ROCK_COUNT && desertArcs.length; i++) {
-      const p = placeProp(randT(desertArcs[Math.floor(propRng() * desertArcs.length)]), ROAD_WIDTH / 2 + 2.2, 26, 1);
-      if (p.underWater) continue;
-      const s = 0.5 + propRng() * 0.8;
-      dummy.rotation.set(propRng() * Math.PI, propRng() * Math.PI, 0);
-      dummy.position.set(p.x, p.h + 0.3 * s, p.z);
-      dummy.scale.set(s, s * (0.6 + propRng() * 0.5), s);
-      dummy.updateMatrix();
-      desertRockInst.setMatrixAt(placed, dummy.matrix);
-      placed++;
-    }
-    for (let i = placed; i < DESERT_ROCK_COUNT; i++) { hideMatrix(); desertRockInst.setMatrixAt(i, dummy.matrix); }
-    placed = 0;
-    for (let i = 0; i < BUSH_COUNT && desertArcs.length; i++) {
-      const p = placeProp(randT(desertArcs[Math.floor(propRng() * desertArcs.length)]), ROAD_WIDTH / 2 + 2.5, 24, 1);
-      if (p.underWater) continue;
-      const s = 0.4 + propRng() * 0.5;
-      dummy.rotation.set(0, propRng() * Math.PI, 0);
-      dummy.position.set(p.x, p.h + 0.35 * s, p.z);
-      dummy.scale.set(s, s * 0.6, s);
-      dummy.updateMatrix();
-      bushInst.setMatrixAt(placed, dummy.matrix);
-      placed++;
-    }
-    for (let i = placed; i < BUSH_COUNT; i++) { hideMatrix(); bushInst.setMatrixAt(i, dummy.matrix); }
-    desertRockInst.computeBoundingSphere(); bushInst.computeBoundingSphere();
-    scene.add(desertRockInst, bushInst);
-
-    /* ═══════════════════════════════════════
-       LIVING WORLD LAYERS — lightweight animated life
-       ═══════════════════════════════════════ */
-    const cityTraffic = [];
-    const cityPedestrians = [];
-    const forestDeer = [];
-    const beachPeople = [];
-    const beachUmbrellas = [];
-    const beachBoats = [];
-
-    const lifeSkin = new THREE.MeshStandardMaterial({ color: 0xc88767, roughness: 0.9 });
-    const lifeDark = new THREE.MeshStandardMaterial({ color: 0x27313a, roughness: 0.9 });
-    const lifePants = new THREE.MeshStandardMaterial({ color: 0x344352, roughness: 0.92 });
-    const pedestrianShirts = [0x4f7890, 0xb8755c, 0xc3a15f, 0x6c8b62].map(hex => new THREE.MeshStandardMaterial({ color: hex, roughness: 0.88 }));
-    const personBodyGeo = new THREE.BoxGeometry(0.34, 0.62, 0.24);
-    const personHeadGeo = new THREE.SphereGeometry(0.17, 8, 6);
-    const personLegGeo = new THREE.BoxGeometry(0.1, 0.38, 0.11);
-    const personArmGeo = new THREE.BoxGeometry(0.08, 0.38, 0.09);
-
-    function makePerson(shirtMat, scale = 1) {
-      const person = new THREE.Group();
-      const body = new THREE.Mesh(personBodyGeo, shirtMat);
-      body.position.y = 0.58;
-      const head = new THREE.Mesh(personHeadGeo, lifeSkin);
-      head.position.y = 1.04;
-      const hair = new THREE.Mesh(personHeadGeo, lifeDark);
-      hair.scale.set(1.02, 0.42, 1.02);
-      hair.position.set(0, 1.15, -0.015);
-      const leftLeg = new THREE.Mesh(personLegGeo, lifePants);
-      leftLeg.position.set(-0.09, 0.18, 0);
-      const rightLeg = new THREE.Mesh(personLegGeo, lifePants);
-      rightLeg.position.set(0.09, 0.18, 0);
-      const leftArm = new THREE.Mesh(personArmGeo, shirtMat);
-      leftArm.position.set(-0.25, 0.6, 0);
-      leftArm.rotation.z = -0.18;
-      const rightArm = new THREE.Mesh(personArmGeo, shirtMat);
-      rightArm.position.set(0.25, 0.6, 0);
-      rightArm.rotation.z = 0.18;
-      person.add(body, head, hair, leftLeg, rightLeg, leftArm, rightArm);
-      person.scale.setScalar(scale);
-      person.traverse(child => { if (child.isMesh) child.castShadow = true; });
-      return person;
-    }
-
-    function roadFrame(t) {
-      const pos = roadCurve.getPointAt(t);
-      const tangent = roadCurve.getTangentAt(t).normalize();
-      const right = new THREE.Vector3().crossVectors(tangent, upVector).normalize();
-      return { pos, tangent, right };
-    }
-    function roadOffset(t, offset, side) {
-      const frame = roadFrame(t);
-      const x = frame.pos.x + frame.right.x * side * offset;
-      const z = frame.pos.z + frame.right.z * side * offset;
-      return { ...frame, x, z, h: vertexTerrain(x, z).h };
-    }
-    function shoreSide(t) {
-      const frame = roadFrame(t);
-      const radial = new THREE.Vector3(frame.pos.x - loopCenter.x, 0, frame.pos.z - loopCenter.z).normalize();
-      return Math.sign(frame.right.dot(radial) || 1);
-    }
-
-    // City traffic: small, quiet vehicles keep the road alive without competing
-    // with the player's Ferrari or turning the scene into a racing game.
-    const trafficBodyGeo = new THREE.BoxGeometry(1.15, 0.38, 2.15);
-    const trafficCabinGeo = new THREE.BoxGeometry(0.88, 0.34, 0.95);
-    const trafficWindowMat = new THREE.MeshStandardMaterial({ color: 0x17242d, roughness: 0.46, metalness: 0.2 });
-    const trafficColors = [0x5d8fb0, 0xd46a52, 0xe0b24f, 0x8797a6, 0x6faf8a];
-    function makeTraffic(color) {
-      const vehicle = new THREE.Group();
-      const body = new THREE.Mesh(trafficBodyGeo, new THREE.MeshStandardMaterial({ color, roughness: 0.72, metalness: 0.12 }));
-      const cabin = new THREE.Mesh(trafficCabinGeo, trafficWindowMat);
-      body.position.y = 0.38;
-      cabin.position.set(0, 0.69, -0.08);
-      vehicle.add(body, cabin);
-      vehicle.traverse(child => { if (child.isMesh) child.castShadow = true; });
-      return vehicle;
-    }
-    const cityArcsLife = cityArcs;
-    const TRAFFIC_COUNT = 16;
-    for (let i = 0; i < TRAFFIC_COUNT && cityArcsLife.length; i++) {
-      const arc = cityArcsLife[i % cityArcsLife.length];
-      const entry = {
-        arc,
-        t: arc.from + (i / TRAFFIC_COUNT) * (arc.to - arc.from),
-        lane: i % 2 === 0 ? 1.55 : -1.55,
-        speed: 0.00005 + propRng() * 0.00004,
-        vehicle: makeTraffic(trafficColors[i % trafficColors.length]),
-      };
-      scene.add(entry.vehicle);
-      cityTraffic.push(entry);
-    }
-
-    // City pedestrians occupy the sidewalks and loop through their district.
-    const PEDESTRIAN_COUNT = 24;
-    for (let i = 0; i < PEDESTRIAN_COUNT && cityArcsLife.length; i++) {
-      const arc = cityArcsLife[i % cityArcsLife.length];
-      const entry = {
-        arc,
-        t: arc.from + (i / PEDESTRIAN_COUNT) * (arc.to - arc.from),
-        side: i % 2 === 0 ? 1 : -1,
-        speed: 0.000018 + propRng() * 0.000018,
-        phase: propRng() * Math.PI * 2,
-        person: makePerson(pedestrianShirts[i % pedestrianShirts.length], 0.82 + propRng() * 0.2),
-      };
-      scene.add(entry.person);
-      cityPedestrians.push(entry);
-    }
-
-    // Nature life: deer remain sparse, calm, and close enough to read from the road.
-    const deerBodyGeo = new THREE.BoxGeometry(1.25, 0.56, 0.46);
-    const deerHeadGeo = new THREE.BoxGeometry(0.42, 0.42, 0.34);
-    const deerLegGeo = new THREE.CylinderGeometry(0.055, 0.075, 0.65, 5);
-    const deerMat = new THREE.MeshStandardMaterial({ color: 0x8a6844, roughness: 0.95, flatShading: true });
-    const deerDarkMat = new THREE.MeshStandardMaterial({ color: 0x463528, roughness: 0.95, flatShading: true });
-    function makeDeer() {
-      const deer = new THREE.Group();
-      const body = new THREE.Mesh(deerBodyGeo, deerMat);
-      body.position.y = 1.02;
-      const head = new THREE.Mesh(deerHeadGeo, deerMat);
-      head.position.set(0, 1.34, 0.55);
-      const tail = new THREE.Mesh(new THREE.ConeGeometry(0.16, 0.3, 5), deerDarkMat);
-      tail.rotation.x = -Math.PI / 2;
-      tail.position.set(0, 1.17, -0.7);
-      // Antlers make the deer readable at driving distance.
-      for (const x of [-0.14, 0.14]) {
-        const antler = new THREE.Mesh(new THREE.ConeGeometry(0.035, 0.42, 4), deerDarkMat);
-        antler.position.set(x, 1.72, 0.5);
-        antler.rotation.z = x < 0 ? -0.35 : 0.35;
-        deer.add(antler);
-      }
-      deer.add(body, head, tail);
-      for (const x of [-0.4, 0.4]) for (const z of [-0.25, 0.25]) {
-        const leg = new THREE.Mesh(deerLegGeo, deerDarkMat);
-        leg.position.set(x, 0.52, z);
-        deer.add(leg);
-      }
-      deer.traverse(child => { if (child.isMesh) child.castShadow = true; });
-      return deer;
-    }
-    const forestArcsLife = forestArcs;
-    for (let i = 0; i < 5 && forestArcsLife.length; i++) {
-      const arc = forestArcsLife[i % forestArcsLife.length];
-      const entry = {
-        arc,
-        t: arc.from + propRng() * (arc.to - arc.from),
-        side: i % 2 === 0 ? 1 : -1,
-        offset: 8 + propRng() * 10,
-        phase: propRng() * Math.PI * 2,
-        deer: makeDeer(),
-      };
-      scene.add(entry.deer);
-      forestDeer.push(entry);
-    }
-
-    // Fireflies use one tiny point cloud instead of dozens of individual meshes.
-    const fireflyCount = 42;
-    const fireflyPos = new Float32Array(fireflyCount * 3);
-    const fireflyBaseY = new Float32Array(fireflyCount);
-    const fireflyMat = new THREE.PointsMaterial({ color: 0xffe9a4, size: 0.28, transparent: true, opacity: 0, depthWrite: false });
-    for (let i = 0; i < fireflyCount; i++) {
-      const arc = forestArcsLife.length ? forestArcsLife[i % forestArcsLife.length] : arcs[0];
-      const t = arc.from + propRng() * (arc.to - arc.from);
-      const p = roadOffset(t, 8 + propRng() * 28, propRng() > 0.5 ? 1 : -1);
-      fireflyPos[i * 3] = p.x;
-      fireflyPos[i * 3 + 1] = p.h + 1.2 + propRng() * 4.8;
-      fireflyBaseY[i] = fireflyPos[i * 3 + 1];
-      fireflyPos[i * 3 + 2] = p.z;
-    }
-    const fireflyGeo = new THREE.BufferGeometry();
-    fireflyGeo.setAttribute('position', new THREE.BufferAttribute(fireflyPos, 3));
-    const fireflies = new THREE.Points(fireflyGeo, fireflyMat);
-    fireflies.frustumCulled = false;
-    scene.add(fireflies);
-
-    // Beach life: bright, simple silhouettes near the waterline and slow boats.
-    const beachArcsLife = beachArcs;
-    const beachShirts = [0xe17858, 0x5b9eb5, 0xf0c76e, 0xf1e2c2].map(hex => new THREE.MeshStandardMaterial({ color: hex, roughness: 0.86 }));
-    const BEACHGOER_COUNT = 16;
-    for (let i = 0; i < BEACHGOER_COUNT && beachArcsLife.length; i++) {
-      const arc = beachArcsLife[i % beachArcsLife.length];
-      const entry = {
-        arc,
-        t: arc.from + (i / BEACHGOER_COUNT) * (arc.to - arc.from),
-        side: shoreSide(arc.from + (arc.to - arc.from) * 0.5),
-        offset: 7 + propRng() * 4,
-        phase: propRng() * Math.PI * 2,
-        person: makePerson(beachShirts[i % beachShirts.length], 0.72 + propRng() * 0.2),
-      };
-      scene.add(entry.person);
-      beachPeople.push(entry);
-    }
-
-    const umbrellaPoleGeo = new THREE.CylinderGeometry(0.035, 0.045, 1.65, 6);
-    const umbrellaGeo = new THREE.ConeGeometry(0.9, 0.32, 10);
-    const umbrellaPoleMat = new THREE.MeshStandardMaterial({ color: 0x6b5140, roughness: 0.9 });
-    const umbrellaMats = [0xe17858, 0x5b9eb5, 0xf0c76e].map(hex => new THREE.MeshStandardMaterial({ color: hex, roughness: 0.84, flatShading: true }));
-    for (let i = 0; i < 10 && beachArcsLife.length; i++) {
-      const arc = beachArcsLife[i % beachArcsLife.length];
-      const t = arc.from + (i / 10) * (arc.to - arc.from);
-      const side = shoreSide(t);
-      const p = roadOffset(t, 6 + propRng() * 3, side);
-      const umbrella = new THREE.Group();
-      const pole = new THREE.Mesh(umbrellaPoleGeo, umbrellaPoleMat);
-      pole.position.y = 0.82;
-      const canopy = new THREE.Mesh(umbrellaGeo, umbrellaMats[i % umbrellaMats.length]);
-      canopy.position.y = 1.65;
-      umbrella.add(pole, canopy);
-      umbrella.position.set(p.x, p.h, p.z);
-      umbrella.rotation.y = propRng() * Math.PI;
-      umbrella.traverse(child => { if (child.isMesh) child.castShadow = true; });
-      scene.add(umbrella);
-      beachUmbrellas.push({ umbrella, phase: propRng() * Math.PI * 2 });
-    }
-
-    const boatHullGeo = new THREE.BoxGeometry(2.6, 0.34, 0.9);
-    const boatCabinGeo = new THREE.BoxGeometry(0.85, 0.34, 0.55);
-    const boatMat = new THREE.MeshStandardMaterial({ color: 0xf0f0e7, roughness: 0.78 });
-    const boatAccentMat = new THREE.MeshStandardMaterial({ color: 0x3f89a8, roughness: 0.7 });
-    for (let i = 0; i < 3 && beachArcsLife.length; i++) {
-      const arc = beachArcsLife[i % beachArcsLife.length];
-      const t = arc.from + propRng() * (arc.to - arc.from);
-      const side = shoreSide(t);
-      const p = roadOffset(t, 48 + propRng() * 28, side);
-      const boat = new THREE.Group();
-      const hull = new THREE.Mesh(boatHullGeo, boatMat);
-      const cabin = new THREE.Mesh(boatCabinGeo, boatAccentMat);
-      cabin.position.set(-0.25, 0.32, 0);
-      boat.add(hull, cabin);
-      boat.position.set(p.x, WATER_LEVEL + 0.35, p.z);
-      boat.rotation.y = Math.atan2(p.tangent.x, p.tangent.z);
-      boat.traverse(child => { if (child.isMesh) child.castShadow = true; });
-      scene.add(boat);
-      beachBoats.push({ boat, arc, t, side, phase: propRng() * Math.PI * 2 });
-    }
-
-    // ── Kilometer posts around the whole loop ──
-    const POST_COUNT = 36;
-    const postBaseGeo = new THREE.CylinderGeometry(0.08, 0.08, 0.9, 6);
-    const postBaseMat = new THREE.MeshLambertMaterial({ color: 0x3d2b1f });
-    const postBaseInst = new THREE.InstancedMesh(postBaseGeo, postBaseMat, POST_COUNT);
-    const postCapGeo = new THREE.BoxGeometry(0.2, 0.18, 0.1);
-    const postCapMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.4 });
-    const postCapInst = new THREE.InstancedMesh(postCapGeo, postCapMat, POST_COUNT);
-    for (let i = 0; i < POST_COUNT; i++) {
-      const t = i / POST_COUNT;
-      const pos = roadCurve.getPointAt(t);
-      const tangent = roadCurve.getTangentAt(t).normalize();
-      const right = new THREE.Vector3().crossVectors(tangent, upVector).normalize();
-      const side = (i % 2 === 0) ? 1 : -1;
-      const px = pos.x + right.x * side * (ROAD_WIDTH / 2 + 0.8);
-      const pz = pos.z + right.z * side * (ROAD_WIDTH / 2 + 0.8);
-      const g = vertexTerrain(px, pz);
-      dummy.rotation.set(0, 0, 0);
-      dummy.scale.set(1, 1, 1);
-      dummy.position.set(px, g.h + 0.45, pz);
-      dummy.updateMatrix();
-      postBaseInst.setMatrixAt(i, dummy.matrix);
-      dummy.position.set(px, g.h + 0.85, pz);
-      dummy.updateMatrix();
-      postCapInst.setMatrixAt(i, dummy.matrix);
-    }
-    postBaseInst.computeBoundingSphere(); postCapInst.computeBoundingSphere();
-    scene.add(postBaseInst, postCapInst);
-
-    /* ═══════════════════════════════════════
-       FLOCK OF BIRDS
-       ═══════════════════════════════════════ */
-    const BIRD_COUNT = 14;
-    const birdGroup = new THREE.Group();
-    const birdWings = [];
-
-    const wingShapeGeo = new THREE.BufferGeometry();
-    const wingVerts = new Float32Array([
-      -0.4, 0, 0,  0, 0.08, -0.15,  0, 0, 0,
-       0, 0, 0,    0, 0.08, -0.15,  0.4, 0, 0
-    ]);
-    wingShapeGeo.setAttribute('position', new THREE.BufferAttribute(wingVerts, 3));
-    wingShapeGeo.computeVertexNormals();
-
-    const birdMat = new THREE.MeshBasicMaterial({ color: 0x223328, side: THREE.DoubleSide });
-
-    for (let i = 0; i < BIRD_COUNT; i++) {
-      const bMesh = new THREE.Mesh(wingShapeGeo, birdMat);
-      bMesh.position.set(
-        groundCX + (Math.random() - 0.5) * groundW * 0.75,
-        14 + Math.random() * 14,
-        groundCZ + (Math.random() - 0.5) * groundH * 0.75
-      );
-      bMesh.scale.setScalar(1.2 + Math.random() * 0.6);
-      birdGroup.add(bMesh);
-      birdWings.push(bMesh);
-    }
-    scene.add(birdGroup);
-
-    /* ═══════════════════════════════════════
-       3D VEHICLE LOADING & LIGHTS
-       ═══════════════════════════════════════ */
-    const carGroup = new THREE.Group();
-    scene.add(carGroup);
-
-    const tailGlowGeo = new THREE.PlaneGeometry(0.8, 0.18);
-    const tailGlowMat = new THREE.MeshBasicMaterial({
-      color: 0xff1100,
-      transparent: true,
-      opacity: 0.5,
-      side: THREE.DoubleSide
-    });
-    const tailGlowMesh = new THREE.Mesh(tailGlowGeo, tailGlowMat);
-    tailGlowMesh.position.set(0, 0.48, -2.12);
-
-    const headlightLeft = new THREE.SpotLight(0xfff5dd, 0, 45, Math.PI / 6, 0.4, 1);
-    headlightLeft.position.set(-0.6, 0.55, 2.0);
-    const headlightRight = new THREE.SpotLight(0xfff5dd, 0, 45, Math.PI / 6, 0.4, 1);
-    headlightRight.position.set(0.6, 0.55, 2.0);
-
-    const targetLeft = new THREE.Object3D();
-    targetLeft.position.set(-0.6, 0.1, 15);
-    carGroup.add(targetLeft);
-    headlightLeft.target = targetLeft;
-
-    const targetRight = new THREE.Object3D();
-    targetRight.position.set(0.6, 0.1, 15);
-    carGroup.add(targetRight);
-    headlightRight.target = targetRight;
-
-    carGroup.add(headlightLeft, headlightRight);
-
-    let frontWheels = [];
-    let innerCarMesh = null;
-
-    const dracoLoader = new DRACOLoader();
-    dracoLoader.setDecoderPath('https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/libs/draco/gltf/');
-
-    const gltfLoader = new GLTFLoader();
-    gltfLoader.setDRACOLoader(dracoLoader);
-
-    function prepareCarModel(model) {
-      model.traverse(child => {
-        if (child.isMesh) {
-          child.castShadow = true;
-          child.receiveShadow = true;
-          if (child.name.toLowerCase().includes('wheel_fl') || child.name.toLowerCase().includes('wheel_fr')) {
-            frontWheels.push(child);
-          }
-        }
-      });
-      const box = new THREE.Box3().setFromObject(model);
-      const center = box.getCenter(new THREE.Vector3());
-      const size = box.getSize(new THREE.Vector3());
-
-      model.rotation.y = Math.PI;
-      model.position.sub(center);
-
-      const wrapper = new THREE.Group();
-      wrapper.add(model);
-      wrapper.add(tailGlowMesh);
-      innerCarMesh = wrapper;
-
-      const maxDim = Math.max(size.x, size.y, size.z);
-      const targetScale = 4.2 / maxDim;
-      wrapper.scale.setScalar(targetScale);
-      wrapper.position.y = (size.y * targetScale) / 2 + 0.06;
-      return wrapper;
-    }
-
-    function hideLoadingScreen() {
-      const ls = document.getElementById('loadingScreen');
-      if (ls) { ls.classList.add('hidden'); setTimeout(() => ls.remove(), 700); }
-    }
-    // Safety timeout: hide loading screen after 6s even if models fail
-    setTimeout(hideLoadingScreen, 6000);
-
-    gltfLoader.load('ferrari.glb', (gltf) => {
-      carGroup.add(prepareCarModel(gltf.scene));
-      hideLoadingScreen();
-    }, undefined, (err) => {
-      console.warn('Ferrari GLB fallback to car.glb:', err);
-      const fallbackLoader = new GLTFLoader();
-      fallbackLoader.load('car.glb', (gltf) => {
-        carGroup.add(prepareCarModel(gltf.scene));
-        hideLoadingScreen();
-      }, undefined, (err2) => {
-        console.error('All car models failed to load:', err2);
-        // Final fallback: simple colored box placeholder
-        const fallbackGeo = new THREE.BoxGeometry(4, 1.4, 2);
-        const fallbackMat = new THREE.MeshStandardMaterial({ color: 0xcc2222, roughness: 0.3, metalness: 0.7 });
-        const fallbackMesh = new THREE.Mesh(fallbackGeo, fallbackMat);
-        fallbackMesh.position.y = 0.8;
-        fallbackMesh.castShadow = true;
-        carGroup.add(fallbackMesh);
-        hideLoadingScreen();
-      });
-    });
-
-    /* ═══════════════════════════════════════
-       EXHAUST DUST PARTICLES
-       ═══════════════════════════════════════ */
-    const PARTICLE_COUNT = 45;
-    const pGeo = new THREE.BufferGeometry();
-    const pPos = new Float32Array(PARTICLE_COUNT * 3);
-
-    for (let i = 0; i < PARTICLE_COUNT; i++) {
-      pPos[i * 3] = 0; pPos[i * 3 + 1] = -100; pPos[i * 3 + 2] = 0;
-    }
-    pGeo.setAttribute('position', new THREE.BufferAttribute(pPos, 3));
-
-    // Generate soft radial-gradient texture for dust particles
-    const dustCanvas = document.createElement('canvas');
-    dustCanvas.width = 64; dustCanvas.height = 64;
-    const dustCtx = dustCanvas.getContext('2d');
-    const gradient = dustCtx.createRadialGradient(32, 32, 0, 32, 32, 32);
-    gradient.addColorStop(0, 'rgba(255, 255, 255, 0.9)');
-    gradient.addColorStop(0.4, 'rgba(255, 255, 255, 0.4)');
-    gradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
-    dustCtx.fillStyle = gradient;
-    dustCtx.fillRect(0, 0, 64, 64);
-    const dustTexture = new THREE.CanvasTexture(dustCanvas);
-
-    const pMat = new THREE.PointsMaterial({
-      color: 0xc8d8ca,
-      size: 0.5,
-      map: dustTexture,
-      transparent: true,
-      opacity: 0.35,
-      alphaTest: 0.01,
-      depthWrite: false
-    });
-    const dustParticles = new THREE.Points(pGeo, pMat);
-    scene.add(dustParticles);
-
-    /* ═══════════════════════════════════════
-       INTERACTIVE DRIVE CONTROLS & TOUCH
-       ═══════════════════════════════════════ */
-    let speedMultiplier = 1.0;
-    let targetSpeedMultiplier = 1.0;
-
-    const kUp = document.querySelector('#kUp');
-    const kDown = document.querySelector('#kDown');
-    const btnGas = document.querySelector('#btnGas');
-    const btnBrake = document.querySelector('#btnBrake');
-
-    function setGas(active) {
-      targetSpeedMultiplier = active ? 1.8 : 1.0;
-      kUp?.classList.toggle('active', active);
-      tailGlowMat.opacity = 0.5;
-    }
-    function setBrake(active) {
-      targetSpeedMultiplier = active ? 0.45 : 1.0;
-      kDown?.classList.toggle('active', active);
-      tailGlowMat.opacity = active ? 1.0 : 0.5;
-    }
-
-    // Hint auto-hide: fade out on first drive input
-    const hintEl = document.querySelector('.hint');
-    function hideHint() {
-      if (hintEl) hintEl.classList.add('hidden');
-    }
-    window.addEventListener('keydown', (e) => {
-      if (e.key === 'ArrowUp' || e.key === 'w' || e.key === 'W') { setGas(true); hideHint(); }
-      if (e.key === 'ArrowDown' || e.key === 's' || e.key === 'S') { setBrake(true); hideHint(); }
-    });
-
-    window.addEventListener('keyup', (e) => {
-      if (['ArrowUp', 'w', 'W'].includes(e.key)) setGas(false);
-      if (['ArrowDown', 's', 'S'].includes(e.key)) setBrake(false);
-    });
-
-    // Touch capability detection — show touch controls on any touch-capable device
-    const touchControls = document.querySelector('.touch-controls');
-    const isTouchCapable = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
-    if (isTouchCapable && touchControls) {
-      touchControls.classList.add('touch-capable');
-    }
-
-    // Touch + mouse fallback for gas/brake buttons
-    btnGas?.addEventListener('touchstart', (e) => { e.preventDefault(); setGas(true); hideHint(); }, { passive: false });
-    btnGas?.addEventListener('touchend', (e) => { e.preventDefault(); setGas(false); }, { passive: false });
-    btnBrake?.addEventListener('touchstart', (e) => { e.preventDefault(); setBrake(true); hideHint(); }, { passive: false });
-    btnBrake?.addEventListener('touchend', (e) => { e.preventDefault(); setBrake(false); }, { passive: false });
-
-    // Mouse fallback so buttons work on narrow desktop windows too
-    btnGas?.addEventListener('mousedown', (e) => { e.preventDefault(); setGas(true); hideHint(); });
-    btnGas?.addEventListener('mouseup', () => setGas(false));
-    btnGas?.addEventListener('mouseleave', () => setGas(false));
-    btnBrake?.addEventListener('mousedown', (e) => { e.preventDefault(); setBrake(true); hideHint(); });
-    btnBrake?.addEventListener('mouseup', () => setBrake(false));
-    btnBrake?.addEventListener('mouseleave', () => setBrake(false));
-
-    window.addEventListener('touchstart', (e) => {
-      if (e.target.closest('.ui') || e.target.closest('.info') || e.target.closest('.touch-controls') || e.target.closest('.hud-stats')) return;
-      const touchY = e.touches[0].clientY;
-      if (touchY < innerHeight * 0.5) setGas(true); else setBrake(true);
-      hideHint();
-    }, { passive: true });
-
-    window.addEventListener('touchend', () => {
-      setGas(false); setBrake(false);
-    }, { passive: true });
-
-    /* ═══════════════════════════════════════
-       DUAL-OSCILLATOR WEB AUDIO ENGINE HUM SYNTHESIZER
-       ═══════════════════════════════════════ */
-    class EngineAudioSynthesizer {
-      constructor() {
-        this.ctx = null;
-        this.osc1 = null;
-        this.osc2 = null;
-        this.filter = null;
-        this.gain = null;
-        this.active = false;
-      }
-      init() {
-        if (this.ctx) return;
-        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
-        this.ctx = new AudioContextClass();
-        
-        this.osc1 = this.ctx.createOscillator();
-        this.osc2 = this.ctx.createOscillator();
-        this.filter = this.ctx.createBiquadFilter();
-        this.gain = this.ctx.createGain();
-
-        this.osc1.type = 'sawtooth';
-        this.osc2.type = 'triangle';
-
-        this.filter.type = 'lowpass';
-        this.filter.Q.value = 2.5;
-
-        this.gain.gain.value = 0.0001;
-
-        this.osc1.connect(this.filter);
-        this.osc2.connect(this.filter);
-        this.filter.connect(this.gain);
-        this.gain.connect(this.ctx.destination);
-
-        this.osc1.start();
-        this.osc2.start();
-      }
-      toggle() {
-        this.init();
-        if (this.ctx.state === 'suspended') this.ctx.resume();
-        this.active = !this.active;
-        const targetGain = this.active ? 0.08 : 0.0001;
-        this.gain.gain.setTargetAtTime(targetGain, this.ctx.currentTime, 0.1);
-        return this.active;
-      }
-      update(spd) {
-        if (!this.active || !this.ctx) return;
-        const now = this.ctx.currentTime;
-        const baseFreq = 46 * Math.pow(spd, 1.15);
-        this.osc1.frequency.setTargetAtTime(baseFreq, now, 0.05);
-        this.osc2.frequency.setTargetAtTime(baseFreq * 1.015, now, 0.05);
-
-        const cutoff = 180 + spd * 380;
-        this.filter.frequency.setTargetAtTime(cutoff, now, 0.05);
-      }
-    }
-
-    const engineAudio = new EngineAudioSynthesizer();
-    const btnAudio = document.querySelector('#btnAudio');
-
-    btnAudio?.addEventListener('click', () => {
-      const isLive = engineAudio.toggle();
-      btnAudio.textContent = isLive ? 'SOUND 🔊' : 'SOUND 🔇';
-    });
-
-    document.addEventListener('visibilitychange', () => {
-      if (document.hidden && engineAudio.active && engineAudio.ctx) {
-        engineAudio.gain.gain.setTargetAtTime(0.0001, engineAudio.ctx.currentTime, 0.1);
-      }
-    });
-
-    /* ═══════════════════════════════════════
-       ZERO-GC REUSABLE VECTOR TARGETS & ANIMATION LOOP
-       ═══════════════════════════════════════ */
-    const _pos = new THREE.Vector3();
-    const _aheadPos = new THREE.Vector3();
-    const _lookAheadFar = new THREE.Vector3();
-    const _behindPos = new THREE.Vector3();
-    const _currentTang = new THREE.Vector3();
-    const _aheadTang = new THREE.Vector3();
-    const _targetCamPos = new THREE.Vector3();
-
-    let progress = 0.02;
-    let lap = 1;
-    const BASE_SPEED = 0.00018;
-    let frameCount = 0;
-
-    const mouse = { x: 0, y: 0 };
-    const smoothMouse = { x: 0, y: 0 };
-    const cameraPos = new THREE.Vector3();
-    let particleIdx = 0;
-
-    const speedValEl = document.querySelector('#speedVal');
-    const distValEl = document.querySelector('#distVal');
-    const lapValEl = document.querySelector('#lapVal');
-    const wthrValEl = document.querySelector('#wthrVal');
-    const biomeValEl = document.querySelector('#biomeVal');
-    const hudGauge = document.querySelector('#hudGauge');
-
-    addEventListener('pointermove', e => {
-      mouse.x = (e.clientX / innerWidth) * 2 - 1;
-      mouse.y = -(e.clientY / innerHeight) * 2 - 1;
-    });
-
-    const clock = new THREE.Clock();
-    let lightning = 0;
-
-    function animate() {
-      requestAnimationFrame(animate);
-      frameCount++;
-      const dt = Math.min(clock.getDelta(), 0.05);
-      const time = clock.getElapsedTime();
-
-      if (frameCount % 2 === 0) {
-        renderer.shadowMap.needsUpdate = true;
-      }
-
-      smoothMouse.x += (mouse.x - smoothMouse.x) * 0.035;
-      smoothMouse.y += (mouse.y - smoothMouse.y) * 0.035;
-
-      speedMultiplier += (targetSpeedMultiplier - speedMultiplier) * 0.05;
-
-      // Seamless closed-loop progress — the circuit never ends
-      progress += BASE_SPEED * speedMultiplier;
-      if (progress >= 1) { progress -= 1; lap++; }
-
-      engineAudio.update(speedMultiplier);
-
-      birdWings.forEach((bird, idx) => {
-        bird.rotation.z = Math.sin(time * 9 + idx) * 0.25;
-        bird.position.x += Math.sin(time * 0.2 + idx) * 0.04;
-      });
-
-      // Animate each living-world layer on its own small loop. Objects stay
-      // attached to the same terrain sampler as the road, so nothing floats.
-      cityTraffic.forEach((entry, idx) => {
-        entry.t += entry.speed * dt;
-        if (entry.t > entry.arc.to) entry.t = entry.arc.from;
-        const p = roadOffset(entry.t, Math.abs(entry.lane), Math.sign(entry.lane));
-        entry.vehicle.position.set(p.x, p.h, p.z);
-        entry.vehicle.lookAt(p.pos.x + p.tangent.x * 4, p.h, p.pos.z + p.tangent.z * 4);
-      });
-      cityPedestrians.forEach((entry, idx) => {
-        entry.t += entry.speed * dt;
-        if (entry.t > entry.arc.to) entry.t = entry.arc.from;
-        const p = roadOffset(entry.t, ROAD_WIDTH / 2 + 6.8, entry.side);
-        entry.person.position.set(p.x, p.h + Math.abs(Math.sin(time * 3.2 + entry.phase)) * 0.025, p.z);
-        entry.person.rotation.y = Math.atan2(p.tangent.x, p.tangent.z) + (entry.side > 0 ? Math.PI / 2 : -Math.PI / 2);
-      });
-      forestDeer.forEach((entry, idx) => {
-        const p = roadOffset(entry.t, entry.offset, entry.side);
-        entry.deer.position.set(p.x, p.h + Math.sin(time * 0.9 + entry.phase) * 0.035, p.z);
-        entry.deer.rotation.y = Math.atan2(p.tangent.x, p.tangent.z) + (entry.side > 0 ? -0.65 : 0.65);
-        entry.deer.rotation.z = Math.sin(time * 0.7 + entry.phase) * 0.025;
-      });
-      beachPeople.forEach(entry => {
-        entry.t += 0.000008 * dt;
-        if (entry.t > entry.arc.to) entry.t = entry.arc.from;
-        const p = roadOffset(entry.t, entry.offset, entry.side);
-        entry.person.position.set(p.x, p.h + Math.abs(Math.sin(time * 2.2 + entry.phase)) * 0.04, p.z);
-        entry.person.rotation.y = Math.atan2(p.tangent.x, p.tangent.z);
-      });
-      beachUmbrellas.forEach((entry, idx) => {
-        entry.umbrella.rotation.z = Math.sin(time * 0.35 + entry.phase) * 0.025;
-      });
-      beachBoats.forEach(entry => {
-        entry.t += 0.000006 * dt;
-        if (entry.t > entry.arc.to) entry.t = entry.arc.from;
-        const p = roadOffset(entry.t, 48, entry.side);
-        entry.boat.position.x = p.x;
-        entry.boat.position.z = p.z;
-        entry.boat.position.y = WATER_LEVEL + 0.35 + Math.sin(time * 0.8 + entry.phase) * 0.08;
-        entry.boat.rotation.y = Math.atan2(p.tangent.x, p.tangent.z);
-      });
-      const fireflyArray = fireflyGeo.attributes.position.array;
-      for (let i = 0; i < fireflyCount; i++) {
-        fireflyArray[i * 3 + 1] = fireflyBaseY[i] + Math.sin(time * 0.9 + i) * 0.35;
-      }
-      fireflyGeo.attributes.position.needsUpdate = true;
-
-      const currentSpeed = Math.round(64 * speedMultiplier + Math.sin(progress * 40) * 4);
-      if (speedValEl) speedValEl.textContent = `${currentSpeed} MPH`;
-      if (distValEl) distValEl.textContent = `${((progress * loopLength) / 1000).toFixed(1)} KM`;
-      if (lapValEl) lapValEl.textContent = `L${lap}`;
-      if (biomeValEl) biomeValEl.textContent = BIOME_LABELS[arcBiomes[Math.floor((((progress % 1) + 1) % 1) * ARC_COUNT) % ARC_COUNT]];
-      if (hudGauge) hudGauge.style.width = `${((speedMultiplier - 0.45) / (1.8 - 0.45)) * 100}%`;
-
-      // Live Ohio weather drives the sky — ease toward the current condition
-      const wTarget = weatherTarget(weatherState.cond, weatherState.isDay);
-      const lerpK = 1 - Math.pow(0.0012, dt);
-      skyState.top.lerp(wTarget.top, lerpK);
-      skyState.horizon.lerp(wTarget.horizon, lerpK);
-      skyState.sun.lerp(wTarget.sun, lerpK);
-      skyState.sunIntensity += (wTarget.sunIntensity - skyState.sunIntensity) * lerpK;
-      skyState.ambient += (wTarget.ambient - skyState.ambient) * lerpK;
-      skyState.hemi += (wTarget.hemi - skyState.hemi) * lerpK;
-      skyState.fogDensity += (wTarget.fogDensity - skyState.fogDensity) * lerpK;
-      skyState.night += (wTarget.night - skyState.night) * lerpK;
-      skyState.clouds += (wTarget.clouds - skyState.clouds) * lerpK;
-      skyState.cloudColor.lerp(wTarget.cloudColor, lerpK);
-      skyState.rain += (wTarget.rain - skyState.rain) * lerpK;
-      skyState.snow += (wTarget.snow - skyState.snow) * lerpK;
-      skyState.storm += (wTarget.storm - skyState.storm) * lerpK;
-
-      // Thunderstorm lightning flashes
-      if (skyState.storm > 0.5 && Math.random() < 0.008) lightning = 1;
-      lightning *= 0.88;
-
-      skyMat.uniforms.topColor.value.copy(skyState.top);
-      skyMat.uniforms.horizonColor.value.copy(skyState.horizon);
-      skyMat.uniforms.sunColor.value.copy(skyState.sun);
-      skyMat.uniforms.sunIntensityU.value = skyState.sunIntensity;
-      skyMat.uniforms.nightFactor.value = skyState.night;
-      skyMat.uniforms.cloudCover.value = skyState.clouds;
-      skyMat.uniforms.cloudColor.value.copy(skyState.cloudColor);
-      skyMat.uniforms.timeU.value = time;
-
-      scene.fog.color.copy(skyState.horizon);
-      scene.fog.density = skyState.fogDensity;
-      ambientLight.intensity = skyState.ambient * (1 + lightning * 1.3);
-      hemiLight.intensity = skyState.hemi * (1 + lightning * 0.6);
-      sun.intensity = skyState.sunIntensity * (1 - skyState.night * 0.8) * (1 + lightning * 1.5);
-      sun.color.copy(skyState.sun);
-
-      // Headlights come on when it is genuinely dark
-      const dark = Math.max(skyState.night, skyState.storm * 0.65);
-      cityPedestrians.forEach(entry => { entry.person.visible = dark < 0.78; });
-      beachPeople.forEach(entry => { entry.person.visible = dark < 0.62; });
-      fireflyMat.opacity = 0.18 + Math.min(0.75, dark * 0.95);
-      headlightLeft.intensity = dark * 14;
-      headlightRight.intensity = dark * 14;
-      lampHeadMat.emissiveIntensity = 0.02 + 1.8 * dark;
-      buildingMat.emissiveIntensity = 0.02 + 0.78 * dark;
-      waterMat.uniforms.uTime.value = time;
-
-      // Rain & snow — follow the car, recycle forever
-      rainLines.visible = skyState.rain > 0.15;
-      snowPoints.visible = skyState.snow > 0.15;
-      if (rainLines.visible) {
-        rainGroup.position.set(_pos.x, 0, _pos.z);
-        for (let i = 0; i < RAIN_COUNT; i++) {
-          const j = i * 6;
-          rainPos[j + 1] -= 32 * dt;
-          if (rainPos[j + 1] < -4) rainPos[j + 1] = 34 + Math.random() * 8;
-          rainPos[j + 4] = rainPos[j + 1] - 0.6;
-        }
-        rainGeo.attributes.position.needsUpdate = true;
-      }
-      if (snowPoints.visible) {
-        snowPoints.position.set(_pos.x, 0, _pos.z);
-        for (let i = 0; i < SNOW_COUNT; i++) {
-          const j = i * 3;
-          snowPos[j + 1] -= 2.4 * dt;
-          snowPos[j] += Math.sin(time * 1.4 + i * 0.7) * 0.004;
-          if (snowPos[j + 1] < -2) {
-            snowPos[j] = (Math.random() - 0.5) * 160;
-            snowPos[j + 1] = 42 + Math.random() * 6;
-            snowPos[j + 2] = (Math.random() - 0.5) * 160;
-          }
-        }
-        snowGeo.attributes.position.needsUpdate = true;
-      }
-
-      if (wthrValEl) wthrValEl.textContent = `${COND_EMOJI[weatherState.cond] || '☁️'} ${weatherState.temp}°F`;
-
-      const tAhead = (progress + 0.003) % 1;
-      const tLook = (progress + 0.015) % 1;
-      const tTang = (progress + 0.008) % 1;
-      const tBehind = (progress - 0.014 + 1) % 1;
-
-      roadCurve.getPointAt(progress, _pos);
-      roadCurve.getPointAt(tAhead, _aheadPos);
-      roadCurve.getPointAt(tLook, _lookAheadFar);
-
-      carGroup.position.copy(_pos);
-      carGroup.lookAt(_aheadPos.x, _aheadPos.y, _aheadPos.z);
-
-      roadCurve.getTangentAt(progress, _currentTang).normalize();
-      roadCurve.getTangentAt(tTang, _aheadTang).normalize();
-      const steerDelta = _currentTang.x - _aheadTang.x;
-
-      frontWheels.forEach(w => {
-        w.rotation.y = steerDelta * 2.6;
-      });
-
-      if (innerCarMesh) {
-        innerCarMesh.rotation.z = -steerDelta * 0.8;
-      }
-
-      if (carGroup.children.length > 0 && Math.random() < 0.45) {
-        const positions = dustParticles.geometry.attributes.position.array;
-        positions[particleIdx * 3] = _pos.x + (Math.random() - 0.5) * 1.2;
-        positions[particleIdx * 3 + 1] = _pos.y + 0.15;
-        positions[particleIdx * 3 + 2] = _pos.z + 1.8;
-        dustParticles.geometry.attributes.position.needsUpdate = true;
-        particleIdx = (particleIdx + 1) % PARTICLE_COUNT;
-      }
-
-      const targetFov = 52 + (speedMultiplier - 1.0) * 7.5;
-      if (Math.abs(camera.fov - targetFov) > 0.05) {
-        camera.fov += (targetFov - camera.fov) * 0.08;
-        camera.updateProjectionMatrix();
-      }
-
-      roadCurve.getPointAt(tBehind, _behindPos);
-      _targetCamPos.set(
-        _behindPos.x + smoothMouse.x * 3.5,
-        _behindPos.y + 2.8 + smoothMouse.y * 0.8,
-        _behindPos.z
-      );
-
-      // Terrain floor clamp via the track distance field — camera never dips below the world
-      const camH = vertexTerrain(_targetCamPos.x, _targetCamPos.z).h;
-      _targetCamPos.y = Math.max(_targetCamPos.y, camH + 1.8, 1.8);
-
-      if (cameraPos.lengthSq() === 0) {
-        cameraPos.copy(_targetCamPos);
-      } else {
-        cameraPos.lerp(_targetCamPos, 0.055);
-      }
-
-      camera.position.copy(cameraPos);
-      camera.lookAt(_lookAheadFar.x, _lookAheadFar.y + 0.6, _lookAheadFar.z);
-
-      sun.position.set(_pos.x + sunDir.x * 140, 150 + sunDir.y * 140, _pos.z + sunDir.z * 140);
-      sun.target = carGroup;
-
-      composer.render();
-    }
-    animate();
-
+  <script>
     /* ═══════════════════
-       RESIZE & UI
+       IDENTITY & INFO PANEL
        ═══════════════════ */
-    addEventListener('resize', () => {
-      renderer.setSize(innerWidth, innerHeight);
-      composer.setSize(innerWidth, innerHeight);
-      bloomPass.setSize(innerWidth, innerHeight);
-      camera.aspect = innerWidth / innerHeight;
-      camera.updateProjectionMatrix();
-      if (ghPop && ghPop.classList.contains('show')) positionPop();
-    });
-
     const identity = document.querySelector('#identity');
     const info = document.querySelector('#info');
     identity.addEventListener('click', () => {
@@ -2143,9 +372,39 @@
     });
 
     /* ═══════════════════
-       GITHUB CONTRIBUTION HEATMAP
+       SUBTLE MOUSE PARALLAX ON ORBS
+       ═══════════════════ */
+    const orbs = document.querySelectorAll('.orb');
+    const parallaxStrengths = [0.02, 0.015, 0.025, 0.018, 0.01];
+    let mouseX = 0, mouseY = 0, smoothX = 0, smoothY = 0;
+
+    window.addEventListener('pointermove', (e) => {
+      mouseX = (e.clientX / innerWidth - 0.5) * 2;
+      mouseY = (e.clientY / innerHeight - 0.5) * 2;
+    });
+
+    function updateParallax() {
+      smoothX += (mouseX - smoothX) * 0.03;
+      smoothY += (mouseY - smoothY) * 0.03;
+      orbs.forEach((orb, i) => {
+        const s = parallaxStrengths[i] || 0.015;
+        orb.style.translate = `${smoothX * s * innerWidth}px ${smoothY * s * innerHeight}px`;
+      });
+      requestAnimationFrame(updateParallax);
+    }
+    updateParallax();
+
+    /* ═══════════════════
+       RESIZE — reposition GitHub popup if open
        ═══════════════════ */
     const ghPop = document.querySelector('#ghPop');
+    addEventListener('resize', () => {
+      if (ghPop && ghPop.classList.contains('show')) positionPop();
+    });
+
+    /* ═══════════════════
+       GITHUB CONTRIBUTION HEATMAP
+       ═══════════════════ */
     const ghHeat = document.querySelector('#ghHeat');
     const ghTip = document.querySelector('#ghTip');
     const linkGh = document.querySelector('.link-github');
@@ -2163,7 +422,6 @@
         .sort((a, b) => a.date - b.date);
 
       if (!entries.length) {
-        // No usable data — signal the fallback chain to try another source
         throw new Error('no contribution data');
       }
 
@@ -2251,7 +509,7 @@
       const r = linkGh.getBoundingClientRect();
       const pw = ghPop.offsetWidth;
       const ph = ghPop.offsetHeight;
-      let left = Math.max(8, Math.min(r.right - pw, innerWidth - pw - 8));
+      let left = Math.max(8, Math.min(r.left + r.width / 2 - pw / 2, innerWidth - pw - 8));
       let top = r.top - ph - 16;
       if (top < 8) top = Math.min(r.bottom + 14, innerHeight - ph - 8);
       ghPop.style.left = `${left}px`;
@@ -2284,7 +542,6 @@
       .then(r => { if (!r.ok) throw new Error(r.status); return r.json(); })
       .then(renderHeatmap)
       .catch(() => {
-        // Fallback: public contributions API (CORS-enabled), then graceful empty state
         return fetch('https://github-contributions-api.jogruber.de/v4/arv20?y=last')
           .then(r => { if (!r.ok) throw new Error(r.status); return r.json(); })
           .then(renderHeatmap)
