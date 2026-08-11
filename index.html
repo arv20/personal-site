@@ -911,10 +911,22 @@
 
       roadCurve.getPointAt(Math.max(progress - 0.014, 0.001), _behindPos);
       _targetCamPos.set(
-        _behindPos.x + smoothMouse.x * 4.5,
-        _behindPos.y + 2.9 + smoothMouse.y * 1.1,
-        _behindPos.z + 7.8
+        _behindPos.x + smoothMouse.x * 3.5,
+        _behindPos.y + 2.8 + smoothMouse.y * 0.8,
+        _behindPos.z
       );
+
+      // Terrain Floor Clamp: Guarantee camera never dips below local terrain or road elevation
+      const cWorldZ = _targetCamPos.z;
+      const cNormT = Math.max(0, Math.min(1, Math.abs(cWorldZ) / ROAD_LENGTH));
+      const cRoadPt = roadCurve.getPointAt(cNormT);
+      const cDist = Math.hypot(_targetCamPos.x - cRoadPt.x, cWorldZ - cRoadPt.z);
+      let cHillH = 0;
+      if (cDist > 7.5) {
+        const cFactor = Math.min((cDist - 7.5) * 0.07, 1.0);
+        cHillH = (Math.sin(_targetCamPos.x * 0.035) * Math.cos(cWorldZ * 0.025) * 7.5 + Math.sin(_targetCamPos.x * 0.07 + cWorldZ * 0.04) * 3.2) * cFactor;
+      }
+      _targetCamPos.y = Math.max(_targetCamPos.y, cHillH + 1.8, 1.8);
 
       if (cameraPos.lengthSq() === 0) {
         cameraPos.copy(_targetCamPos);
