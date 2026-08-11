@@ -293,16 +293,20 @@
     scene.add(sun);
 
     /* ═══════════════════════════════════════
-       ROAD SPLINE & TIRE SKID MARKS
+       SEAMLESS ROAD SPLINE & TIRE SKID MARKS
        ═══════════════════════════════════════ */
     const ROAD_LENGTH = 1000;
-    const ROAD_SEGMENTS = 1200;
+    const ROAD_SEGMENTS = 1400;
     const ROAD_WIDTH = 6.5;
 
     const roadControlPoints = [];
-    for (let i = 0; i <= 25; i++) {
-      const z = -i * (ROAD_LENGTH / 25);
-      const x = Math.sin(i * 0.38) * 40 + Math.cos(i * 0.14) * 18;
+    const NUM_PTS = 26;
+    for (let i = 0; i <= NUM_PTS; i++) {
+      const tNorm = i / NUM_PTS;
+      const z = -tNorm * ROAD_LENGTH;
+      // Cosine envelope ensures start (i=0) and end (i=NUM_PTS) seamlessly taper to x=0 with matching 0 slope!
+      const envelope = Math.sin(tNorm * Math.PI); 
+      const x = (Math.sin(tNorm * Math.PI * 4) * 36 + Math.cos(tNorm * Math.PI * 2) * 16) * envelope;
       roadControlPoints.push(new THREE.Vector3(x, 0.1, z));
     }
     const roadCurve = new THREE.CatmullRomCurve3(roadControlPoints, false, 'catmullrom', 0.5);
@@ -329,8 +333,8 @@
       roadVerts.push(lx, 0.14, lz);
       roadVerts.push(rx, 0.14, rz);
 
-      roadUvs.push(0, t * 120);
-      roadUvs.push(1, t * 120);
+      roadUvs.push(0, t * 140);
+      roadUvs.push(1, t * 140);
 
       if (i < ROAD_SEGMENTS) {
         const a = i * 2, b = i * 2 + 1, c = (i + 1) * 2, d = (i + 1) * 2 + 1;
@@ -340,7 +344,7 @@
         const tangAhead = roadCurve.getTangentAt(tAhead).normalize();
         const curveAngle = Math.abs(tangent.x - tangAhead.x);
 
-        if (curveAngle > 0.0032) {
+        if (curveAngle > 0.0028) {
           const sIdx = skidVerts.length / 3;
           const slx = pos.x - right.x * 1.55;
           const slz = pos.z - right.z * 1.55;
@@ -412,7 +416,7 @@
     }
 
     /* ═══════════════════════════════════════
-       TERRAIN & ROLLING HILLS
+       EXACT SPLINE DISTANCE TERRAIN FLATTENING
        ═══════════════════════════════════════ */
     const groundGeo = new THREE.PlaneGeometry(700, ROAD_LENGTH + 120, 140, 140);
     groundGeo.rotateX(-Math.PI / 2);
@@ -421,13 +425,15 @@
     for (let i = 0; i < gPos.count; i++) {
       const x = gPos.getX(i);
       const z = gPos.getZ(i);
-      const absZ = Math.abs(z);
-      const roadX = Math.sin((absZ / (ROAD_LENGTH / 25)) * 0.38) * 40 + Math.cos((absZ / (ROAD_LENGTH / 25)) * 0.14) * 18;
-      const distFromRoad = Math.abs(x - roadX);
+      const worldZ = z - ROAD_LENGTH / 2;
+      const tNorm = Math.max(0, Math.min(1, Math.abs(worldZ) / ROAD_LENGTH));
+      const roadPt = roadCurve.getPointAt(tNorm);
+
+      const dist = Math.hypot(x - roadPt.x, worldZ - roadPt.z);
       let h = 0;
-      if (distFromRoad > 14) {
-        const factor = (distFromRoad - 14) * 0.07;
-        h = (Math.sin(x * 0.035) * Math.cos(z * 0.025) * 7 + Math.sin(x * 0.07 + z * 0.04) * 3) * Math.min(factor, 2.8);
+      if (dist > 7.5) {
+        const hillFactor = Math.min((dist - 7.5) * 0.07, 1.0);
+        h = (Math.sin(x * 0.035) * Math.cos(worldZ * 0.025) * 7.5 + Math.sin(x * 0.07 + worldZ * 0.04) * 3.2) * hillFactor;
       }
       gPos.setY(i, h);
     }
@@ -445,7 +451,7 @@
     scene.add(groundMesh);
 
     /* ═══════════════════════════════════════
-       ROADSIDE PROPS & INSTANCED BOUNDING SPHERES
+       PERPENDICULAR PROPS PLACEMENT (TREES, ROCKS, POSTS)
        ═══════════════════════════════════════ */
     const dummy = new THREE.Object3D();
 
@@ -459,20 +465,23 @@
     const pineInst = new THREE.InstancedMesh(pineGeo, pineMat, TREE_COUNT);
 
     for (let i = 0; i < TREE_COUNT; i++) {
-      const z = -Math.random() * (ROAD_LENGTH - 30);
+      const tNorm = Math.random() * 0.96 + 0.02;
+      const roadPos = roadCurve.getPointAt(tNorm);
+      const tangent = roadCurve.getTangentAt(tNorm).normalize();
+      const right = new THREE.Vector3().crossVectors(tangent, upVector).normalize();
+
       const side = Math.random() > 0.5 ? 1 : -1;
-      const progressT = Math.abs(z) / ROAD_LENGTH;
-      const roadPosAtZ = roadCurve.getPointAt(Math.min(Math.max(progressT, 0), 1));
-      const offset = 8.5 + Math.random() * 50;
-      const x = roadPosAtZ.x + side * offset;
+      const offset = (ROAD_WIDTH / 2 + 3.5) + Math.random() * 45;
+      const px = roadPos.x + right.x * side * offset;
+      const pz = roadPos.z + right.z * side * offset;
       const scale = 0.75 + Math.random() * 0.9;
 
-      dummy.position.set(x, 0.65 * scale, z);
+      dummy.position.set(px, 0.65 * scale, pz);
       dummy.scale.set(scale, scale, scale);
       dummy.updateMatrix();
       trunkInst.setMatrixAt(i, dummy.matrix);
 
-      dummy.position.set(x, 1.95 * scale, z);
+      dummy.position.set(px, 1.95 * scale, pz);
       dummy.updateMatrix();
       pineInst.setMatrixAt(i, dummy.matrix);
     }
@@ -486,15 +495,18 @@
     const rockInst = new THREE.InstancedMesh(rockGeo, rockMat, ROCK_COUNT);
 
     for (let i = 0; i < ROCK_COUNT; i++) {
-      const z = -Math.random() * (ROAD_LENGTH - 20);
+      const tNorm = Math.random() * 0.96 + 0.02;
+      const roadPos = roadCurve.getPointAt(tNorm);
+      const tangent = roadCurve.getTangentAt(tNorm).normalize();
+      const right = new THREE.Vector3().crossVectors(tangent, upVector).normalize();
+
       const side = Math.random() > 0.5 ? 1 : -1;
-      const progressT = Math.abs(z) / ROAD_LENGTH;
-      const roadPosAtZ = roadCurve.getPointAt(Math.min(Math.max(progressT, 0), 1));
-      const offset = 5.5 + Math.random() * 25;
-      const x = roadPosAtZ.x + side * offset;
+      const offset = (ROAD_WIDTH / 2 + 2.2) + Math.random() * 20;
+      const px = roadPos.x + right.x * side * offset;
+      const pz = roadPos.z + right.z * side * offset;
       const scale = 0.5 + Math.random() * 0.8;
 
-      dummy.position.set(x, 0.3 * scale, z);
+      dummy.position.set(px, 0.3 * scale, pz);
       dummy.scale.set(scale, scale * (0.6 + Math.random() * 0.5), scale);
       dummy.rotation.set(Math.random() * Math.PI, Math.random() * Math.PI, 0);
       dummy.updateMatrix();
@@ -767,7 +779,7 @@
         const now = this.ctx.currentTime;
         const baseFreq = 46 * Math.pow(spd, 1.15);
         this.osc1.frequency.setTargetAtTime(baseFreq, now, 0.05);
-        this.osc2.frequency.setTargetAtTime(baseFreq * 1.015, now, 0.05); // Detuned sub-bass growl
+        this.osc2.frequency.setTargetAtTime(baseFreq * 1.015, now, 0.05);
 
         const cutoff = 180 + spd * 380;
         this.filter.frequency.setTargetAtTime(cutoff, now, 0.05);
@@ -836,7 +848,6 @@
       progress += BASE_SPEED * speedMultiplier;
       if (progress > 0.96) progress = 0.02;
 
-      // Update engine audio pitch dynamically
       engineAudio.update(speedMultiplier);
 
       birdWings.forEach((bird, idx) => {
