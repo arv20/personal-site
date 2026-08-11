@@ -144,7 +144,7 @@
 
       if (i < ROAD_SEGMENTS) {
         const a = i * 2, b = i * 2 + 1, c = (i + 1) * 2, d = (i + 1) * 2 + 1;
-        roadIndices.push(a, c, b, b, c, d);
+        roadIndices.push(a, b, c, b, d, c);
       }
     }
 
@@ -177,6 +177,7 @@
       map: roadTex,
       roughness: 0.7,
       metalness: 0.1,
+      side: THREE.DoubleSide,
       polygonOffset: true,
       polygonOffsetFactor: -1
     });
