@@ -356,10 +356,10 @@
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     renderer.shadowMap.autoUpdate = false;
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 1.15;
+    renderer.toneMappingExposure = 1.0;
 
     const scene = new THREE.Scene();
-    scene.fog = new THREE.FogExp2(new THREE.Color(0xd9e8d2), 0.0055);
+    scene.fog = new THREE.FogExp2(new THREE.Color(0xd9e8d2), 0.0035);
 
     const camera = new THREE.PerspectiveCamera(52, innerWidth / innerHeight, 0.1, 500);
 
@@ -370,7 +370,7 @@
     // Bloom post-processing — makes neon, headlights and glows pop
     const composer = new EffectComposer(renderer);
     composer.addPass(new RenderPass(scene, camera));
-    const bloomPass = new UnrealBloomPass(new THREE.Vector2(innerWidth, innerHeight), 0.62, 0.55, 0.85);
+    const bloomPass = new UnrealBloomPass(new THREE.Vector2(innerWidth, innerHeight), 0.45, 0.5, 1.05);
     composer.addPass(bloomPass);
     composer.addPass(new OutputPass());
 
@@ -401,7 +401,7 @@
         fogDensity: 0.0042, night: 0,
       },
       city: {
-        ground: [0x3a4149, 0x262c33],
+        ground: [0x4a525c, 0x333a44],
         skyTop: 0x0b1020, skyHorizon: 0x31415c, sunColor: 0x8899bb, sunIntensity: 0.3,
         ambient: 0.3, hemiSky: 0x2a3a55, hemiGround: 0x141a22, hemiIntensity: 0.45,
         fogDensity: 0.007, night: 1,
@@ -458,15 +458,15 @@
     const weatherState = { code: 1, isDay: 1, temp: 72, cond: 'partly_day' };
     const CC = (hex) => new THREE.Color(hex);
     const WEATHER_PALETTES = {
-      clear_day: { top: CC(0x3f8fd4), horizon: CC(0xcfe6f2), sun: CC(0xfff6df), sunIntensity: 2.1, night: 0, fogDensity: 0.0032, ambient: 0.55, hemi: 0.65, clouds: 0.06, cloudColor: CC(0xffffff), rain: 0, snow: 0, storm: 0 },
-      partly_day: { top: CC(0x5a9bd4), horizon: CC(0xd3e2ea), sun: CC(0xfff2d8), sunIntensity: 1.7, night: 0, fogDensity: 0.0038, ambient: 0.5, hemi: 0.6, clouds: 0.45, cloudColor: CC(0xffffff), rain: 0, snow: 0, storm: 0 },
-      overcast: { top: CC(0x8a959e), horizon: CC(0xc9ced1), sun: CC(0xe8ecf0), sunIntensity: 0.5, night: 0, fogDensity: 0.005, ambient: 0.62, hemi: 0.55, clouds: 0.92, cloudColor: CC(0xd6dade), rain: 0, snow: 0, storm: 0 },
-      fog: { top: CC(0x9aa2a6), horizon: CC(0xcdd2d0), sun: CC(0xe6eaeb), sunIntensity: 0.45, night: 0, fogDensity: 0.013, ambient: 0.7, hemi: 0.6, clouds: 0.5, cloudColor: CC(0xccd2d2), rain: 0, snow: 0, storm: 0 },
-      rain: { top: CC(0x4c5a68), horizon: CC(0x93a0ab), sun: CC(0xd8e2ea), sunIntensity: 0.3, night: 0, fogDensity: 0.007, ambient: 0.5, hemi: 0.55, clouds: 1, cloudColor: CC(0x8f9aa3), rain: 1, snow: 0, storm: 0 },
-      thunderstorm: { top: CC(0x232a36), horizon: CC(0x5b6775), sun: CC(0xb8c4d0), sunIntensity: 0.15, night: 0.45, fogDensity: 0.008, ambient: 0.4, hemi: 0.4, clouds: 1, cloudColor: CC(0x4a5562), rain: 1, snow: 0, storm: 1 },
-      snow: { top: CC(0xaebdc6), horizon: CC(0xe2e9ec), sun: CC(0xffffff), sunIntensity: 0.55, night: 0, fogDensity: 0.006, ambient: 0.6, hemi: 0.62, clouds: 0.95, cloudColor: CC(0xdde6ea), rain: 0, snow: 1, storm: 0 },
-      clear_night: { top: CC(0x0a101f), horizon: CC(0x1a2538), sun: CC(0x9fb0cc), sunIntensity: 0.12, night: 1, fogDensity: 0.0035, ambient: 0.32, hemi: 0.4, clouds: 0.05, cloudColor: CC(0x3a465c), rain: 0, snow: 0, storm: 0 },
-      partly_night: { top: CC(0x0d1526), horizon: CC(0x25304a), sun: CC(0x9fb0cc), sunIntensity: 0.12, night: 0.8, fogDensity: 0.004, ambient: 0.3, hemi: 0.38, clouds: 0.45, cloudColor: CC(0x3a465c), rain: 0, snow: 0, storm: 0 },
+      clear_day: { top: CC(0x3f8fd4), horizon: CC(0xcfe6f2), sun: CC(0xfff6df), sunIntensity: 2.1, night: 0, fogDensity: 0.0022, ambient: 0.55, hemi: 0.65, clouds: 0.06, cloudColor: CC(0xffffff), rain: 0, snow: 0, storm: 0 },
+      partly_day: { top: CC(0x5a9bd4), horizon: CC(0xd3e2ea), sun: CC(0xfff2d8), sunIntensity: 1.7, night: 0, fogDensity: 0.0026, ambient: 0.5, hemi: 0.6, clouds: 0.45, cloudColor: CC(0xffffff), rain: 0, snow: 0, storm: 0 },
+      overcast: { top: CC(0x8a959e), horizon: CC(0xc9ced1), sun: CC(0xe8ecf0), sunIntensity: 0.5, night: 0, fogDensity: 0.0034, ambient: 0.62, hemi: 0.55, clouds: 0.92, cloudColor: CC(0xd6dade), rain: 0, snow: 0, storm: 0 },
+      fog: { top: CC(0x9aa2a6), horizon: CC(0xcdd2d0), sun: CC(0xe6eaeb), sunIntensity: 0.45, night: 0, fogDensity: 0.0085, ambient: 0.7, hemi: 0.6, clouds: 0.5, cloudColor: CC(0xccd2d2), rain: 0, snow: 0, storm: 0 },
+      rain: { top: CC(0x4c5a68), horizon: CC(0x93a0ab), sun: CC(0xd8e2ea), sunIntensity: 0.3, night: 0, fogDensity: 0.0046, ambient: 0.5, hemi: 0.55, clouds: 1, cloudColor: CC(0x8f9aa3), rain: 1, snow: 0, storm: 0 },
+      thunderstorm: { top: CC(0x232a36), horizon: CC(0x5b6775), sun: CC(0xb8c4d0), sunIntensity: 0.15, night: 0.45, fogDensity: 0.0052, ambient: 0.4, hemi: 0.4, clouds: 1, cloudColor: CC(0x4a5562), rain: 1, snow: 0, storm: 1 },
+      snow: { top: CC(0xaebdc6), horizon: CC(0xe2e9ec), sun: CC(0xffffff), sunIntensity: 0.55, night: 0, fogDensity: 0.0038, ambient: 0.6, hemi: 0.62, clouds: 0.95, cloudColor: CC(0xdde6ea), rain: 0, snow: 1, storm: 0 },
+      clear_night: { top: CC(0x0a101f), horizon: CC(0x1a2538), sun: CC(0x9fb0cc), sunIntensity: 0.12, night: 1, fogDensity: 0.0024, ambient: 0.32, hemi: 0.4, clouds: 0.05, cloudColor: CC(0x3a465c), rain: 0, snow: 0, storm: 0 },
+      partly_night: { top: CC(0x0d1526), horizon: CC(0x25304a), sun: CC(0x9fb0cc), sunIntensity: 0.12, night: 0.8, fogDensity: 0.0027, ambient: 0.3, hemi: 0.38, clouds: 0.45, cloudColor: CC(0x3a465c), rain: 0, snow: 0, storm: 0 },
     };
 
     function classifyWeather(code, isDay) {
@@ -579,7 +579,7 @@
           vec3 col = mix(horizonColor, topColor, pow(h, 0.55));
           col = mix(vec3(0.05, 0.07, 0.1), col, smoothstep(-0.12, 0.1, d.y));
           float s = max(dot(d, sunDirU), 0.0);
-          col += sunColor * sunIntensityU * (pow(s, 900.0) * 2.4 + pow(s, 40.0) * 0.32 + pow(s, 5.0) * 0.05);
+          col += sunColor * sunIntensityU * (1.0 - cloudCover * 0.95) * (pow(s, 900.0) * 2.4 + pow(s, 40.0) * 0.32 + pow(s, 5.0) * 0.05);
           if (d.y > 0.03) {
             float star = step(0.99915, hash13(floor(d * 800.0 + timeU * 4.0))) * (1.0 - cloudCover * 0.85);
             col += vec3(0.9, 0.95, 1.0) * star * nightFactor * (0.3 + 0.7 * d.y);
@@ -706,10 +706,10 @@
     const ctx = rCanvas.getContext('2d');
     ctx.fillStyle = '#262729';
     ctx.fillRect(0, 0, 128, 256);
-    ctx.fillStyle = '#e8e8e8';
+    ctx.fillStyle = '#cfd2d4';
     ctx.fillRect(2, 0, 3, 256);
     ctx.fillRect(123, 0, 3, 256);
-    ctx.fillStyle = '#f5c518';
+    ctx.fillStyle = '#e6b400';
     for (let y = 0; y < 256; y += 32) {
       ctx.fillRect(62, y, 4, 18);
     }
@@ -719,8 +719,8 @@
 
     const roadMat = new THREE.MeshStandardMaterial({
       map: roadTex,
-      roughness: 0.72,
-      metalness: 0.1,
+      roughness: 0.88,
+      metalness: 0.04,
       side: THREE.DoubleSide,
       polygonOffset: true,
       polygonOffsetFactor: -1
@@ -785,7 +785,8 @@
         for (const c of beachCenters) beachness = Math.max(beachness, smoothstep01(circDist(n.t, c), 0.0, 0.085));
         if (beachness > 0) {
           const outward = Math.hypot(x - loopCenter.x, z - loopCenter.z) > Math.hypot(n.pos.x - loopCenter.x, n.pos.z - loopCenter.z);
-          if (outward) h -= beachness * 4.4;
+          // gentle shoreline: full dip only well past the road, ramping from the shoulder
+          if (outward) h -= beachness * 4.4 * smoothstep01(n.dist, 2.0, 14.0);
         }
       }
       return { h, n, beachness };
@@ -803,21 +804,22 @@
     const groundCX = (minX + maxX) / 2;
     const groundCZ = (minZ + maxZ) / 2;
 
-    const colA = new THREE.Color(), colB = new THREE.Color(), colC = new THREE.Color();
-    function biomeColorAt(t, out) {
+    const colA = new THREE.Color(), colB = new THREE.Color(), colC = new THREE.Color(), colD = new THREE.Color();
+    function biomeColorAt(t, out, idx) {
       const i = Math.floor((((t % 1) + 1) % 1) * ARC_COUNT) % ARC_COUNT;
-      return out.setHex(BIOMES[arcBiomes[i]].ground[0]);
+      return out.setHex(BIOMES[arcBiomes[i]].ground[idx || 0]);
     }
     function terrainColorAt(t, x, z) {
       biomeColorAt(t, colA);
       biomeColorAt(t + 0.03, colB);
       biomeColorAt(t - 0.03 + 1, colC);
+      biomeColorAt(t, colD, 1);
+      // base tone blended across arc boundaries, darker tone mixed in by terrain noise
       const nz = 0.5 + 0.5 * Math.sin(x * 0.08 + 1.7) * Math.cos(z * 0.1 + 0.9);
       colA.r = colA.r * 0.5 + colB.r * 0.25 + colC.r * 0.25;
       colA.g = colA.g * 0.5 + colB.g * 0.25 + colC.g * 0.25;
       colA.b = colA.b * 0.5 + colB.b * 0.25 + colC.b * 0.25;
-      const s = 0.82 + nz * 0.36;
-      colA.r *= s; colA.g *= s; colA.b *= s;
+      colA.lerp(colD, 0.45 * nz);
       return colA;
     }
 
@@ -1526,6 +1528,8 @@
       const dark = Math.max(skyState.night, skyState.storm * 0.65);
       headlightLeft.intensity = dark * 14;
       headlightRight.intensity = dark * 14;
+      lampHeadMat.emissiveIntensity = 0.05 + 3.0 * dark;
+      buildingMat.emissiveIntensity = 0.1 + 1.35 * dark;
       waterMat.uniforms.uTime.value = time;
 
       // Rain & snow — follow the car, recycle forever
