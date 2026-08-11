@@ -9,15 +9,15 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
   <style>
-    :root { color-scheme: dark; --ink:#1a2a1a; --text:#f0f0ed; --muted:#969692; --line:rgba(255,255,255,.14); --accent:#7ec8a0; }
+    :root { color-scheme: dark; --ink:#121a14; --text:#f0f0ed; --muted:#969692; --line:rgba(255,255,255,.14); --accent:#7ec8a0; }
     * { box-sizing:border-box; }
     html, body { width:100%; height:100%; margin:0; overflow:hidden; background:var(--ink); }
     body { color:var(--text); font-family:"DM Sans",system-ui,sans-serif; -webkit-font-smoothing:antialiased; }
     a, button { color:inherit; font:inherit; }
     a { text-decoration:none; }
     #scene { position:fixed; inset:0; width:100%; height:100%; z-index:0; }
-    .grain { position:fixed; inset:0; z-index:1; pointer-events:none; opacity:.12; background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.28'/%3E%3C/svg%3E"); mix-blend-mode:soft-light; }
-    .vignette { position:fixed; inset:0; z-index:1; pointer-events:none; background:radial-gradient(ellipse at 50% 48%, transparent 36%, rgba(0,0,0,.32) 100%); }
+    .grain { position:fixed; inset:0; z-index:1; pointer-events:none; opacity:.10; background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.28'/%3E%3C/svg%3E"); mix-blend-mode:soft-light; }
+    .vignette { position:fixed; inset:0; z-index:1; pointer-events:none; background:radial-gradient(ellipse at 50% 55%, transparent 40%, rgba(0,0,0,.35) 100%); }
     .ui { position:relative; z-index:2; height:100%; padding:clamp(18px,2.7vw,42px); display:flex; justify-content:space-between; align-items:flex-end; pointer-events:none; }
     .identity, .links { pointer-events:auto; opacity:0; transform:translateY(8px); animation:arrive .8s cubic-bezier(.2,.8,.2,1) .35s forwards; }
     .identity { appearance:none; border:1px solid transparent; background:rgba(5,5,5,.35); border-radius:14px; color:var(--text); padding:10px 14px; text-align:left; cursor:pointer; transition:background .2s,border-color .2s; backdrop-filter:blur(8px); }
@@ -58,395 +58,315 @@
   </script>
   <script type="module">
     import * as THREE from 'three';
+    import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+    import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
 
-    // ── Simplex Noise (compact 2D implementation) ──
-    const F2 = 0.5 * (Math.sqrt(3) - 1), G2 = (3 - Math.sqrt(3)) / 6;
-    const grad2 = [[1,1],[-1,1],[1,-1],[-1,-1],[1,0],[-1,0],[0,1],[0,-1]];
-    const perm = new Uint8Array(512);
-    (function seedNoise() {
-      const p = new Uint8Array(256);
-      for (let i = 0; i < 256; i++) p[i] = i;
-      for (let i = 255; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [p[i], p[j]] = [p[j], p[i]]; }
-      for (let i = 0; i < 512; i++) perm[i] = p[i & 255];
-    })();
-    function simplex2(x, y) {
-      let s = (x + y) * F2, i = Math.floor(x + s), j = Math.floor(y + s);
-      let t = (i + j) * G2, X0 = i - t, Y0 = j - t, x0 = x - X0, y0 = y - Y0;
-      let i1 = x0 > y0 ? 1 : 0, j1 = x0 > y0 ? 0 : 1;
-      let x1 = x0 - i1 + G2, y1 = y0 - j1 + G2, x2 = x0 - 1 + 2 * G2, y2 = y0 - 1 + 2 * G2;
-      let ii = i & 255, jj = j & 255;
-      let n0 = 0, n1 = 0, n2 = 0;
-      let t0 = 0.5 - x0 * x0 - y0 * y0;
-      if (t0 >= 0) { t0 *= t0; let gi = perm[ii + perm[jj]] % 8; n0 = t0 * t0 * (grad2[gi][0] * x0 + grad2[gi][1] * y0); }
-      let t1 = 0.5 - x1 * x1 - y1 * y1;
-      if (t1 >= 0) { t1 *= t1; let gi = perm[ii + i1 + perm[jj + j1]] % 8; n1 = t1 * t1 * (grad2[gi][0] * x1 + grad2[gi][1] * y1); }
-      let t2 = 0.5 - x2 * x2 - y2 * y2;
-      if (t2 >= 0) { t2 *= t2; let gi = perm[ii + 1 + perm[jj + 1]] % 8; n2 = t2 * t2 * (grad2[gi][0] * x2 + grad2[gi][1] * y2); }
-      return 70 * (n0 + n1 + n2);
-    }
-    function fbm(x, y, octaves = 4) {
-      let val = 0, amp = 1, freq = 1, max = 0;
-      for (let i = 0; i < octaves; i++) { val += simplex2(x * freq, y * freq) * amp; max += amp; amp *= 0.5; freq *= 2; }
-      return val / max;
-    }
-
-    // ── Renderer ──
+    /* ═══════════════════
+       RENDERER & SCENE SETUP
+       ═══════════════════ */
     const canvas = document.querySelector('#scene');
-    const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+    const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false });
     renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
     renderer.setSize(innerWidth, innerHeight);
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
     renderer.toneMappingExposure = 1.1;
 
-    // ── Scene ──
     const scene = new THREE.Scene();
-    const fogColor = new THREE.Color(0.42, 0.58, 0.52);
-    scene.fog = new THREE.FogExp2(fogColor, 0.018);
-    scene.background = fogColor;
+    const skyColor = new THREE.Color(0x90b8a0);
+    scene.background = skyColor;
+    scene.fog = new THREE.FogExp2(skyColor, 0.007);
 
-    // ── Camera ──
-    const camera = new THREE.PerspectiveCamera(55, innerWidth / innerHeight, 0.1, 200);
+    const camera = new THREE.PerspectiveCamera(50, innerWidth / innerHeight, 0.1, 400);
 
-    // ── Lighting ──
-    const ambientLight = new THREE.AmbientLight(0x8899aa, 0.6);
+    /* ═══════════════════
+       LIGHTS
+       ═══════════════════ */
+    const ambientLight = new THREE.AmbientLight(0xddeedd, 0.7);
     scene.add(ambientLight);
-    const sunLight = new THREE.DirectionalLight(0xffeedd, 1.4);
-    sunLight.position.set(50, 80, -30);
-    scene.add(sunLight);
-    const fillLight = new THREE.DirectionalLight(0x88aacc, 0.3);
-    fillLight.position.set(-30, 20, 40);
-    scene.add(fillLight);
 
-    // ── Road Path (procedural spline) ──
-    const ROAD_LENGTH = 300;
-    const ROAD_POINTS = 600;
-    const roadCurvePoints = [];
-    for (let i = 0; i < ROAD_POINTS; i++) {
-      const z = -i * (ROAD_LENGTH / ROAD_POINTS);
-      const x = simplex2(i * 0.008, 0.5) * 25;
-      const y = fbm(i * 0.006, 1.0, 3) * 4 + 0.05;
-      roadCurvePoints.push(new THREE.Vector3(x, y, z));
+    const hemiLight = new THREE.HemisphereLight(0xb1e1e4, 0x4c6b48, 0.6);
+    scene.add(hemiLight);
+
+    const sun = new THREE.DirectionalLight(0xfffaed, 1.8);
+    sun.position.set(80, 100, -50);
+    sun.castShadow = true;
+    sun.shadow.mapSize.width = 2048;
+    sun.shadow.mapSize.height = 2048;
+    sun.shadow.camera.near = 10;
+    sun.shadow.camera.far = 300;
+    const d = 50;
+    sun.shadow.camera.left = -d;
+    sun.shadow.camera.right = d;
+    sun.shadow.camera.top = d;
+    sun.shadow.camera.bottom = -d;
+    scene.add(sun);
+
+    /* ═══════════════════════════════════════
+       ROAD SPLINE & GEOMETRY
+       ═══════════════════════════════════════ */
+    const ROAD_LENGTH = 800;
+    const ROAD_SEGMENTS = 1000;
+    const ROAD_WIDTH = 6;
+
+    // Create a smooth winding path on X-Z plane
+    const points = [];
+    for (let i = 0; i <= 20; i++) {
+      const z = -i * (ROAD_LENGTH / 20);
+      const x = Math.sin(i * 0.4) * 35 + Math.cos(i * 0.15) * 15;
+      points.push(new THREE.Vector3(x, 0.1, z));
     }
-    const roadCurve = new THREE.CatmullRomCurve3(roadCurvePoints, false, 'catmullrom', 0.5);
+    const roadCurve = new THREE.CatmullRomCurve3(points, false, 'catmullrom', 0.5);
 
-    // ── Road Mesh ──
-    const ROAD_WIDTH = 3.8;
-    const roadSegments = 500;
-    const roadGeo = new THREE.BufferGeometry();
+    // Build Road Ribbon Geometry
     const roadVerts = [];
     const roadUvs = [];
     const roadIndices = [];
-    for (let i = 0; i <= roadSegments; i++) {
-      const t = i / roadSegments;
+    const up = new THREE.Vector3(0, 1, 0);
+
+    for (let i = 0; i <= ROAD_SEGMENTS; i++) {
+      const t = i / ROAD_SEGMENTS;
       const pos = roadCurve.getPointAt(t);
       const tangent = roadCurve.getTangentAt(t).normalize();
-      const up = new THREE.Vector3(0, 1, 0);
       const right = new THREE.Vector3().crossVectors(tangent, up).normalize();
-      const left = pos.clone().add(right.clone().multiplyScalar(-ROAD_WIDTH / 2));
-      const rightP = pos.clone().add(right.clone().multiplyScalar(ROAD_WIDTH / 2));
-      roadVerts.push(left.x, left.y + 0.02, left.z);
-      roadVerts.push(rightP.x, rightP.y + 0.02, rightP.z);
-      roadUvs.push(0, t * 40); roadUvs.push(1, t * 40);
-      if (i < roadSegments) {
+
+      const lx = pos.x - right.x * (ROAD_WIDTH / 2);
+      const lz = pos.z - right.z * (ROAD_WIDTH / 2);
+      const rx = pos.x + right.x * (ROAD_WIDTH / 2);
+      const rz = pos.z + right.z * (ROAD_WIDTH / 2);
+
+      roadVerts.push(lx, 0.12, lz);
+      roadVerts.push(rx, 0.12, rz);
+
+      roadUvs.push(0, t * 100);
+      roadUvs.push(1, t * 100);
+
+      if (i < ROAD_SEGMENTS) {
         const a = i * 2, b = i * 2 + 1, c = (i + 1) * 2, d = (i + 1) * 2 + 1;
         roadIndices.push(a, c, b, b, c, d);
       }
     }
+
+    const roadGeo = new THREE.BufferGeometry();
     roadGeo.setAttribute('position', new THREE.Float32BufferAttribute(roadVerts, 3));
     roadGeo.setAttribute('uv', new THREE.Float32BufferAttribute(roadUvs, 2));
     roadGeo.setIndex(roadIndices);
     roadGeo.computeVertexNormals();
 
-    // Road material — dark asphalt with dashed center line
-    const roadCanvas = document.createElement('canvas');
-    roadCanvas.width = 128; roadCanvas.height = 128;
-    const rctx = roadCanvas.getContext('2d');
-    rctx.fillStyle = '#3a3a3a';
-    rctx.fillRect(0, 0, 128, 128);
-    // Shoulders
-    rctx.fillStyle = '#555';
-    rctx.fillRect(0, 0, 4, 128);
-    rctx.fillRect(124, 0, 4, 128);
-    // Center dashes
-    rctx.fillStyle = '#ddd';
-    for (let dy = 0; dy < 128; dy += 24) {
-      rctx.fillRect(62, dy, 4, 14);
+    // Road Texture
+    const rCanvas = document.createElement('canvas');
+    rCanvas.width = 128; rCanvas.height = 256;
+    const ctx = rCanvas.getContext('2d');
+    ctx.fillStyle = '#2c2d30';
+    ctx.fillRect(0, 0, 128, 256);
+    // White shoulder lines
+    ctx.fillStyle = '#f0f0f0';
+    ctx.fillRect(2, 0, 3, 256);
+    ctx.fillRect(123, 0, 3, 256);
+    // Yellow dashed center line
+    ctx.fillStyle = '#ffcc00';
+    for (let y = 0; y < 256; y += 32) {
+      ctx.fillRect(62, y, 4, 18);
     }
-    const roadTexture = new THREE.CanvasTexture(roadCanvas);
-    roadTexture.wrapS = THREE.RepeatWrapping;
-    roadTexture.wrapT = THREE.RepeatWrapping;
-    const roadMat = new THREE.MeshLambertMaterial({ map: roadTexture });
+    const roadTex = new THREE.CanvasTexture(rCanvas);
+    roadTex.wrapS = THREE.RepeatWrapping;
+    roadTex.wrapT = THREE.RepeatWrapping;
+
+    const roadMat = new THREE.MeshStandardMaterial({
+      map: roadTex,
+      roughness: 0.7,
+      metalness: 0.1,
+      polygonOffset: true,
+      polygonOffsetFactor: -1
+    });
     const roadMesh = new THREE.Mesh(roadGeo, roadMat);
+    roadMesh.receiveShadow = true;
     scene.add(roadMesh);
 
-    // ── Terrain ──
-    const TERRAIN_SIZE = 200;
-    const TERRAIN_RES = 128;
-    const terrainGeo = new THREE.PlaneGeometry(TERRAIN_SIZE, TERRAIN_SIZE, TERRAIN_RES, TERRAIN_RES);
-    terrainGeo.rotateX(-Math.PI / 2);
-    const terrainPos = terrainGeo.attributes.position;
-    const terrainColors = new Float32Array(terrainPos.count * 3);
-    const grassBase = new THREE.Color(0.28, 0.52, 0.24);
-    const grassDark = new THREE.Color(0.18, 0.38, 0.16);
-    const dirtColor = new THREE.Color(0.45, 0.38, 0.28);
-
-    for (let i = 0; i < terrainPos.count; i++) {
-      const x = terrainPos.getX(i);
-      const z = terrainPos.getZ(i);
-      const h = fbm(x * 0.015, z * 0.015, 4) * 8 + fbm(x * 0.04, z * 0.04, 2) * 2;
-      terrainPos.setY(i, h);
-      // Color variation
-      const n = (fbm(x * 0.05, z * 0.05, 2) + 1) * 0.5;
-      const c = new THREE.Color().copy(grassBase).lerp(grassDark, n);
-      if (h > 4) c.lerp(dirtColor, (h - 4) * 0.2);
-      terrainColors[i * 3] = c.r;
-      terrainColors[i * 3 + 1] = c.g;
-      terrainColors[i * 3 + 2] = c.b;
+    /* ═══════════════════════════════════════
+       TERRAIN GROUND PLANE & HILLS
+       ═══════════════════════════════════════ */
+    const groundGeo = new THREE.PlaneGeometry(600, ROAD_LENGTH + 100, 120, 120);
+    groundGeo.rotateX(-Math.PI / 2);
+    
+    // Add gentle rolling hills away from center road
+    const gPos = groundGeo.attributes.position;
+    for (let i = 0; i < gPos.count; i++) {
+      const x = gPos.getX(i);
+      const z = gPos.getZ(i);
+      const distFromCenter = Math.abs(x);
+      let h = 0;
+      if (distFromCenter > 15) {
+        const factor = (distFromCenter - 15) * 0.08;
+        h = (Math.sin(x * 0.04) * Math.cos(z * 0.03) * 6 + Math.sin(x * 0.08 + z * 0.05) * 3) * Math.min(factor, 2.5);
+      }
+      gPos.setY(i, h);
     }
-    terrainGeo.setAttribute('color', new THREE.Float32BufferAttribute(terrainColors, 3));
-    terrainGeo.computeVertexNormals();
-    const terrainMat = new THREE.MeshLambertMaterial({ vertexColors: true, flatShading: true });
-    const terrain = new THREE.Mesh(terrainGeo, terrainMat);
-    terrain.position.set(0, -0.3, -TERRAIN_SIZE / 2);
-    scene.add(terrain);
+    groundGeo.computeVertexNormals();
 
-    // Second terrain chunk behind
-    const terrain2 = terrain.clone();
-    terrain2.position.z = -TERRAIN_SIZE / 2 - TERRAIN_SIZE;
-    scene.add(terrain2);
+    const groundMat = new THREE.MeshStandardMaterial({
+      color: 0x5a8854,
+      roughness: 0.9,
+      metalness: 0.05,
+      flatShading: true
+    });
+    const groundMesh = new THREE.Mesh(groundGeo, groundMat);
+    groundMesh.position.set(0, 0, -ROAD_LENGTH / 2);
+    groundMesh.receiveShadow = true;
+    scene.add(groundMesh);
 
-    // ── Trees (instanced) ──
-    const TREE_COUNT = 400;
-    const trunkGeo = new THREE.CylinderGeometry(0.06, 0.1, 0.8, 5);
-    const trunkMat = new THREE.MeshLambertMaterial({ color: 0x5c4033 });
-    const trunkMesh = new THREE.InstancedMesh(trunkGeo, trunkMat, TREE_COUNT);
-    const leafGeo = new THREE.ConeGeometry(0.55, 1.4, 6);
-    const leafMat = new THREE.MeshLambertMaterial({ color: 0x2d6a2e, flatShading: true });
-    const leafMesh = new THREE.InstancedMesh(leafGeo, leafMat, TREE_COUNT);
-    const leafGeo2 = new THREE.ConeGeometry(0.42, 1.1, 6);
-    const leafMesh2 = new THREE.InstancedMesh(leafGeo2, leafMat, TREE_COUNT);
+    /* ═══════════════════════════════════════
+       LOW-POLY TREES
+       ═══════════════════════════════════════ */
+    const TREE_COUNT = 450;
+    const trunkGeo = new THREE.CylinderGeometry(0.12, 0.2, 1.2, 5);
+    const trunkMat = new THREE.MeshLambertMaterial({ color: 0x4a3525 });
+    const trunkInst = new THREE.InstancedMesh(trunkGeo, trunkMat, TREE_COUNT);
 
-    const treePositions = [];
+    const foliageGeo = new THREE.ConeGeometry(0.9, 2.2, 6);
+    const foliageMat = new THREE.MeshStandardMaterial({ color: 0x2b5e32, flatShading: true, roughness: 0.8 });
+    const foliageInst = new THREE.InstancedMesh(foliageGeo, foliageMat, TREE_COUNT);
+
     const dummy = new THREE.Object3D();
     for (let i = 0; i < TREE_COUNT; i++) {
-      const z = -Math.random() * ROAD_LENGTH * 0.9;
-      const roadT = Math.min(Math.max(-z / ROAD_LENGTH, 0), 1);
-      const roadPos = roadCurve.getPointAt(roadT);
-      // Place trees offset from road
+      const z = -Math.random() * (ROAD_LENGTH - 20);
       const side = Math.random() > 0.5 ? 1 : -1;
-      const offset = ROAD_WIDTH / 2 + 2 + Math.random() * 30;
-      const x = roadPos.x + side * offset;
-      const h = fbm(x * 0.015, z * 0.015, 4) * 8 + fbm(x * 0.04, z * 0.04, 2) * 2;
-      const scale = 0.7 + Math.random() * 0.8;
-      treePositions.push({ x, y: h, z, scale });
+      const roadX = Math.sin((Math.abs(z) / (ROAD_LENGTH / 20)) * 0.4) * 35 + Math.cos((Math.abs(z) / (ROAD_LENGTH / 20)) * 0.15) * 15;
+      const offset = 8 + Math.random() * 45;
+      const x = roadX + side * offset;
+      const scale = 0.8 + Math.random() * 0.8;
 
-      // Trunk
-      dummy.position.set(x, h + 0.4 * scale, z);
+      dummy.position.set(x, 0.6 * scale, z);
       dummy.scale.set(scale, scale, scale);
       dummy.updateMatrix();
-      trunkMesh.setMatrixAt(i, dummy.matrix);
+      trunkInst.setMatrixAt(i, dummy.matrix);
 
-      // Lower canopy
-      dummy.position.set(x, h + 1.1 * scale, z);
-      dummy.rotation.y = Math.random() * Math.PI;
+      dummy.position.set(x, 1.8 * scale, z);
       dummy.updateMatrix();
-      leafMesh.setMatrixAt(i, dummy.matrix);
-
-      // Upper canopy
-      dummy.position.set(x, h + 1.7 * scale, z);
-      dummy.updateMatrix();
-      leafMesh2.setMatrixAt(i, dummy.matrix);
-
-      dummy.rotation.y = 0;
+      foliageInst.setMatrixAt(i, dummy.matrix);
     }
-    scene.add(trunkMesh, leafMesh, leafMesh2);
+    trunkInst.castShadow = true;
+    foliageInst.castShadow = true;
+    scene.add(trunkInst, foliageInst);
 
-    // ── Low-Poly Skyline GTR ──
-    function createSkylineGTR() {
-      const car = new THREE.Group();
-
-      // Body shell
-      const bodyMat = new THREE.MeshLambertMaterial({ color: 0x1a1a2e, flatShading: true });
-      const chassisGeo = new THREE.BoxGeometry(1.75, 0.45, 4.2);
-      const chassis = new THREE.Mesh(chassisGeo, bodyMat);
-      chassis.position.y = 0.35;
-      car.add(chassis);
-
-      // Hood (front slope)
-      const hoodGeo = new THREE.BoxGeometry(1.65, 0.15, 1.2);
-      const hood = new THREE.Mesh(hoodGeo, bodyMat);
-      hood.position.set(0, 0.65, -0.9);
-      hood.rotation.x = -0.1;
-      car.add(hood);
-
-      // Cabin
-      const cabinMat = new THREE.MeshLambertMaterial({ color: 0x222244, flatShading: true });
-      const cabinGeo = new THREE.BoxGeometry(1.5, 0.45, 1.6);
-      const cabin = new THREE.Mesh(cabinGeo, cabinMat);
-      cabin.position.set(0, 0.82, 0.15);
-      car.add(cabin);
-
-      // Rear deck
-      const rearGeo = new THREE.BoxGeometry(1.65, 0.2, 1.0);
-      const rear = new THREE.Mesh(rearGeo, bodyMat);
-      rear.position.set(0, 0.62, 1.2);
-      rear.rotation.x = 0.08;
-      car.add(rear);
-
-      // Windshield
-      const glassMat = new THREE.MeshLambertMaterial({ color: 0x88bbdd, transparent: true, opacity: 0.5, flatShading: true });
-      const windshieldGeo = new THREE.BoxGeometry(1.4, 0.4, 0.05);
-      const windshield = new THREE.Mesh(windshieldGeo, glassMat);
-      windshield.position.set(0, 0.9, -0.6);
-      windshield.rotation.x = -0.45;
-      car.add(windshield);
-
-      // Rear window
-      const rearWindowGeo = new THREE.BoxGeometry(1.4, 0.35, 0.05);
-      const rearWindow = new THREE.Mesh(rearWindowGeo, glassMat);
-      rearWindow.position.set(0, 0.88, 0.9);
-      rearWindow.rotation.x = 0.35;
-      car.add(rearWindow);
-
-      // Wing / spoiler
-      const wingPostMat = new THREE.MeshLambertMaterial({ color: 0x111122, flatShading: true });
-      const wingGeo = new THREE.BoxGeometry(1.8, 0.06, 0.25);
-      const wing = new THREE.Mesh(wingGeo, wingPostMat);
-      wing.position.set(0, 1.15, 1.65);
-      car.add(wing);
-      // Wing posts
-      const postGeo = new THREE.BoxGeometry(0.06, 0.3, 0.06);
-      [-0.6, 0.6].forEach(x => {
-        const post = new THREE.Mesh(postGeo, wingPostMat);
-        post.position.set(x, 1.0, 1.55);
-        car.add(post);
-      });
-
-      // Wheels
-      const wheelGeo = new THREE.CylinderGeometry(0.25, 0.25, 0.18, 8);
-      const wheelMat = new THREE.MeshLambertMaterial({ color: 0x222222, flatShading: true });
-      const wheelPositions = [
-        { x: -0.85, z: -1.25 }, { x: 0.85, z: -1.25 },
-        { x: -0.85, z: 1.25 }, { x: 0.85, z: 1.25 }
-      ];
-      const wheels = [];
-      wheelPositions.forEach(p => {
-        const wheel = new THREE.Mesh(wheelGeo, wheelMat);
-        wheel.position.set(p.x, 0.2, p.z);
-        wheel.rotation.z = Math.PI / 2;
-        car.add(wheel);
-        wheels.push(wheel);
-      });
-
-      // Tail lights
-      const tailMat = new THREE.MeshBasicMaterial({ color: 0xff2222 });
-      [-0.65, 0.65].forEach(x => {
-        const tailGeo = new THREE.BoxGeometry(0.2, 0.1, 0.05);
-        const tail = new THREE.Mesh(tailGeo, tailMat);
-        tail.position.set(x, 0.45, 2.11);
-        car.add(tail);
-      });
-
-      // Headlights
-      const headMat = new THREE.MeshBasicMaterial({ color: 0xffeebb });
-      [-0.55, 0.55].forEach(x => {
-        const headGeo = new THREE.BoxGeometry(0.25, 0.12, 0.05);
-        const head = new THREE.Mesh(headGeo, headMat);
-        head.position.set(x, 0.45, -2.11);
-        car.add(head);
-      });
-
-      car.wheels = wheels;
-      return car;
-    }
-
-    const carGroup = createSkylineGTR();
+    /* ═══════════════════════════════════════
+       3D CAR MODEL LOADING
+       ═══════════════════════════════════════ */
+    const carGroup = new THREE.Group();
     scene.add(carGroup);
 
-    // ── Animation State ──
-    let carT = 0.001; // parameter along the road spline (0..1)
-    const CAR_SPEED = 0.00028;
-    const CAMERA_DISTANCE = 8;
-    const CAMERA_HEIGHT = 2.8;
-    const mouse = { x: 0, y: 0 };
-    const target = { x: 0, y: 0 };
+    // Setup DRACO + GLTF Loaders
+    const dracoLoader = new DRACOLoader();
+    dracoLoader.setDecoderPath('https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/libs/draco/gltf/');
 
-    addEventListener('pointermove', e => {
-      target.x = (e.clientX / innerWidth) * 2 - 1;
-      target.y = -(e.clientY / innerHeight) * 2 - 1;
-    });
+    const gltfLoader = new GLTFLoader();
+    gltfLoader.setDRACOLoader(dracoLoader);
 
-    // ── Terrain repositioning ──
-    function repositionTerrain() {
-      const carPos = roadCurve.getPointAt(carT);
-      const cz = carPos.z;
-      [terrain, terrain2].forEach(t => {
-        while (t.position.z + TERRAIN_SIZE / 2 > cz + 20) {
-          t.position.z -= TERRAIN_SIZE * 2;
-        }
-        while (t.position.z + TERRAIN_SIZE / 2 < cz - TERRAIN_SIZE * 1.5) {
-          t.position.z += TERRAIN_SIZE * 2;
+    function fitModel(model) {
+      model.traverse(child => {
+        if (child.isMesh) {
+          child.castShadow = true;
+          child.receiveShadow = true;
         }
       });
+      const box = new THREE.Box3().setFromObject(model);
+      const center = box.getCenter(new THREE.Vector3());
+      const size = box.getSize(new THREE.Vector3());
+      
+      model.position.sub(center); // Center pivot
+      const wrapper = new THREE.Group();
+      wrapper.add(model);
+
+      const maxDim = Math.max(size.x, size.y, size.z);
+      const scale = 4.2 / maxDim; // Normalize length to 4.2 units
+      wrapper.scale.setScalar(scale);
+      wrapper.position.y = (size.y * scale) / 2 + 0.05;
+      return wrapper;
     }
 
-    // ── Render Loop ──
+    gltfLoader.load('ferrari.glb', (gltf) => {
+      carGroup.add(fitModel(gltf.scene));
+    }, undefined, (err) => {
+      console.warn('Ferrari GLB failed, trying fallback car.glb:', err);
+      const fallbackLoader = new GLTFLoader();
+      fallbackLoader.load('car.glb', (gltf) => {
+        carGroup.add(fitModel(gltf.scene));
+      });
+    });
+
+    /* ═══════════════════════════════════════
+       ANIMATION LOOP & CHASE CAMERA
+       ═══════════════════════════════════════ */
+    let progress = 0.005;
+    const SPEED = 0.00018;
+
+    const mouse = { x: 0, y: 0 };
+    const smoothMouse = { x: 0, y: 0 };
+    const cameraPos = new THREE.Vector3();
+
+    addEventListener('pointermove', e => {
+      mouse.x = (e.clientX / innerWidth) * 2 - 1;
+      mouse.y = -(e.clientY / innerHeight) * 2 - 1;
+    });
+
     const clock = new THREE.Clock();
 
     function animate() {
       requestAnimationFrame(animate);
-      const dt = clock.getDelta();
-      const time = clock.getElapsedTime();
+      const dt = Math.min(clock.getDelta(), 0.05);
 
-      // Smoothly interpolate mouse
-      mouse.x += (target.x - mouse.x) * 0.03;
-      mouse.y += (target.y - mouse.y) * 0.03;
+      smoothMouse.x += (mouse.x - smoothMouse.x) * 0.03;
+      smoothMouse.y += (mouse.y - smoothMouse.y) * 0.03;
 
-      // Advance car along road
-      carT += CAR_SPEED;
-      if (carT >= 0.98) carT = 0.01; // loop
+      // Progress along road
+      progress += SPEED;
+      if (progress > 0.95) progress = 0.005;
 
       // Car position & orientation
-      const carPos = roadCurve.getPointAt(carT);
-      const carLookT = Math.min(carT + 0.005, 0.999);
-      const carLookPos = roadCurve.getPointAt(carLookT);
-      carGroup.position.copy(carPos);
-      carGroup.position.y += 0.08; // lift slightly above road
-      carGroup.lookAt(carLookPos.x, carLookPos.y + 0.08, carLookPos.z);
+      const currentPos = roadCurve.getPointAt(progress);
+      const aheadPos = roadCurve.getPointAt(Math.min(progress + 0.003, 0.999));
 
-      // Spin wheels
-      carGroup.wheels.forEach(w => { w.rotation.x += dt * 12; });
+      carGroup.position.copy(currentPos);
+      carGroup.lookAt(aheadPos.x, aheadPos.y, aheadPos.z);
 
-      // Subtle car body sway
-      carGroup.rotation.z = Math.sin(time * 1.2) * 0.008;
-
-      // Chase camera
-      const behindT = Math.max(carT - 0.018, 0.001);
-      const camTarget = roadCurve.getPointAt(behindT);
-      const camIdeal = new THREE.Vector3(
-        camTarget.x + mouse.x * 4,
-        camTarget.y + CAMERA_HEIGHT + mouse.y * 1.5,
-        camTarget.z + CAMERA_DISTANCE
+      // Chase Camera setup (following smoothly behind car)
+      const behindPos = roadCurve.getPointAt(Math.max(progress - 0.012, 0.001));
+      const targetCamPos = new THREE.Vector3(
+        behindPos.x + smoothMouse.x * 4,
+        behindPos.y + 2.8 + smoothMouse.y * 1.0,
+        behindPos.z + 7.5
       );
-      camera.position.lerp(camIdeal, 0.06);
-      const lookTarget = new THREE.Vector3(carPos.x, carPos.y + 0.8, carPos.z);
-      camera.lookAt(lookTarget);
 
-      // Reposition terrain chunks
-      repositionTerrain();
+      if (cameraPos.lengthSq() === 0) {
+        cameraPos.copy(targetCamPos);
+      } else {
+        cameraPos.lerp(targetCamPos, 0.06);
+      }
+
+      camera.position.copy(cameraPos);
+      camera.lookAt(currentPos.x, currentPos.y + 0.8, currentPos.z - 3);
+
+      // Keep sun shadows aligned with car movement
+      sun.position.set(currentPos.x + 80, 100, currentPos.z - 50);
+      sun.target = carGroup;
 
       renderer.render(scene, camera);
     }
     animate();
 
-    // ── Resize ──
+    /* ═══════════════════
+       RESIZE
+       ═══════════════════ */
     addEventListener('resize', () => {
       renderer.setSize(innerWidth, innerHeight);
       camera.aspect = innerWidth / innerHeight;
       camera.updateProjectionMatrix();
     });
 
-    // ── Identity toggle ──
+    /* ═══════════════════
+       UI INTERACTION
+       ═══════════════════ */
     const identity = document.querySelector('#identity');
     const info = document.querySelector('#info');
     identity.addEventListener('click', () => {
