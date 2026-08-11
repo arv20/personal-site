@@ -100,11 +100,21 @@
     
     .hint {
       position: fixed; top: clamp(20px, 3vw, 44px); left: 50%; z-index: 2;
-      color: rgba(244, 244, 240, 0.5); font: 500 11px/1 "DM Mono", monospace;
-      letter-spacing: 0.12em; text-transform: uppercase; transform: translateX(-50%);
+      color: rgba(244, 244, 240, 0.65); font: 500 11px/1 "DM Mono", monospace;
+      letter-spacing: 0.1em; text-transform: uppercase; transform: translateX(-50%);
       opacity: 0; animation: arrive 0.9s ease 0.6s forwards; pointer-events: none;
-      background: rgba(14, 22, 17, 0.35); padding: 8px 16px; border-radius: 999px;
-      border: 1px solid rgba(255, 255, 255, 0.08); backdrop-filter: blur(8px);
+      background: rgba(14, 22, 17, 0.45); padding: 6px 14px; border-radius: 999px;
+      border: 1px solid rgba(255, 255, 255, 0.12); backdrop-filter: blur(10px);
+      display: flex; align-items: center; gap: 6px;
+    }
+    kbd {
+      display: inline-block; padding: 2px 5px; font-family: inherit; font-size: 10px;
+      color: var(--accent); background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.2);
+      border-radius: 4px; transition: background 0.15s, border-color 0.15s, color 0.15s, transform 0.15s;
+    }
+    kbd.active {
+      background: var(--accent); color: #0e1713; border-color: var(--accent);
+      transform: scale(1.15); box-shadow: 0 0 10px var(--accent-glow);
     }
     
     @keyframes arrive { to { opacity: 1; transform: translateY(0) translateX(var(--tx, 0)); } }
@@ -125,7 +135,13 @@
   <div class="grain"></div>
   <div class="vignette"></div>
   
-  <span class="hint">use ▲ ▼ to accelerate / brake</span>
+  <div class="hint">
+    <span>press</span>
+    <kbd id="kUp">▲ W</kbd>
+    <kbd id="kDown">▼ S</kbd>
+    <span>to accelerate / brake</span>
+  </div>
+
   <div class="hud-stats" id="hudStats">
     <span class="stat-dot"></span>
     <span id="speedVal">68 MPH</span>
@@ -327,7 +343,7 @@
     scene.add(groundMesh);
 
     /* ═══════════════════════════════════════
-       ROADSIDE PROPS: TREES, ROCKS & MILEPOSTS
+       ROADSIDE PROPS: TREES, ROCKS & GUARDRAILS
        ═══════════════════════════════════════ */
     const dummy = new THREE.Object3D();
 
@@ -420,7 +436,38 @@
     scene.add(postBaseInst, postCapInst);
 
     /* ═══════════════════════════════════════
-       3D VEHICLE LOADING, LIGHTS & HEADLIGHT SPOTLIGHTS
+       FLOCK OF BIRDS CIRCLING IN SKY
+       ═══════════════════════════════════════ */
+    const BIRD_COUNT = 14;
+    const birdGroup = new THREE.Group();
+    const birdWings = [];
+
+    // V-shaped wing geometry
+    const wingShapeGeo = new THREE.BufferGeometry();
+    const wingVerts = new Float32Array([
+      -0.4, 0, 0,  0, 0.08, -0.15,  0, 0, 0,
+       0, 0, 0,    0, 0.08, -0.15,  0.4, 0, 0
+    ]);
+    wingShapeGeo.setAttribute('position', new THREE.BufferAttribute(wingVerts, 3));
+    wingShapeGeo.computeVertexNormals();
+
+    const birdMat = new THREE.MeshBasicMaterial({ color: 0x223328, side: THREE.DoubleSide });
+
+    for (let i = 0; i < BIRD_COUNT; i++) {
+      const bMesh = new THREE.Mesh(wingShapeGeo, birdMat);
+      bMesh.position.set(
+        (Math.random() - 0.5) * 60,
+        18 + Math.random() * 8,
+        -150 - Math.random() * 200
+      );
+      bMesh.scale.setScalar(1.2 + Math.random() * 0.6);
+      birdGroup.add(bMesh);
+      birdWings.push(bMesh);
+    }
+    scene.add(birdGroup);
+
+    /* ═══════════════════════════════════════
+       3D VEHICLE LOADING & LIGHTS
        ═══════════════════════════════════════ */
     const carGroup = new THREE.Group();
     scene.add(carGroup);
@@ -430,7 +477,7 @@
     const tailGlowMat = new THREE.MeshBasicMaterial({
       color: 0xff1100,
       transparent: true,
-      opacity: 0.85,
+      opacity: 0.5,
       side: THREE.DoubleSide
     });
     const tailGlowMesh = new THREE.Mesh(tailGlowGeo, tailGlowMat);
@@ -525,22 +572,35 @@
     scene.add(dustParticles);
 
     /* ═══════════════════════════════════════
-       INTERACTIVE DRIVE CONTROLS (UP/DOWN SPEED MULTIPLIER)
+       INTERACTIVE DRIVE CONTROLS & KBD BADGE HIGHLIGHTS
        ═══════════════════════════════════════ */
     let speedMultiplier = 1.0;
     let targetSpeedMultiplier = 1.0;
 
+    const kUp = document.querySelector('#kUp');
+    const kDown = document.querySelector('#kDown');
+
     window.addEventListener('keydown', (e) => {
       if (e.key === 'ArrowUp' || e.key === 'w' || e.key === 'W') {
-        targetSpeedMultiplier = 1.8; // Accelerate boost
+        targetSpeedMultiplier = 1.8;
+        kUp?.classList.add('active');
+        tailGlowMat.opacity = 0.5; // Normal drive glow
       } else if (e.key === 'ArrowDown' || e.key === 's' || e.key === 'S') {
-        targetSpeedMultiplier = 0.45; // Brake / slow cruise
+        targetSpeedMultiplier = 0.45;
+        kDown?.classList.add('active');
+        tailGlowMat.opacity = 1.0; // Bright Brake Light Glow!
       }
     });
 
     window.addEventListener('keyup', (e) => {
-      if (['ArrowUp', 'w', 'W', 'ArrowDown', 's', 'S'].includes(e.key)) {
-        targetSpeedMultiplier = 1.0; // Return to standard cruise
+      if (['ArrowUp', 'w', 'W'].includes(e.key)) {
+        kUp?.classList.remove('active');
+        targetSpeedMultiplier = 1.0;
+      }
+      if (['ArrowDown', 's', 'S'].includes(e.key)) {
+        kDown?.classList.remove('active');
+        targetSpeedMultiplier = 1.0;
+        tailGlowMat.opacity = 0.5;
       }
     });
 
@@ -568,6 +628,7 @@
     function animate() {
       requestAnimationFrame(animate);
       const dt = Math.min(clock.getDelta(), 0.05);
+      const time = clock.getElapsedTime();
 
       smoothMouse.x += (mouse.x - smoothMouse.x) * 0.035;
       smoothMouse.y += (mouse.y - smoothMouse.y) * 0.035;
@@ -578,6 +639,12 @@
       // Advance car along spline
       progress += BASE_SPEED * speedMultiplier;
       if (progress > 0.96) progress = 0.02;
+
+      // Flap bird wings & circle flock in sky
+      birdWings.forEach((bird, idx) => {
+        bird.rotation.z = Math.sin(time * 9 + idx) * 0.25;
+        bird.position.x += Math.sin(time * 0.2 + idx) * 0.04;
+      });
 
       // Update HUD stats dynamically
       const currentSpeed = Math.round(64 * speedMultiplier + Math.sin(progress * 40) * 4);
@@ -623,7 +690,7 @@
         innerCarMesh.rotation.z = -steerDelta * 0.8;
       }
 
-      // Spawn dust particles behind rear wheels periodically
+      // Spawn dust particles behind rear wheels periodically when car is loaded
       if (carGroup.children.length > 0 && Math.random() < 0.45) {
         const positions = dustParticles.geometry.attributes.position.array;
         positions[particleIdx * 3] = currentPos.x + (Math.random() - 0.5) * 1.2;
@@ -633,7 +700,13 @@
         particleIdx = (particleIdx + 1) % PARTICLE_COUNT;
       }
 
-      // Dynamic Chase Camera
+      // Dynamic Chase Camera & Speed FOV Stretch
+      const targetFov = 52 + (speedMultiplier - 1.0) * 7.5;
+      if (Math.abs(camera.fov - targetFov) > 0.05) {
+        camera.fov += (targetFov - camera.fov) * 0.08;
+        camera.updateProjectionMatrix();
+      }
+
       const behindPos = roadCurve.getPointAt(Math.max(progress - 0.014, 0.001));
       const targetCamPos = new THREE.Vector3(
         behindPos.x + smoothMouse.x * 4.5,
