@@ -279,6 +279,8 @@
     <span style="opacity:0.3">|</span>
     <span id="lapVal">L1</span>
     <span style="opacity:0.3">|</span>
+    <span id="wthrVal">☀️ 72°F</span>
+    <span style="opacity:0.3">|</span>
     <button id="btnAudio" class="btn-audio" type="button" aria-label="Toggle engine sound">SOUND 🔇</button>
   </div>
 
@@ -432,12 +434,7 @@
     }
     const arcs = arcBiomes.map((biome, i) => ({ biome, from: i / ARC_COUNT, to: (i + 1) / ARC_COUNT }));
 
-    function biomeAt(t) {
-      const i = Math.floor((((t % 1) + 1) % 1) * ARC_COUNT) % ARC_COUNT;
-      return BIOMES[arcBiomes[i]];
-    }
-
-    // Smoothly-lerped sky / light state (targets come from biomeAt each frame)
+    // Smoothly-lerped sky / light state — targets now come from live Ohio weather
     const skyState = {
       top: new THREE.Color(BIOMES.forest.skyTop),
       horizon: new THREE.Color(BIOMES.forest.skyHorizon),
@@ -447,7 +444,86 @@
       hemi: BIOMES.forest.hemiIntensity,
       fogDensity: BIOMES.forest.fogDensity,
       night: BIOMES.forest.night,
+      clouds: 0.2,
+      cloudColor: new THREE.Color(0xffffff),
+      rain: 0,
+      snow: 0,
+      storm: 0,
     };
+
+    /* ═══════════════════════════════════════
+       LIVE OHIO WEATHER — the sky is whatever it is right now in Columbus
+       ═══════════════════════════════════════ */
+    const OHIO = { lat: 39.9612, lon: -82.9988 }; // Columbus, Ohio
+    const weatherState = { code: 1, isDay: 1, temp: 72, cond: 'partly_day' };
+    const CC = (hex) => new THREE.Color(hex);
+    const WEATHER_PALETTES = {
+      clear_day: { top: CC(0x3f8fd4), horizon: CC(0xcfe6f2), sun: CC(0xfff6df), sunIntensity: 2.1, night: 0, fogDensity: 0.0032, ambient: 0.55, hemi: 0.65, clouds: 0.06, cloudColor: CC(0xffffff), rain: 0, snow: 0, storm: 0 },
+      partly_day: { top: CC(0x5a9bd4), horizon: CC(0xd3e2ea), sun: CC(0xfff2d8), sunIntensity: 1.7, night: 0, fogDensity: 0.0038, ambient: 0.5, hemi: 0.6, clouds: 0.45, cloudColor: CC(0xffffff), rain: 0, snow: 0, storm: 0 },
+      overcast: { top: CC(0x8a959e), horizon: CC(0xc9ced1), sun: CC(0xe8ecf0), sunIntensity: 0.5, night: 0, fogDensity: 0.005, ambient: 0.62, hemi: 0.55, clouds: 0.92, cloudColor: CC(0xd6dade), rain: 0, snow: 0, storm: 0 },
+      fog: { top: CC(0x9aa2a6), horizon: CC(0xcdd2d0), sun: CC(0xe6eaeb), sunIntensity: 0.45, night: 0, fogDensity: 0.013, ambient: 0.7, hemi: 0.6, clouds: 0.5, cloudColor: CC(0xccd2d2), rain: 0, snow: 0, storm: 0 },
+      rain: { top: CC(0x4c5a68), horizon: CC(0x93a0ab), sun: CC(0xd8e2ea), sunIntensity: 0.3, night: 0, fogDensity: 0.007, ambient: 0.5, hemi: 0.55, clouds: 1, cloudColor: CC(0x8f9aa3), rain: 1, snow: 0, storm: 0 },
+      thunderstorm: { top: CC(0x232a36), horizon: CC(0x5b6775), sun: CC(0xb8c4d0), sunIntensity: 0.15, night: 0.45, fogDensity: 0.008, ambient: 0.4, hemi: 0.4, clouds: 1, cloudColor: CC(0x4a5562), rain: 1, snow: 0, storm: 1 },
+      snow: { top: CC(0xaebdc6), horizon: CC(0xe2e9ec), sun: CC(0xffffff), sunIntensity: 0.55, night: 0, fogDensity: 0.006, ambient: 0.6, hemi: 0.62, clouds: 0.95, cloudColor: CC(0xdde6ea), rain: 0, snow: 1, storm: 0 },
+      clear_night: { top: CC(0x0a101f), horizon: CC(0x1a2538), sun: CC(0x9fb0cc), sunIntensity: 0.12, night: 1, fogDensity: 0.0035, ambient: 0.32, hemi: 0.4, clouds: 0.05, cloudColor: CC(0x3a465c), rain: 0, snow: 0, storm: 0 },
+      partly_night: { top: CC(0x0d1526), horizon: CC(0x25304a), sun: CC(0x9fb0cc), sunIntensity: 0.12, night: 0.8, fogDensity: 0.004, ambient: 0.3, hemi: 0.38, clouds: 0.45, cloudColor: CC(0x3a465c), rain: 0, snow: 0, storm: 0 },
+    };
+
+    function classifyWeather(code, isDay) {
+      if (code === 0) return isDay ? 'clear_day' : 'clear_night';
+      if (code <= 2) return isDay ? 'partly_day' : 'partly_night';
+      if (code === 3) return 'overcast';
+      if (code === 45 || code === 48) return 'fog';
+      if (code >= 95) return 'thunderstorm';
+      if ((code >= 71 && code <= 77) || code === 85 || code === 86) return 'snow';
+      if (code >= 51 && code <= 67) return 'rain';
+      if (code >= 80 && code <= 82) return 'rain';
+      return isDay ? 'partly_day' : 'partly_night';
+    }
+    function nightify(p) {
+      return {
+        top: p.top.clone().multiplyScalar(0.42),
+        horizon: p.horizon.clone().multiplyScalar(0.6),
+        sun: p.sun.clone().multiplyScalar(0.7),
+        sunIntensity: p.sunIntensity * 0.32,
+        night: Math.max(p.night, 0.55),
+        fogDensity: p.fogDensity * 1.2,
+        ambient: p.ambient * 0.7,
+        hemi: p.hemi * 0.75,
+        clouds: p.clouds,
+        cloudColor: p.cloudColor.clone(),
+        rain: p.rain, snow: p.snow, storm: p.storm,
+      };
+    }
+    const weatherPaletteCache = {};
+    function weatherTarget(cond, isDay) {
+      let p = WEATHER_PALETTES[cond] || WEATHER_PALETTES.partly_day;
+      if (!isDay && (cond === 'overcast' || cond === 'fog' || cond === 'rain' || cond === 'thunderstorm' || cond === 'snow')) {
+        const key = cond + '_night';
+        if (!weatherPaletteCache[key]) weatherPaletteCache[key] = nightify(p);
+        p = weatherPaletteCache[key];
+      }
+      return p;
+    }
+    const COND_EMOJI = { clear_day: '☀️', clear_night: '🌙', partly_day: '⛅', partly_night: '☁️', overcast: '☁️', fog: '🌫️', rain: '🌧️', thunderstorm: '⛈️', snow: '❄️' };
+
+    async function fetchWeather() {
+      try {
+        const r = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${OHIO.lat}&longitude=${OHIO.lon}&current=weather_code,is_day,temperature_2m&temperature_unit=fahrenheit&timezone=America%2FNew_York`);
+        if (!r.ok) throw new Error(r.status);
+        const j = await r.json();
+        if (j && j.current) {
+          weatherState.code = j.current.weather_code ?? weatherState.code;
+          weatherState.isDay = j.current.is_day ?? 1;
+          weatherState.temp = Math.round(j.current.temperature_2m ?? 72);
+          weatherState.cond = classifyWeather(weatherState.code, weatherState.isDay);
+        }
+      } catch (err) {
+        console.warn('Weather fetch failed, keeping default sky:', err);
+      }
+    }
+    fetchWeather();
+    setInterval(fetchWeather, 10 * 60 * 1000);
 
     /* ═══════════════════════════════════════
        SKY DOME — gradient, sun disc, night stars
@@ -463,6 +539,8 @@
         sunColor: { value: new THREE.Color(BIOMES.forest.sunColor) },
         sunIntensityU: { value: BIOMES.forest.sunIntensity },
         nightFactor: { value: 0 },
+        cloudCover: { value: 0.2 },
+        cloudColor: { value: new THREE.Color(0xffffff) },
         timeU: { value: 0 },
       },
       vertexShader: `
@@ -479,8 +557,22 @@
         uniform vec3 sunColor;
         uniform float sunIntensityU;
         uniform float nightFactor;
+        uniform float cloudCover;
+        uniform vec3 cloudColor;
         uniform float timeU;
         float hash13(vec3 p) { p = fract(p * 0.3183099 + 0.1); p *= 17.0; return fract(p.x * p.y * p.z * (p.x + p.y + p.z)); }
+        float hash21(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
+        float noise21(vec2 p) {
+          vec2 i = floor(p); vec2 f = fract(p);
+          f = f * f * (3.0 - 2.0 * f);
+          return mix(mix(hash21(i), hash21(i + vec2(1.0, 0.0)), f.x),
+                     mix(hash21(i + vec2(0.0, 1.0)), hash21(i + vec2(1.0, 1.0)), f.x), f.y);
+        }
+        float fbm21(vec2 p) {
+          float v = 0.0; float a = 0.5;
+          for (int i = 0; i < 4; i++) { v += a * noise21(p); p = p * 2.03 + vec2(7.3); a *= 0.5; }
+          return v;
+        }
         void main() {
           vec3 d = normalize(vDir);
           float h = clamp(d.y, 0.0, 1.0);
@@ -489,9 +581,13 @@
           float s = max(dot(d, sunDirU), 0.0);
           col += sunColor * sunIntensityU * (pow(s, 900.0) * 2.4 + pow(s, 40.0) * 0.32 + pow(s, 5.0) * 0.05);
           if (d.y > 0.03) {
-            float star = step(0.99915, hash13(floor(d * 800.0 + timeU * 4.0)));
+            float star = step(0.99915, hash13(floor(d * 800.0 + timeU * 4.0))) * (1.0 - cloudCover * 0.85);
             col += vec3(0.9, 0.95, 1.0) * star * nightFactor * (0.3 + 0.7 * d.y);
           }
+          float band = smoothstep(0.02, 0.28, d.y) * (1.0 - smoothstep(0.28, 0.62, d.y));
+          float cloudN = fbm21(d.xz * 2.4 + vec2(timeU * 0.012, 0.0));
+          float cloudM = band * cloudCover * smoothstep(0.42, 0.88, cloudN);
+          col = mix(col, cloudColor, cloudM * 0.92);
           gl_FragColor = vec4(col, 1.0);
         }`,
     });
@@ -796,6 +892,54 @@
     waterMesh.rotation.x = -Math.PI / 2;
     waterMesh.position.set(groundCX, -0.7, groundCZ);
     scene.add(waterMesh);
+
+    /* ═══════════════════════════════════════
+       RAIN & SNOW — weather particle systems
+       ═══════════════════════════════════════ */
+    const RAIN_COUNT = 1400;
+    const rainPos = new Float32Array(RAIN_COUNT * 6);
+    for (let i = 0; i < RAIN_COUNT; i++) {
+      const x = (Math.random() - 0.5) * 150;
+      const z = (Math.random() - 0.5) * 150;
+      const y = Math.random() * 40 - 4;
+      rainPos[i * 6] = x; rainPos[i * 6 + 1] = y; rainPos[i * 6 + 2] = z;
+      rainPos[i * 6 + 3] = x; rainPos[i * 6 + 4] = y - 0.6; rainPos[i * 6 + 5] = z;
+    }
+    const rainGeo = new THREE.BufferGeometry();
+    rainGeo.setAttribute('position', new THREE.BufferAttribute(rainPos, 3));
+    const rainMat = new THREE.LineBasicMaterial({ color: 0xa8c4dc, transparent: true, opacity: 0.5 });
+    const rainLines = new THREE.LineSegments(rainGeo, rainMat);
+    rainLines.frustumCulled = false;
+    rainLines.visible = false;
+    const rainGroup = new THREE.Group();
+    rainGroup.add(rainLines);
+    scene.add(rainGroup);
+
+    const snowTexCanvas = document.createElement('canvas');
+    snowTexCanvas.width = snowTexCanvas.height = 32;
+    const sctx = snowTexCanvas.getContext('2d');
+    const grad = sctx.createRadialGradient(16, 16, 1, 16, 16, 15);
+    grad.addColorStop(0, 'rgba(255,255,255,0.95)');
+    grad.addColorStop(1, 'rgba(255,255,255,0)');
+    sctx.fillStyle = grad;
+    sctx.fillRect(0, 0, 32, 32);
+    const snowTex = new THREE.CanvasTexture(snowTexCanvas);
+    const SNOW_COUNT = 1100;
+    const snowPos = new Float32Array(SNOW_COUNT * 3);
+    for (let i = 0; i < SNOW_COUNT; i++) {
+      snowPos[i * 3] = (Math.random() - 0.5) * 160;
+      snowPos[i * 3 + 1] = Math.random() * 45;
+      snowPos[i * 3 + 2] = (Math.random() - 0.5) * 160;
+    }
+    const snowGeo = new THREE.BufferGeometry();
+    snowGeo.setAttribute('position', new THREE.BufferAttribute(snowPos, 3));
+    const snowMat = new THREE.PointsMaterial({
+      map: snowTex, color: 0xffffff, size: 0.5, transparent: true, opacity: 0.9, depthWrite: false,
+    });
+    const snowPoints = new THREE.Points(snowGeo, snowMat);
+    snowPoints.frustumCulled = false;
+    snowPoints.visible = false;
+    scene.add(snowPoints);
 
     /* ═══════════════════════════════════════
        PER-BIOME PROPS — instanced, terrain-grounded
@@ -1298,6 +1442,7 @@
     const speedValEl = document.querySelector('#speedVal');
     const distValEl = document.querySelector('#distVal');
     const lapValEl = document.querySelector('#lapVal');
+    const wthrValEl = document.querySelector('#wthrVal');
     const hudGauge = document.querySelector('#hudGauge');
 
     addEventListener('pointermove', e => {
@@ -1306,7 +1451,7 @@
     });
 
     const clock = new THREE.Clock();
-    const _biomeCol = new THREE.Color();
+    let lightning = 0;
 
     function animate() {
       requestAnimationFrame(animate);
@@ -1340,35 +1485,78 @@
       if (lapValEl) lapValEl.textContent = `L${lap}`;
       if (hudGauge) hudGauge.style.width = `${((speedMultiplier - 0.45) / (1.8 - 0.45)) * 100}%`;
 
-      // Biome-driven sky & lighting — ease toward the biome under the car
-      const biome = biomeAt(progress);
-      const lerpK = 1 - Math.pow(0.0008, dt);
-      skyState.top.lerp(_biomeCol.setHex(biome.skyTop), lerpK);
-      skyState.horizon.lerp(_biomeCol.setHex(biome.skyHorizon), lerpK);
-      skyState.sun.lerp(_biomeCol.setHex(biome.sunColor), lerpK);
-      skyState.sunIntensity += (biome.sunIntensity - skyState.sunIntensity) * lerpK;
-      skyState.ambient += (biome.ambient - skyState.ambient) * lerpK;
-      skyState.hemi += (biome.hemiIntensity - skyState.hemi) * lerpK;
-      skyState.fogDensity += (biome.fogDensity - skyState.fogDensity) * lerpK;
-      skyState.night += (biome.night - skyState.night) * lerpK;
+      // Live Ohio weather drives the sky — ease toward the current condition
+      const wTarget = weatherTarget(weatherState.cond, weatherState.isDay);
+      const lerpK = 1 - Math.pow(0.0012, dt);
+      skyState.top.lerp(wTarget.top, lerpK);
+      skyState.horizon.lerp(wTarget.horizon, lerpK);
+      skyState.sun.lerp(wTarget.sun, lerpK);
+      skyState.sunIntensity += (wTarget.sunIntensity - skyState.sunIntensity) * lerpK;
+      skyState.ambient += (wTarget.ambient - skyState.ambient) * lerpK;
+      skyState.hemi += (wTarget.hemi - skyState.hemi) * lerpK;
+      skyState.fogDensity += (wTarget.fogDensity - skyState.fogDensity) * lerpK;
+      skyState.night += (wTarget.night - skyState.night) * lerpK;
+      skyState.clouds += (wTarget.clouds - skyState.clouds) * lerpK;
+      skyState.cloudColor.lerp(wTarget.cloudColor, lerpK);
+      skyState.rain += (wTarget.rain - skyState.rain) * lerpK;
+      skyState.snow += (wTarget.snow - skyState.snow) * lerpK;
+      skyState.storm += (wTarget.storm - skyState.storm) * lerpK;
+
+      // Thunderstorm lightning flashes
+      if (skyState.storm > 0.5 && Math.random() < 0.008) lightning = 1;
+      lightning *= 0.88;
 
       skyMat.uniforms.topColor.value.copy(skyState.top);
       skyMat.uniforms.horizonColor.value.copy(skyState.horizon);
       skyMat.uniforms.sunColor.value.copy(skyState.sun);
       skyMat.uniforms.sunIntensityU.value = skyState.sunIntensity;
       skyMat.uniforms.nightFactor.value = skyState.night;
+      skyMat.uniforms.cloudCover.value = skyState.clouds;
+      skyMat.uniforms.cloudColor.value.copy(skyState.cloudColor);
       skyMat.uniforms.timeU.value = time;
 
       scene.fog.color.copy(skyState.horizon);
       scene.fog.density = skyState.fogDensity;
-      ambientLight.intensity = skyState.ambient;
-      hemiLight.intensity = skyState.hemi;
-      sun.intensity = skyState.sunIntensity * (1 - skyState.night * 0.85);
+      ambientLight.intensity = skyState.ambient * (1 + lightning * 1.3);
+      hemiLight.intensity = skyState.hemi * (1 + lightning * 0.6);
+      sun.intensity = skyState.sunIntensity * (1 - skyState.night * 0.8) * (1 + lightning * 1.5);
       sun.color.copy(skyState.sun);
 
-      headlightLeft.intensity = skyState.night * 14;
-      headlightRight.intensity = skyState.night * 14;
+      // Headlights come on when it is genuinely dark
+      const dark = Math.max(skyState.night, skyState.storm * 0.65);
+      headlightLeft.intensity = dark * 14;
+      headlightRight.intensity = dark * 14;
       waterMat.uniforms.uTime.value = time;
+
+      // Rain & snow — follow the car, recycle forever
+      rainLines.visible = skyState.rain > 0.15;
+      snowPoints.visible = skyState.snow > 0.15;
+      if (rainLines.visible) {
+        rainGroup.position.set(_pos.x, 0, _pos.z);
+        for (let i = 0; i < RAIN_COUNT; i++) {
+          const j = i * 6;
+          rainPos[j + 1] -= 32 * dt;
+          if (rainPos[j + 1] < -4) rainPos[j + 1] = 34 + Math.random() * 8;
+          rainPos[j + 4] = rainPos[j + 1] - 0.6;
+        }
+        rainGeo.attributes.position.needsUpdate = true;
+      }
+      if (snowPoints.visible) {
+        snowPoints.position.set(_pos.x, 0, _pos.z);
+        for (let i = 0; i < SNOW_COUNT; i++) {
+          const j = i * 3;
+          snowPos[j + 1] -= 2.4 * dt;
+          snowPos[j] += Math.sin(time * 1.4 + i * 0.7) * 0.004;
+          if (snowPos[j + 1] < -2) {
+            snowPos[j] = (Math.random() - 0.5) * 160;
+            snowPos[j + 1] = 42 + Math.random() * 6;
+            snowPos[j + 2] = (Math.random() - 0.5) * 160;
+          }
+        }
+        snowGeo.attributes.position.needsUpdate = true;
+      }
+
+      if (wthrValEl) wthrValEl.textContent = `${COND_EMOJI[weatherState.cond] || '☁️'} ${weatherState.temp}°F`;
 
       const tAhead = (progress + 0.003) % 1;
       const tLook = (progress + 0.015) % 1;
