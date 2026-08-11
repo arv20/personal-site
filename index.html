@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
   <style>
-    :root { color-scheme: dark; --ink:#030303; --text:#f0f0ed; --muted:#969692; --line:rgba(255,255,255,.14); --accent:#99e9ff; }
+    :root { color-scheme: dark; --ink:#050510; --text:#f0f0ed; --muted:#969692; --line:rgba(255,255,255,.14); --accent:#ff007f; }
     * { box-sizing:border-box; }
     html, body { width:100%; height:100%; margin:0; overflow:hidden; background:var(--ink); }
     body { color:var(--text); font-family:"DM Sans",system-ui,sans-serif; -webkit-font-smoothing:antialiased; }
@@ -54,16 +54,87 @@
     renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
     renderer.setSize(innerWidth, innerHeight);
     const scene = new THREE.Scene();
-    const camera = new THREE.PerspectiveCamera(48, innerWidth / innerHeight, .1, 100); camera.position.z = 6;
+    scene.fog = new THREE.FogExp2(0x050510, 0.04);
+    
+    const camera = new THREE.PerspectiveCamera(60, innerWidth / innerHeight, .1, 100); 
+    camera.position.set(0, 1.2, 6);
+    camera.lookAt(0, 1.2, 0);
+    
     const group = new THREE.Group(); scene.add(group);
-    const count = 1350, positions = new Float32Array(count * 3), sizes = new Float32Array(count);
-    for (let i=0;i<count;i++) { const t=i/count*Math.PI*18, r=1.5+.65*Math.sin(t*2.5); positions[i*3]=Math.cos(t)*r; positions[i*3+1]=(i/count-.5)*4.5; positions[i*3+2]=Math.sin(t)*r*.46; sizes[i]=Math.random()*1.8+.35; }
-    const geometry = new THREE.BufferGeometry(); geometry.setAttribute('position',new THREE.BufferAttribute(positions,3)); geometry.setAttribute('size',new THREE.BufferAttribute(sizes,1));
-    const material = new THREE.ShaderMaterial({ transparent:true, depthWrite:false, blending:THREE.AdditiveBlending, uniforms:{ pixel:{value:Math.min(devicePixelRatio,2)}, opacity:{value:.78} }, vertexShader:'attribute float size; uniform float pixel; void main(){ vec4 p=modelViewMatrix*vec4(position,1.); gl_PointSize=size*pixel*(56./-p.z); gl_Position=projectionMatrix*p; }', fragmentShader:'uniform float opacity; void main(){ float d=length(gl_PointCoord-.5); if(d>.5) discard; float a=1.-smoothstep(.05,.5,d); gl_FragColor=vec4(.48,.72,1.,a*a*opacity); }' });
-    const points = new THREE.Points(geometry,material); group.add(points);
-    const halo = new THREE.Mesh(new THREE.TorusGeometry(2.15,.008,6,120),new THREE.MeshBasicMaterial({color:0x6d95ff,transparent:true,opacity:.34})); halo.rotation.x=1.15; halo.rotation.y=-.38; group.add(halo);
-    const mouse={x:0,y:0}, target={x:0,y:0}; addEventListener('pointermove',e=>{ target.x=e.clientX/innerWidth*2-1; target.y=-(e.clientY/innerHeight*2-1); });
-    const clock = new THREE.Clock(); function animate(){ requestAnimationFrame(animate); const time=clock.getElapsedTime(); mouse.x+=(target.x-mouse.x)*.035; mouse.y+=(target.y-mouse.y)*.035; group.rotation.y=time*.09+mouse.x*.24; group.rotation.x=Math.sin(time*.22)*.09-mouse.y*.16; group.position.x=mouse.x*.24; group.position.y=mouse.y*.12; halo.rotation.z=time*.06; renderer.render(scene,camera); } animate();
+    
+    // Grid Road
+    const gridHelper = new THREE.GridHelper(80, 80, 0xff007f, 0x00ffff);
+    gridHelper.position.y = 0;
+    group.add(gridHelper);
+
+    // Neon Sun
+    const sunGeo = new THREE.CircleGeometry(12, 64);
+    const sunMat = new THREE.MeshBasicMaterial({ color: 0xff3366, transparent: true, fog: false });
+    const sun = new THREE.Mesh(sunGeo, sunMat);
+    sun.position.set(0, 8, -40);
+    group.add(sun);
+
+    // Mountains (simple lines)
+    const mountGeo = new THREE.BufferGeometry();
+    const mountPts = [];
+    for(let i=0; i<20; i++) {
+        mountPts.push(
+            -40 + i*4, Math.random()*5, -35,
+            -38 + i*4, 0, -35
+        );
+    }
+    mountGeo.setAttribute('position', new THREE.Float32BufferAttribute(mountPts, 3));
+    const mountMat = new THREE.LineBasicMaterial({ color: 0x00ffff, transparent: true, opacity: 0.3 });
+    const mountains = new THREE.LineSegments(mountGeo, mountMat);
+    group.add(mountains);
+
+    // Skyline GTR
+    const textureLoader = new THREE.TextureLoader();
+    let car;
+    textureLoader.load('car.jpg', (texture) => {
+      const carMat = new THREE.MeshBasicMaterial({ 
+        map: texture, 
+        transparent: true, 
+        blending: THREE.AdditiveBlending,
+        depthWrite: false
+      });
+      car = new THREE.Mesh(new THREE.PlaneGeometry(6, 6), carMat);
+      car.position.set(0, 1.8, 2);
+      group.add(car);
+    });
+
+    const mouse={x:0,y:0}, target={x:0,y:0}; 
+    addEventListener('pointermove',e=>{ 
+      target.x=e.clientX/innerWidth*2-1; 
+      target.y=-(e.clientY/innerHeight*2-1); 
+    });
+    
+    const clock = new THREE.Clock(); 
+    function animate(){ 
+      requestAnimationFrame(animate); 
+      const time=clock.getElapsedTime(); 
+      
+      mouse.x+=(target.x-mouse.x)*.05; 
+      mouse.y+=(target.y-mouse.y)*.05; 
+      
+      // Animate road
+      gridHelper.position.z = (time * 15) % 1;
+      
+      // Animate car
+      if (car) {
+        car.position.y = 1.8 + Math.sin(time * 20) * 0.04;
+        car.position.x = mouse.x * 2;
+        car.rotation.z = -mouse.x * 0.15;
+      }
+      
+      // Dynamic camera
+      camera.position.x = mouse.x * 1.5;
+      camera.position.y = 1.2 + mouse.y * 0.5;
+      camera.lookAt(0, 1.2, 0);
+
+      renderer.render(scene,camera); 
+    } 
+    animate();
     addEventListener('resize',()=>{ renderer.setSize(innerWidth,innerHeight); camera.aspect=innerWidth/innerHeight; camera.updateProjectionMatrix(); });
     const identity=document.querySelector('#identity'), info=document.querySelector('#info'); identity.addEventListener('click',()=>{ const open=info.classList.toggle('open'); identity.setAttribute('aria-expanded',open); info.setAttribute('aria-hidden',!open); });
   </script>
