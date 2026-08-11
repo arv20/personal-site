@@ -277,6 +277,8 @@
     <span style="opacity:0.3">|</span>
     <span id="distVal">01.2 KM</span>
     <span style="opacity:0.3">|</span>
+    <span id="lapVal">L1</span>
+    <span style="opacity:0.3">|</span>
     <button id="btnAudio" class="btn-audio" type="button" aria-label="Toggle engine sound">SOUND 🔇</button>
   </div>
 
@@ -335,9 +337,14 @@
     import * as THREE from 'three';
     import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
     import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
+    import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+    import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+    import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+    import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
+    import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 
     /* ═══════════════════════════════════════
-       RENDERER & PIPELINE
+       RENDERER & POST PIPELINE
        ═══════════════════════════════════════ */
     const canvas = document.querySelector('#scene');
     const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: "high-performance" });
@@ -350,34 +357,165 @@
     renderer.toneMappingExposure = 1.15;
 
     const scene = new THREE.Scene();
-    
-    const skyMorning = new THREE.Color(0x8cb6a0);
-    const skySunset = new THREE.Color(0xba8c72);
-    const skyTwilight = new THREE.Color(0x354452);
-    const currentSkyColor = skyMorning.clone();
-    
-    scene.background = currentSkyColor;
-    scene.fog = new THREE.FogExp2(currentSkyColor, 0.0065);
+    scene.fog = new THREE.FogExp2(new THREE.Color(0xd9e8d2), 0.0055);
 
-    const camera = new THREE.PerspectiveCamera(52, innerWidth / innerHeight, 0.1, 450);
+    const camera = new THREE.PerspectiveCamera(52, innerWidth / innerHeight, 0.1, 500);
+
+    // Studio environment map → glossy paint and rich materials
+    const pmrem = new THREE.PMREMGenerator(renderer);
+    scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+
+    // Bloom post-processing — makes neon, headlights and glows pop
+    const composer = new EffectComposer(renderer);
+    composer.addPass(new RenderPass(scene, camera));
+    const bloomPass = new UnrealBloomPass(new THREE.Vector2(innerWidth, innerHeight), 0.62, 0.55, 0.85);
+    composer.addPass(bloomPass);
+    composer.addPass(new OutputPass());
 
     /* ═══════════════════════════════════════
-       ENVIRONMENT LIGHTING
+       BIOME SYSTEM — seeded arcs around the loop
        ═══════════════════════════════════════ */
-    const ambientLight = new THREE.AmbientLight(0xdbe8df, 0.75);
+    function mulberry32(seed) {
+      let a = seed >>> 0;
+      return function () {
+        a |= 0; a = (a + 0x6D2B79F5) | 0;
+        let t = Math.imul(a ^ (a >>> 15), 1 | a);
+        t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+        return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+      };
+    }
+
+    const BIOMES = {
+      forest: {
+        ground: [0x3f7d46, 0x2c5a31],
+        skyTop: 0x6ea6d4, skyHorizon: 0xd9e8d2, sunColor: 0xfff2d6, sunIntensity: 1.75,
+        ambient: 0.5, hemiSky: 0xb5e2e4, hemiGround: 0x4a6b4a, hemiIntensity: 0.6,
+        fogDensity: 0.0055, night: 0,
+      },
+      beach: {
+        ground: [0xd8c28b, 0xbfa272],
+        skyTop: 0x4e9ddc, skyHorizon: 0xcdeaf0, sunColor: 0xfff8e2, sunIntensity: 2.15,
+        ambient: 0.6, hemiSky: 0xbfe8f2, hemiGround: 0x8a7a55, hemiIntensity: 0.7,
+        fogDensity: 0.0042, night: 0,
+      },
+      city: {
+        ground: [0x3a4149, 0x262c33],
+        skyTop: 0x0b1020, skyHorizon: 0x31415c, sunColor: 0x8899bb, sunIntensity: 0.3,
+        ambient: 0.3, hemiSky: 0x2a3a55, hemiGround: 0x141a22, hemiIntensity: 0.45,
+        fogDensity: 0.007, night: 1,
+      },
+      desert: {
+        ground: [0xcd9a56, 0xa97c42],
+        skyTop: 0x3f82cc, skyHorizon: 0xf4dcae, sunColor: 0xffe6b8, sunIntensity: 1.95,
+        ambient: 0.55, hemiSky: 0xd8c8a8, hemiGround: 0x8a6a42, hemiIntensity: 0.65,
+        fogDensity: 0.0046, night: 0,
+      },
+    };
+
+    // Randomized arc assignment: 6 arcs around the loop, city + beach guaranteed,
+    // no two adjacent arcs share a biome.
+    const ARC_COUNT = 6;
+    const biomeRng = mulberry32((Math.random() * 0xffffffff) >>> 0);
+    const pool = ['forest', 'beach', 'city', 'desert'];
+    const arcBiomes = new Array(ARC_COUNT);
+    const fixedIdx = [Math.floor(biomeRng() * ARC_COUNT), Math.floor(biomeRng() * ARC_COUNT)];
+    if (fixedIdx[0] === fixedIdx[1]) fixedIdx[1] = (fixedIdx[1] + 1) % ARC_COUNT;
+    arcBiomes[fixedIdx[0]] = 'beach';
+    arcBiomes[fixedIdx[1]] = 'city';
+    for (let i = 0; i < ARC_COUNT; i++) {
+      if (arcBiomes[i]) continue;
+      let b;
+      do {
+        b = pool[Math.floor(biomeRng() * pool.length)];
+      } while (b === arcBiomes[(i + ARC_COUNT - 1) % ARC_COUNT] || b === arcBiomes[(i + 1) % ARC_COUNT]);
+      arcBiomes[i] = b;
+    }
+    const arcs = arcBiomes.map((biome, i) => ({ biome, from: i / ARC_COUNT, to: (i + 1) / ARC_COUNT }));
+
+    function biomeAt(t) {
+      const i = Math.floor((((t % 1) + 1) % 1) * ARC_COUNT) % ARC_COUNT;
+      return BIOMES[arcBiomes[i]];
+    }
+
+    // Smoothly-lerped sky / light state (targets come from biomeAt each frame)
+    const skyState = {
+      top: new THREE.Color(BIOMES.forest.skyTop),
+      horizon: new THREE.Color(BIOMES.forest.skyHorizon),
+      sun: new THREE.Color(BIOMES.forest.sunColor),
+      sunIntensity: BIOMES.forest.sunIntensity,
+      ambient: BIOMES.forest.ambient,
+      hemi: BIOMES.forest.hemiIntensity,
+      fogDensity: BIOMES.forest.fogDensity,
+      night: BIOMES.forest.night,
+    };
+
+    /* ═══════════════════════════════════════
+       SKY DOME — gradient, sun disc, night stars
+       ═══════════════════════════════════════ */
+    const sunDir = new THREE.Vector3(0.32, 0.42, -0.5).normalize();
+    const skyMat = new THREE.ShaderMaterial({
+      side: THREE.BackSide,
+      depthWrite: false,
+      uniforms: {
+        topColor: { value: new THREE.Color(BIOMES.forest.skyTop) },
+        horizonColor: { value: new THREE.Color(BIOMES.forest.skyHorizon) },
+        sunDirU: { value: sunDir.clone() },
+        sunColor: { value: new THREE.Color(BIOMES.forest.sunColor) },
+        sunIntensityU: { value: BIOMES.forest.sunIntensity },
+        nightFactor: { value: 0 },
+        timeU: { value: 0 },
+      },
+      vertexShader: `
+        varying vec3 vDir;
+        void main() {
+          vDir = normalize(position);
+          gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+        }`,
+      fragmentShader: `
+        varying vec3 vDir;
+        uniform vec3 topColor;
+        uniform vec3 horizonColor;
+        uniform vec3 sunDirU;
+        uniform vec3 sunColor;
+        uniform float sunIntensityU;
+        uniform float nightFactor;
+        uniform float timeU;
+        float hash13(vec3 p) { p = fract(p * 0.3183099 + 0.1); p *= 17.0; return fract(p.x * p.y * p.z * (p.x + p.y + p.z)); }
+        void main() {
+          vec3 d = normalize(vDir);
+          float h = clamp(d.y, 0.0, 1.0);
+          vec3 col = mix(horizonColor, topColor, pow(h, 0.55));
+          col = mix(vec3(0.05, 0.07, 0.1), col, smoothstep(-0.12, 0.1, d.y));
+          float s = max(dot(d, sunDirU), 0.0);
+          col += sunColor * sunIntensityU * (pow(s, 900.0) * 2.4 + pow(s, 40.0) * 0.32 + pow(s, 5.0) * 0.05);
+          if (d.y > 0.03) {
+            float star = step(0.99915, hash13(floor(d * 800.0 + timeU * 4.0)));
+            col += vec3(0.9, 0.95, 1.0) * star * nightFactor * (0.3 + 0.7 * d.y);
+          }
+          gl_FragColor = vec4(col, 1.0);
+        }`,
+    });
+    const skyDome = new THREE.Mesh(new THREE.SphereGeometry(420, 32, 16), skyMat);
+    skyDome.renderOrder = -1;
+    scene.add(skyDome);
+
+    /* ═══════════════════════════════════════
+       ENVIRONMENT LIGHTING (biome-driven)
+       ═══════════════════════════════════════ */
+    const ambientLight = new THREE.AmbientLight(0xdbe8df, 0.5);
     scene.add(ambientLight);
 
-    const hemiLight = new THREE.HemisphereLight(0xb5e2e4, 0x4a6b4a, 0.65);
+    const hemiLight = new THREE.HemisphereLight(0xb5e2e4, 0x4a6b4a, 0.6);
     scene.add(hemiLight);
 
-    const sun = new THREE.DirectionalLight(0xfff6e5, 1.9);
-    sun.position.set(90, 110, -60);
+    const sun = new THREE.DirectionalLight(0xfff6e5, 1.75);
+    sun.position.set(120, 150, -90);
     sun.castShadow = true;
     sun.shadow.mapSize.width = 2048;
     sun.shadow.mapSize.height = 2048;
     sun.shadow.camera.near = 10;
-    sun.shadow.camera.far = 350;
-    const shadowDim = 60;
+    sun.shadow.camera.far = 400;
+    const shadowDim = 70;
     sun.shadow.camera.left = -shadowDim;
     sun.shadow.camera.right = shadowDim;
     sun.shadow.camera.top = shadowDim;
@@ -386,23 +524,25 @@
     scene.add(sun);
 
     /* ═══════════════════════════════════════
-       SEAMLESS ROAD SPLINE & TIRE SKID MARKS
+       CLOSED-LOOP ROAD SPLINE & TIRE SKID MARKS
        ═══════════════════════════════════════ */
-    const ROAD_LENGTH = 1000;
-    const ROAD_SEGMENTS = 1400;
+    const ROAD_SEGMENTS = 1600;
     const ROAD_WIDTH = 6.5;
 
-    const roadControlPoints = [];
-    const NUM_PTS = 26;
-    for (let i = 0; i <= NUM_PTS; i++) {
-      const tNorm = i / NUM_PTS;
-      const z = -tNorm * ROAD_LENGTH;
-      // Cosine envelope ensures start (i=0) and end (i=NUM_PTS) seamlessly taper to x=0 with matching 0 slope!
-      const envelope = Math.sin(tNorm * Math.PI); 
-      const x = (Math.sin(tNorm * Math.PI * 4) * 36 + Math.cos(tNorm * Math.PI * 2) * 16) * envelope;
-      roadControlPoints.push(new THREE.Vector3(x, 0.1, z));
-    }
-    const roadCurve = new THREE.CatmullRomCurve3(roadControlPoints, false, 'catmullrom', 0.5);
+    // A sealed circuit — 14 control points shaped into a winding kidney
+    // that never self-intersects, so the drive loops forever with no seam.
+    const LOOP_POINTS = [
+      [0, 0], [46, -20], [98, -14], [142, 14],
+      [160, 62], [146, 110], [106, 140], [56, 152],
+      [6, 142], [-36, 110], [-56, 62], [-44, 16],
+      [-10, -22], [38, -44],
+    ];
+    const roadControlPoints = LOOP_POINTS.map(p => new THREE.Vector3(p[0], 0.1, p[1]));
+    const roadCurve = new THREE.CatmullRomCurve3(roadControlPoints, true, 'catmullrom', 0.5);
+    const loopLength = roadCurve.getLength();
+    const loopCenter = new THREE.Vector3();
+    roadControlPoints.forEach(p => loopCenter.add(p));
+    loopCenter.divideScalar(roadControlPoints.length);
 
     const roadVerts = [];
     const roadUvs = [];
@@ -426,8 +566,9 @@
       roadVerts.push(lx, 0.14, lz);
       roadVerts.push(rx, 0.14, rz);
 
-      roadUvs.push(0, t * 140);
-      roadUvs.push(1, t * 140);
+      // v-repeat is a multiple of the dash pattern so the seam is invisible
+      roadUvs.push(0, t * 128);
+      roadUvs.push(1, t * 128);
 
       if (i < ROAD_SEGMENTS) {
         const a = i * 2, b = i * 2 + 1, c = (i + 1) * 2, d = (i + 1) * 2 + 1;
@@ -482,8 +623,8 @@
 
     const roadMat = new THREE.MeshStandardMaterial({
       map: roadTex,
-      roughness: 0.75,
-      metalness: 0.08,
+      roughness: 0.72,
+      metalness: 0.1,
       side: THREE.DoubleSide,
       polygonOffset: true,
       polygonOffsetFactor: -1
@@ -509,132 +650,372 @@
     }
 
     /* ═══════════════════════════════════════
-       EXACT SPLINE DISTANCE TERRAIN FLATTENING
+       TRACK DISTANCE FIELD & TERRAIN
        ═══════════════════════════════════════ */
-    const groundGeo = new THREE.PlaneGeometry(700, ROAD_LENGTH + 120, 140, 140);
-    groundGeo.rotateX(-Math.PI / 2);
+    const TRACK_N = 420;
+    const trackSamples = [];
+    for (let i = 0; i < TRACK_N; i++) {
+      const t = i / TRACK_N;
+      trackSamples.push({ t, pos: roadCurve.getPointAt(t), tangent: roadCurve.getTangentAt(t).clone().normalize() });
+    }
 
+    function nearestTrack(x, z) {
+      let best = trackSamples[0], bd = Infinity;
+      for (let i = 0; i < TRACK_N; i++) {
+        const sp = trackSamples[i];
+        const dx = sp.pos.x - x, dz = sp.pos.z - z;
+        const d = dx * dx + dz * dz;
+        if (d < bd) { bd = d; best = sp; }
+      }
+      return { t: best.t, dist: Math.sqrt(bd), pos: best.pos, tangent: best.tangent };
+    }
+
+    function hillFactor(dist) { return Math.min(Math.max((dist - 7.5) * 0.07, 0), 1); }
+    function rawHeight(x, z) {
+      return Math.sin(x * 0.035) * Math.cos(z * 0.025) * 7.5 + Math.sin(x * 0.07 + z * 0.04) * 3.2;
+    }
+    function smoothstep01(x, a, b) { const t = Math.min(Math.max((x - a) / (b - a), 0), 1); return t * t * (3 - 2 * t); }
+    function circDist(a, b) { let d = Math.abs(a - b); return d > 0.5 ? 1 - d : d; }
+
+    const beachCenters = arcs.filter(a => a.biome === 'beach').map(a => (a.from + a.to) / 2);
+
+    // Terrain height at (x, z): hills that flatten near the track, plus a
+    // shoreline dip on the outward side of any beach arc (below the water plane).
+    function vertexTerrain(x, z) {
+      const n = nearestTrack(x, z);
+      let h = rawHeight(x, z) * hillFactor(n.dist);
+      let beachness = 0;
+      if (n.dist < 65) {
+        for (const c of beachCenters) beachness = Math.max(beachness, smoothstep01(circDist(n.t, c), 0.0, 0.085));
+        if (beachness > 0) {
+          const outward = Math.hypot(x - loopCenter.x, z - loopCenter.z) > Math.hypot(n.pos.x - loopCenter.x, n.pos.z - loopCenter.z);
+          if (outward) h -= beachness * 4.4;
+        }
+      }
+      return { h, n, beachness };
+    }
+
+    // Ground bounds: loop bbox + margin
+    let minX = Infinity, maxX = -Infinity, minZ = Infinity, maxZ = -Infinity;
+    LOOP_POINTS.forEach(p => {
+      minX = Math.min(minX, p[0]); maxX = Math.max(maxX, p[0]);
+      minZ = Math.min(minZ, p[1]); maxZ = Math.max(maxZ, p[1]);
+    });
+    const GROUND_MARGIN = 150;
+    const groundW = maxX - minX + GROUND_MARGIN * 2;
+    const groundH = maxZ - minZ + GROUND_MARGIN * 2;
+    const groundCX = (minX + maxX) / 2;
+    const groundCZ = (minZ + maxZ) / 2;
+
+    const colA = new THREE.Color(), colB = new THREE.Color(), colC = new THREE.Color();
+    function biomeColorAt(t, out) {
+      const i = Math.floor((((t % 1) + 1) % 1) * ARC_COUNT) % ARC_COUNT;
+      return out.setHex(BIOMES[arcBiomes[i]].ground[0]);
+    }
+    function terrainColorAt(t, x, z) {
+      biomeColorAt(t, colA);
+      biomeColorAt(t + 0.03, colB);
+      biomeColorAt(t - 0.03 + 1, colC);
+      const nz = 0.5 + 0.5 * Math.sin(x * 0.08 + 1.7) * Math.cos(z * 0.1 + 0.9);
+      colA.r = colA.r * 0.5 + colB.r * 0.25 + colC.r * 0.25;
+      colA.g = colA.g * 0.5 + colB.g * 0.25 + colC.g * 0.25;
+      colA.b = colA.b * 0.5 + colB.b * 0.25 + colC.b * 0.25;
+      const s = 0.82 + nz * 0.36;
+      colA.r *= s; colA.g *= s; colA.b *= s;
+      return colA;
+    }
+
+    const groundGeo = new THREE.PlaneGeometry(groundW, groundH, 110, 110);
+    groundGeo.rotateX(-Math.PI / 2);
     const gPos = groundGeo.attributes.position;
+    const gCol = new Float32Array(gPos.count * 3);
     for (let i = 0; i < gPos.count; i++) {
       const x = gPos.getX(i);
       const z = gPos.getZ(i);
-      const worldZ = z - ROAD_LENGTH / 2;
-      const tNorm = Math.max(0, Math.min(1, Math.abs(worldZ) / ROAD_LENGTH));
-      const roadPt = roadCurve.getPointAt(tNorm);
-
-      const dist = Math.hypot(x - roadPt.x, worldZ - roadPt.z);
-      let h = 0;
-      if (dist > 7.5) {
-        const hillFactor = Math.min((dist - 7.5) * 0.07, 1.0);
-        h = (Math.sin(x * 0.035) * Math.cos(worldZ * 0.025) * 7.5 + Math.sin(x * 0.07 + worldZ * 0.04) * 3.2) * hillFactor;
-      }
+      const { h, n } = vertexTerrain(x, z);
       gPos.setY(i, h);
+      const c = terrainColorAt(n.t, x, z);
+      gCol[i * 3] = c.r; gCol[i * 3 + 1] = c.g; gCol[i * 3 + 2] = c.b;
     }
+    groundGeo.setAttribute('color', new THREE.BufferAttribute(gCol, 3));
     groundGeo.computeVertexNormals();
 
     const groundMat = new THREE.MeshStandardMaterial({
-      color: 0x54844e,
-      roughness: 0.92,
-      metalness: 0.04,
+      vertexColors: true,
+      roughness: 0.94,
+      metalness: 0.03,
       flatShading: true
     });
     const groundMesh = new THREE.Mesh(groundGeo, groundMat);
-    groundMesh.position.set(0, 0, -ROAD_LENGTH / 2);
+    groundMesh.position.set(groundCX, 0, groundCZ);
     groundMesh.receiveShadow = true;
     scene.add(groundMesh);
 
     /* ═══════════════════════════════════════
-       PERPENDICULAR PROPS PLACEMENT (TREES, ROCKS, POSTS)
+       OCEAN — animated, only visible where beach terrain dips below
+       ═══════════════════════════════════════ */
+    const waterMat = new THREE.ShaderMaterial({
+      transparent: true,
+      depthWrite: false,
+      side: THREE.DoubleSide,
+      uniforms: {
+        uTime: { value: 0 },
+        uColor: { value: new THREE.Color(0x2f86c4) },
+        uDeep: { value: new THREE.Color(0x0d3d63) },
+        uFoam: { value: new THREE.Color(0xbfe9f5) },
+      },
+      vertexShader: `
+        uniform float uTime;
+        varying vec2 vUv;
+        varying float vWave;
+        void main() {
+          vUv = uv;
+          vec3 p = position;
+          float w = sin(p.x * 0.14 + uTime * 0.9) * 0.16 + cos(p.z * 0.11 + uTime * 0.65) * 0.16;
+          p.y += w;
+          vWave = w;
+          gl_Position = projectionMatrix * modelViewMatrix * vec4(p, 1.0);
+        }`,
+      fragmentShader: `
+        uniform vec3 uColor;
+        uniform vec3 uDeep;
+        uniform vec3 uFoam;
+        uniform float uTime;
+        varying vec2 vUv;
+        varying float vWave;
+        void main() {
+          float m = sin(vUv.x * 42.0 + vUv.y * 31.0 + uTime * 1.4) * 0.5 + 0.5;
+          vec3 col = mix(uDeep, uColor, m);
+          float foam = pow(max(sin(vUv.x * 90.0 + uTime * 2.2) * sin(vUv.y * 80.0 - uTime * 1.7), 0.0), 10.0);
+          col = mix(col, uFoam, foam * 0.5);
+          float depthShade = smoothstep(0.0, 1.0, vWave + 0.2);
+          gl_FragColor = vec4(col, 0.72 + depthShade * 0.2);
+        }`,
+    });
+    const waterMesh = new THREE.Mesh(new THREE.PlaneGeometry(groundW, groundH, 72, 72), waterMat);
+    waterMesh.rotation.x = -Math.PI / 2;
+    waterMesh.position.set(groundCX, -0.7, groundCZ);
+    scene.add(waterMesh);
+
+    /* ═══════════════════════════════════════
+       PER-BIOME PROPS — instanced, terrain-grounded
        ═══════════════════════════════════════ */
     const dummy = new THREE.Object3D();
+    const propRng = mulberry32(0x5eed5eed ^ ((Math.random() * 0xffffffff) >>> 0));
+    const _rightV = new THREE.Vector3();
 
-    const TREE_COUNT = 600;
+    function placeProp(t, minOff, maxOff, sideBias) {
+      const pos = roadCurve.getPointAt(t);
+      const tangent = roadCurve.getTangentAt(t).normalize();
+      _rightV.crossVectors(tangent, upVector).normalize();
+      const side = sideBias * (propRng() > 0.5 ? 1 : -1);
+      const offset = minOff + propRng() * (maxOff - minOff);
+      const x = pos.x + _rightV.x * side * offset;
+      const z = pos.z + _rightV.z * side * offset;
+      const g = vertexTerrain(x, z);
+      return { x, z, h: g.h, underWater: g.h < -0.55 };
+    }
+    function hideMatrix() {
+      dummy.position.set(0, 0, 0);
+      dummy.rotation.set(0, 0, 0);
+      dummy.scale.set(0.001, 0.001, 0.001);
+      dummy.updateMatrix();
+    }
+    const arcsOf = (name) => arcs.filter(a => a.biome === name);
+    const randT = (arc) => arc.from + propRng() * (arc.to - arc.from);
+
+    // ── Forest: pines ──
+    const FOREST_COUNT = 260;
     const trunkGeo = new THREE.CylinderGeometry(0.14, 0.22, 1.3, 5);
     const trunkMat = new THREE.MeshLambertMaterial({ color: 0x483424 });
-    const trunkInst = new THREE.InstancedMesh(trunkGeo, trunkMat, TREE_COUNT);
-
     const pineGeo = new THREE.ConeGeometry(1.0, 2.4, 6);
     const pineMat = new THREE.MeshStandardMaterial({ color: 0x27592e, flatShading: true, roughness: 0.85 });
-    const pineInst = new THREE.InstancedMesh(pineGeo, pineMat, TREE_COUNT);
-
-    for (let i = 0; i < TREE_COUNT; i++) {
-      const tNorm = Math.random() * 0.96 + 0.02;
-      const roadPos = roadCurve.getPointAt(tNorm);
-      const tangent = roadCurve.getTangentAt(tNorm).normalize();
-      const right = new THREE.Vector3().crossVectors(tangent, upVector).normalize();
-
-      const side = Math.random() > 0.5 ? 1 : -1;
-      const offset = (ROAD_WIDTH / 2 + 3.5) + Math.random() * 45;
-      const px = roadPos.x + right.x * side * offset;
-      const pz = roadPos.z + right.z * side * offset;
-      const scale = 0.75 + Math.random() * 0.9;
-
-      dummy.position.set(px, 0.65 * scale, pz);
+    const trunkInst = new THREE.InstancedMesh(trunkGeo, trunkMat, FOREST_COUNT);
+    const pineInst = new THREE.InstancedMesh(pineGeo, pineMat, FOREST_COUNT);
+    trunkInst.castShadow = pineInst.castShadow = true;
+    const forestArcs = arcsOf('forest');
+    let placed = 0;
+    for (let i = 0; i < FOREST_COUNT && forestArcs.length; i++) {
+      const p = placeProp(randT(forestArcs[Math.floor(propRng() * forestArcs.length)]), ROAD_WIDTH / 2 + 3.5, 48, 1);
+      const scale = 0.75 + propRng() * 0.9;
+      dummy.position.set(p.x, p.h + 0.65 * scale, p.z);
       dummy.scale.set(scale, scale, scale);
       dummy.updateMatrix();
       trunkInst.setMatrixAt(i, dummy.matrix);
-
-      dummy.position.set(px, 1.95 * scale, pz);
+      dummy.position.set(p.x, p.h + 1.95 * scale, p.z);
       dummy.updateMatrix();
       pineInst.setMatrixAt(i, dummy.matrix);
+      placed++;
     }
-    trunkInst.castShadow = true; pineInst.castShadow = true;
+    for (let i = placed; i < FOREST_COUNT; i++) { hideMatrix(); trunkInst.setMatrixAt(i, dummy.matrix); pineInst.setMatrixAt(i, dummy.matrix); }
     trunkInst.computeBoundingSphere(); pineInst.computeBoundingSphere();
     scene.add(trunkInst, pineInst);
 
-    const ROCK_COUNT = 150;
-    const rockGeo = new THREE.DodecahedronGeometry(0.7, 0);
-    const rockMat = new THREE.MeshStandardMaterial({ color: 0x6e7872, flatShading: true, roughness: 0.9 });
-    const rockInst = new THREE.InstancedMesh(rockGeo, rockMat, ROCK_COUNT);
-
-    for (let i = 0; i < ROCK_COUNT; i++) {
-      const tNorm = Math.random() * 0.96 + 0.02;
-      const roadPos = roadCurve.getPointAt(tNorm);
-      const tangent = roadCurve.getTangentAt(tNorm).normalize();
-      const right = new THREE.Vector3().crossVectors(tangent, upVector).normalize();
-
-      const side = Math.random() > 0.5 ? 1 : -1;
-      const offset = (ROAD_WIDTH / 2 + 2.2) + Math.random() * 20;
-      const px = roadPos.x + right.x * side * offset;
-      const pz = roadPos.z + right.z * side * offset;
-      const scale = 0.5 + Math.random() * 0.8;
-
-      dummy.position.set(px, 0.3 * scale, pz);
-      dummy.scale.set(scale, scale * (0.6 + Math.random() * 0.5), scale);
-      dummy.rotation.set(Math.random() * Math.PI, Math.random() * Math.PI, 0);
+    // ── Beach: palms + rocks on the dry side ──
+    const PALM_COUNT = 60;
+    const palmTrunkGeo = new THREE.CylinderGeometry(0.12, 0.22, 2.6, 5);
+    const palmTrunkMat = new THREE.MeshStandardMaterial({ color: 0x7a5a35, roughness: 0.9 });
+    const palmCrownGeo = new THREE.ConeGeometry(1.7, 0.55, 6);
+    const palmCrownMat = new THREE.MeshStandardMaterial({ color: 0x2f8f4a, flatShading: true, roughness: 0.85 });
+    const palmTrunkInst = new THREE.InstancedMesh(palmTrunkGeo, palmTrunkMat, PALM_COUNT);
+    const palmCrownInst = new THREE.InstancedMesh(palmCrownGeo, palmCrownMat, PALM_COUNT);
+    palmTrunkInst.castShadow = palmCrownInst.castShadow = true;
+    const beachArcs = arcsOf('beach');
+    placed = 0;
+    for (let i = 0; i < PALM_COUNT && beachArcs.length; i++) {
+      const p = placeProp(randT(beachArcs[Math.floor(propRng() * beachArcs.length)]), ROAD_WIDTH / 2 + 2.5, 24, -1);
+      if (p.underWater) continue;
+      const s = 0.8 + propRng() * 0.8;
+      dummy.rotation.set(0, propRng() * Math.PI, 0);
+      dummy.position.set(p.x, p.h + 1.3 * s, p.z);
+      dummy.scale.set(s, s, s);
       dummy.updateMatrix();
-      rockInst.setMatrixAt(i, dummy.matrix);
+      palmTrunkInst.setMatrixAt(i, dummy.matrix);
+      dummy.position.set(p.x, p.h + 2.9 * s, p.z);
+      dummy.scale.set(s * 1.15, s * 0.9, s * 1.15);
+      dummy.updateMatrix();
+      palmCrownInst.setMatrixAt(i, dummy.matrix);
+      placed++;
     }
-    rockInst.castShadow = true;
-    rockInst.computeBoundingSphere();
-    scene.add(rockInst);
+    for (let i = placed; i < PALM_COUNT; i++) { hideMatrix(); palmTrunkInst.setMatrixAt(i, dummy.matrix); palmCrownInst.setMatrixAt(i, dummy.matrix); }
+    palmTrunkInst.computeBoundingSphere(); palmCrownInst.computeBoundingSphere();
+    scene.add(palmTrunkInst, palmCrownInst);
 
-    const POST_COUNT = 35;
+    // ── City: buildings + streetlights ──
+    const bCanvas = document.createElement('canvas');
+    bCanvas.width = 128; bCanvas.height = 192;
+    const bctx = bCanvas.getContext('2d');
+    bctx.fillStyle = '#161b22';
+    bctx.fillRect(0, 0, 128, 192);
+    for (let r = 0; r < 10; r++) {
+      for (let c = 0; c < 6; c++) {
+        if (Math.random() < 0.55) continue;
+        bctx.fillStyle = ['#ffd98a', '#e8f2ff', '#7fd4ff', '#ffb37a'][Math.floor(Math.random() * 4)];
+        bctx.globalAlpha = 0.45 + Math.random() * 0.55;
+        bctx.fillRect(10 + c * 20, 10 + r * 18, 10, 12);
+        bctx.globalAlpha = 1;
+      }
+    }
+    const bTex = new THREE.CanvasTexture(bCanvas);
+    bTex.wrapS = THREE.RepeatWrapping;
+    bTex.wrapT = THREE.RepeatWrapping;
+    const buildingMat = new THREE.MeshStandardMaterial({
+      map: bTex, emissiveMap: bTex, emissive: 0xffffff, emissiveIntensity: 1.45,
+      roughness: 0.55, metalness: 0.25,
+    });
+    const BUILDING_COUNT = 90;
+    const buildingInst = new THREE.InstancedMesh(new THREE.BoxGeometry(1, 1, 1), buildingMat, BUILDING_COUNT);
+    buildingInst.castShadow = true;
+    const cityArcs = arcsOf('city');
+    placed = 0;
+    for (let i = 0; i < BUILDING_COUNT && cityArcs.length; i++) {
+      const p = placeProp(randT(cityArcs[Math.floor(propRng() * cityArcs.length)]), ROAD_WIDTH / 2 + 8, 42, 1);
+      if (p.underWater) continue;
+      const w = 7 + propRng() * 9, d = 7 + propRng() * 9, h = 8 + propRng() * 30;
+      dummy.rotation.set(0, propRng() * Math.PI, 0);
+      dummy.position.set(p.x, p.h + h / 2, p.z);
+      dummy.scale.set(w, h, d);
+      dummy.updateMatrix();
+      buildingInst.setMatrixAt(i, dummy.matrix);
+      placed++;
+    }
+    for (let i = placed; i < BUILDING_COUNT; i++) { hideMatrix(); buildingInst.setMatrixAt(i, dummy.matrix); }
+    buildingInst.computeBoundingSphere();
+    scene.add(buildingInst);
+
+    const LAMP_COUNT = 64;
+    const lampPoleGeo = new THREE.CylinderGeometry(0.06, 0.09, 5.6, 6);
+    const lampPoleMat = new THREE.MeshStandardMaterial({ color: 0x2a2f36, roughness: 0.5, metalness: 0.7 });
+    const lampHeadGeo = new THREE.SphereGeometry(0.22, 8, 6);
+    const lampHeadMat = new THREE.MeshStandardMaterial({ color: 0xffd27a, emissive: 0xffd27a, emissiveIntensity: 3.2, roughness: 0.4 });
+    const lampPoleInst = new THREE.InstancedMesh(lampPoleGeo, lampPoleMat, LAMP_COUNT);
+    const lampHeadInst = new THREE.InstancedMesh(lampHeadGeo, lampHeadMat, LAMP_COUNT);
+    placed = 0;
+    for (const arc of cityArcs) {
+      const n = Math.round(LAMP_COUNT * (arc.to - arc.from));
+      for (let j = 0; j < n && placed < LAMP_COUNT; j++) {
+        const t = arc.from + ((j + 0.5) / n) * (arc.to - arc.from);
+        const p = placeProp(t, ROAD_WIDTH / 2 + 3.2, ROAD_WIDTH / 2 + 3.2, j % 2 === 0 ? 1 : -1);
+        if (p.underWater) { placed++; continue; }
+        dummy.rotation.set(0, 0, 0);
+        dummy.scale.set(1, 1, 1);
+        dummy.position.set(p.x, p.h, p.z);
+        dummy.updateMatrix();
+        lampPoleInst.setMatrixAt(placed, dummy.matrix);
+        dummy.position.set(p.x, p.h + 5.6, p.z);
+        dummy.updateMatrix();
+        lampHeadInst.setMatrixAt(placed, dummy.matrix);
+        placed++;
+      }
+    }
+    for (let i = placed; i < LAMP_COUNT; i++) { hideMatrix(); lampPoleInst.setMatrixAt(i, dummy.matrix); lampHeadInst.setMatrixAt(i, dummy.matrix); }
+    lampPoleInst.computeBoundingSphere(); lampHeadInst.computeBoundingSphere();
+    scene.add(lampPoleInst, lampHeadInst);
+
+    // ── Desert: rocks + dry bushes ──
+    const DESERT_ROCK_COUNT = 40;
+    const rockGeo = new THREE.DodecahedronGeometry(0.7, 0);
+    const rockMat = new THREE.MeshStandardMaterial({ color: 0x8a7a5f, flatShading: true, roughness: 0.95 });
+    const desertRockInst = new THREE.InstancedMesh(rockGeo, rockMat, DESERT_ROCK_COUNT);
+    desertRockInst.castShadow = true;
+    const bushGeo = new THREE.IcosahedronGeometry(0.7, 0);
+    const bushMat = new THREE.MeshStandardMaterial({ color: 0x6d7a4a, flatShading: true, roughness: 0.9 });
+    const BUSH_COUNT = 55;
+    const bushInst = new THREE.InstancedMesh(bushGeo, bushMat, BUSH_COUNT);
+    bushInst.castShadow = true;
+    const desertArcs = arcsOf('desert');
+    placed = 0;
+    for (let i = 0; i < DESERT_ROCK_COUNT && desertArcs.length; i++) {
+      const p = placeProp(randT(desertArcs[Math.floor(propRng() * desertArcs.length)]), ROAD_WIDTH / 2 + 2.2, 26, 1);
+      if (p.underWater) continue;
+      const s = 0.5 + propRng() * 0.8;
+      dummy.rotation.set(propRng() * Math.PI, propRng() * Math.PI, 0);
+      dummy.position.set(p.x, p.h + 0.3 * s, p.z);
+      dummy.scale.set(s, s * (0.6 + propRng() * 0.5), s);
+      dummy.updateMatrix();
+      desertRockInst.setMatrixAt(i, dummy.matrix);
+      placed++;
+    }
+    for (let i = placed; i < DESERT_ROCK_COUNT; i++) { hideMatrix(); desertRockInst.setMatrixAt(i, dummy.matrix); }
+    placed = 0;
+    for (let i = 0; i < BUSH_COUNT && desertArcs.length; i++) {
+      const p = placeProp(randT(desertArcs[Math.floor(propRng() * desertArcs.length)]), ROAD_WIDTH / 2 + 2.5, 24, 1);
+      if (p.underWater) continue;
+      const s = 0.4 + propRng() * 0.5;
+      dummy.rotation.set(0, propRng() * Math.PI, 0);
+      dummy.position.set(p.x, p.h + 0.35 * s, p.z);
+      dummy.scale.set(s, s * 0.6, s);
+      dummy.updateMatrix();
+      bushInst.setMatrixAt(i, dummy.matrix);
+      placed++;
+    }
+    for (let i = placed; i < BUSH_COUNT; i++) { hideMatrix(); bushInst.setMatrixAt(i, dummy.matrix); }
+    desertRockInst.computeBoundingSphere(); bushInst.computeBoundingSphere();
+    scene.add(desertRockInst, bushInst);
+
+    // ── Kilometer posts around the whole loop ──
+    const POST_COUNT = 36;
     const postBaseGeo = new THREE.CylinderGeometry(0.08, 0.08, 0.9, 6);
     const postBaseMat = new THREE.MeshLambertMaterial({ color: 0x3d2b1f });
     const postBaseInst = new THREE.InstancedMesh(postBaseGeo, postBaseMat, POST_COUNT);
-
     const postCapGeo = new THREE.BoxGeometry(0.2, 0.18, 0.1);
     const postCapMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.4 });
     const postCapInst = new THREE.InstancedMesh(postCapGeo, postCapMat, POST_COUNT);
-
     for (let i = 0; i < POST_COUNT; i++) {
-      const t = (i / POST_COUNT) * 0.95 + 0.02;
+      const t = i / POST_COUNT;
       const pos = roadCurve.getPointAt(t);
       const tangent = roadCurve.getTangentAt(t).normalize();
       const right = new THREE.Vector3().crossVectors(tangent, upVector).normalize();
-      
       const side = (i % 2 === 0) ? 1 : -1;
       const px = pos.x + right.x * side * (ROAD_WIDTH / 2 + 0.8);
       const pz = pos.z + right.z * side * (ROAD_WIDTH / 2 + 0.8);
-
-      dummy.position.set(px, 0.45, pz);
-      dummy.scale.set(1, 1, 1);
+      const g = vertexTerrain(px, pz);
       dummy.rotation.set(0, 0, 0);
+      dummy.scale.set(1, 1, 1);
+      dummy.position.set(px, g.h + 0.45, pz);
       dummy.updateMatrix();
       postBaseInst.setMatrixAt(i, dummy.matrix);
-
-      dummy.position.set(px, 0.85, pz);
+      dummy.position.set(px, g.h + 0.85, pz);
       dummy.updateMatrix();
       postCapInst.setMatrixAt(i, dummy.matrix);
     }
@@ -661,9 +1042,9 @@
     for (let i = 0; i < BIRD_COUNT; i++) {
       const bMesh = new THREE.Mesh(wingShapeGeo, birdMat);
       bMesh.position.set(
-        (Math.random() - 0.5) * 60,
-        18 + Math.random() * 8,
-        -150 - Math.random() * 200
+        groundCX + (Math.random() - 0.5) * groundW * 0.75,
+        14 + Math.random() * 14,
+        groundCZ + (Math.random() - 0.5) * groundH * 0.75
       );
       bMesh.scale.setScalar(1.2 + Math.random() * 0.6);
       birdGroup.add(bMesh);
@@ -905,6 +1286,7 @@
     const _targetCamPos = new THREE.Vector3();
 
     let progress = 0.02;
+    let lap = 1;
     const BASE_SPEED = 0.00018;
     let frameCount = 0;
 
@@ -915,6 +1297,7 @@
 
     const speedValEl = document.querySelector('#speedVal');
     const distValEl = document.querySelector('#distVal');
+    const lapValEl = document.querySelector('#lapVal');
     const hudGauge = document.querySelector('#hudGauge');
 
     addEventListener('pointermove', e => {
@@ -923,6 +1306,7 @@
     });
 
     const clock = new THREE.Clock();
+    const _biomeCol = new THREE.Color();
 
     function animate() {
       requestAnimationFrame(animate);
@@ -939,8 +1323,9 @@
 
       speedMultiplier += (targetSpeedMultiplier - speedMultiplier) * 0.05;
 
+      // Seamless closed-loop progress — the circuit never ends
       progress += BASE_SPEED * speedMultiplier;
-      if (progress > 0.96) progress = 0.02;
+      if (progress >= 1) { progress -= 1; lap++; }
 
       engineAudio.update(speedMultiplier);
 
@@ -951,34 +1336,54 @@
 
       const currentSpeed = Math.round(64 * speedMultiplier + Math.sin(progress * 40) * 4);
       if (speedValEl) speedValEl.textContent = `${currentSpeed} MPH`;
-      if (distValEl) distValEl.textContent = `${(progress * 8.5).toFixed(1)} KM`;
+      if (distValEl) distValEl.textContent = `${((progress * loopLength) / 1000).toFixed(1)} KM`;
+      if (lapValEl) lapValEl.textContent = `L${lap}`;
       if (hudGauge) hudGauge.style.width = `${((speedMultiplier - 0.45) / (1.8 - 0.45)) * 100}%`;
 
-      if (progress < 0.38) {
-        const norm = progress / 0.38;
-        currentSkyColor.copy(skyMorning).lerp(skySunset, norm);
-        sun.intensity = 1.9 - norm * 0.5;
-        headlightLeft.intensity = norm * 4.0;
-        headlightRight.intensity = norm * 4.0;
-      } else {
-        const norm = (progress - 0.38) / 0.58;
-        currentSkyColor.copy(skySunset).lerp(skyTwilight, norm);
-        sun.intensity = 1.4 - norm * 0.9;
-        headlightLeft.intensity = 4.0 + norm * 8.0;
-        headlightRight.intensity = 4.0 + norm * 8.0;
-      }
-      scene.background = currentSkyColor;
-      scene.fog.color = currentSkyColor;
+      // Biome-driven sky & lighting — ease toward the biome under the car
+      const biome = biomeAt(progress);
+      const lerpK = 1 - Math.pow(0.0008, dt);
+      skyState.top.lerp(_biomeCol.setHex(biome.skyTop), lerpK);
+      skyState.horizon.lerp(_biomeCol.setHex(biome.skyHorizon), lerpK);
+      skyState.sun.lerp(_biomeCol.setHex(biome.sunColor), lerpK);
+      skyState.sunIntensity += (biome.sunIntensity - skyState.sunIntensity) * lerpK;
+      skyState.ambient += (biome.ambient - skyState.ambient) * lerpK;
+      skyState.hemi += (biome.hemiIntensity - skyState.hemi) * lerpK;
+      skyState.fogDensity += (biome.fogDensity - skyState.fogDensity) * lerpK;
+      skyState.night += (biome.night - skyState.night) * lerpK;
+
+      skyMat.uniforms.topColor.value.copy(skyState.top);
+      skyMat.uniforms.horizonColor.value.copy(skyState.horizon);
+      skyMat.uniforms.sunColor.value.copy(skyState.sun);
+      skyMat.uniforms.sunIntensityU.value = skyState.sunIntensity;
+      skyMat.uniforms.nightFactor.value = skyState.night;
+      skyMat.uniforms.timeU.value = time;
+
+      scene.fog.color.copy(skyState.horizon);
+      scene.fog.density = skyState.fogDensity;
+      ambientLight.intensity = skyState.ambient;
+      hemiLight.intensity = skyState.hemi;
+      sun.intensity = skyState.sunIntensity * (1 - skyState.night * 0.85);
+      sun.color.copy(skyState.sun);
+
+      headlightLeft.intensity = skyState.night * 14;
+      headlightRight.intensity = skyState.night * 14;
+      waterMat.uniforms.uTime.value = time;
+
+      const tAhead = (progress + 0.003) % 1;
+      const tLook = (progress + 0.015) % 1;
+      const tTang = (progress + 0.008) % 1;
+      const tBehind = (progress - 0.014 + 1) % 1;
 
       roadCurve.getPointAt(progress, _pos);
-      roadCurve.getPointAt(Math.min(progress + 0.003, 0.999), _aheadPos);
-      roadCurve.getPointAt(Math.min(progress + 0.015, 0.999), _lookAheadFar);
+      roadCurve.getPointAt(tAhead, _aheadPos);
+      roadCurve.getPointAt(tLook, _lookAheadFar);
 
       carGroup.position.copy(_pos);
       carGroup.lookAt(_aheadPos.x, _aheadPos.y, _aheadPos.z);
 
       roadCurve.getTangentAt(progress, _currentTang).normalize();
-      roadCurve.getTangentAt(Math.min(progress + 0.008, 0.999), _aheadTang).normalize();
+      roadCurve.getTangentAt(tTang, _aheadTang).normalize();
       const steerDelta = _currentTang.x - _aheadTang.x;
 
       frontWheels.forEach(w => {
@@ -1004,24 +1409,16 @@
         camera.updateProjectionMatrix();
       }
 
-      roadCurve.getPointAt(Math.max(progress - 0.014, 0.001), _behindPos);
+      roadCurve.getPointAt(tBehind, _behindPos);
       _targetCamPos.set(
         _behindPos.x + smoothMouse.x * 3.5,
         _behindPos.y + 2.8 + smoothMouse.y * 0.8,
         _behindPos.z
       );
 
-      // Terrain Floor Clamp: Guarantee camera never dips below local terrain or road elevation
-      const cWorldZ = _targetCamPos.z;
-      const cNormT = Math.max(0, Math.min(1, Math.abs(cWorldZ) / ROAD_LENGTH));
-      const cRoadPt = roadCurve.getPointAt(cNormT);
-      const cDist = Math.hypot(_targetCamPos.x - cRoadPt.x, cWorldZ - cRoadPt.z);
-      let cHillH = 0;
-      if (cDist > 7.5) {
-        const cFactor = Math.min((cDist - 7.5) * 0.07, 1.0);
-        cHillH = (Math.sin(_targetCamPos.x * 0.035) * Math.cos(cWorldZ * 0.025) * 7.5 + Math.sin(_targetCamPos.x * 0.07 + cWorldZ * 0.04) * 3.2) * cFactor;
-      }
-      _targetCamPos.y = Math.max(_targetCamPos.y, cHillH + 1.8, 1.8);
+      // Terrain floor clamp via the track distance field — camera never dips below the world
+      const camH = vertexTerrain(_targetCamPos.x, _targetCamPos.z).h;
+      _targetCamPos.y = Math.max(_targetCamPos.y, camH + 1.8, 1.8);
 
       if (cameraPos.lengthSq() === 0) {
         cameraPos.copy(_targetCamPos);
@@ -1032,10 +1429,10 @@
       camera.position.copy(cameraPos);
       camera.lookAt(_lookAheadFar.x, _lookAheadFar.y + 0.6, _lookAheadFar.z);
 
-      sun.position.set(_pos.x + 90, 110, _pos.z - 60);
+      sun.position.set(_pos.x + sunDir.x * 140, 150 + sunDir.y * 140, _pos.z + sunDir.z * 140);
       sun.target = carGroup;
 
-      renderer.render(scene, camera);
+      composer.render();
     }
     animate();
 
@@ -1044,6 +1441,8 @@
        ═══════════════════ */
     addEventListener('resize', () => {
       renderer.setSize(innerWidth, innerHeight);
+      composer.setSize(innerWidth, innerHeight);
+      bloomPass.setSize(innerWidth, innerHeight);
       camera.aspect = innerWidth / innerHeight;
       camera.updateProjectionMatrix();
       if (ghPop && ghPop.classList.contains('show')) positionPop();
