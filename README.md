@@ -85,7 +85,7 @@ Update the HUD links in `index.html` to point to your own profiles:
 ```html
 <a href="https://github.com/arv20"          target="_blank" rel="noopener">github ↗</a>
 <a href="https://linkedin.com/in/YOUR_ID"   target="_blank" rel="noopener">linkedin ↗</a>
-<a href="mailto:your@email.com">email ↗</a>
+<a href="mailto:aarav.kolgaonkar@gmail.com">email ↗</a>
 ```
 
 The GitHub activity popup reads `data/github-contributions.json` (falling back to a public contributions API if the file is missing), so it works out of the box.
