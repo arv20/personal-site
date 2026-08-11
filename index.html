@@ -3,7 +3,14 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="description" content="Aarav K — engineer, builder, and creator." />
+  <meta name="description" content="Aarav K — engineer, builder, and creator. Interactive 3D driving portfolio experience." />
+  <meta property="og:title" content="Aarav K — Engineer & Builder" />
+  <meta property="og:description" content="Software engineer, system builder, and creator. Interactive 3D driving portfolio experience." />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://arv20.github.io" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Aarav K — Engineer & Builder" />
+  <meta name="twitter:description" content="Software engineer, system builder, and creator. Interactive 3D driving portfolio experience." />
   <title>Aarav K — Engineer & Builder</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -603,6 +610,27 @@
         tailGlowMat.opacity = 0.5;
       }
     });
+
+    // Mobile Touch Drive Controls (Upper half = Boost, Lower half = Brake)
+    window.addEventListener('touchstart', (e) => {
+      if (e.target.closest('.ui') || e.target.closest('.info')) return;
+      const touchY = e.touches[0].clientY;
+      if (touchY < innerHeight * 0.5) {
+        targetSpeedMultiplier = 1.8;
+        kUp?.classList.add('active');
+      } else {
+        targetSpeedMultiplier = 0.45;
+        kDown?.classList.add('active');
+        tailGlowMat.opacity = 1.0;
+      }
+    }, { passive: true });
+
+    window.addEventListener('touchend', () => {
+      targetSpeedMultiplier = 1.0;
+      kUp?.classList.remove('active');
+      kDown?.classList.remove('active');
+      tailGlowMat.opacity = 0.5;
+    }, { passive: true });
 
     /* ═══════════════════════════════════════
        ANIMATION LOOP & CHASE CAMERA
