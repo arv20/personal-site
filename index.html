@@ -41,7 +41,7 @@
   <title>Aarav Kolgaonkar — Engineer & Builder</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=DM+Sans:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
   <style>
     /* ── Design tokens ── */
     :root {
@@ -125,6 +125,35 @@
       66% { transform: translate(-10vw, 20vh) scale(0.95); }
     }
 
+    /* ── Day-Bar Progress ── */
+    .day-bar-container {
+      position: fixed;
+      bottom: 40px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: min(800px, calc(100vw - 80px));
+      height: 6px;
+      border-radius: 6px;
+      z-index: 10;
+      pointer-events: none;
+      overflow: hidden;
+      /* Liquid glass look for the container */
+      background: rgba(255, 255, 255, 0.05);
+      backdrop-filter: blur(20px) saturate(120%);
+      -webkit-backdrop-filter: blur(20px) saturate(120%);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    }
+    .day-bar-fill {
+      height: 100%;
+      background: #ffffff;
+      width: 0%;
+      box-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+      border-radius: 6px;
+      transition: width 1s linear;
+    }
+    .magnetic { will-change: transform; }
+
     /* ── Overlays ── */
     .grain {
       position: fixed; inset: 0; z-index: 1; pointer-events: none; opacity: .12;
@@ -167,15 +196,13 @@
       box-shadow: 0 40px 80px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.3);
     }
     .role {
-      display: block; color: var(--muted); font-size: 13px; font-weight: 500;
+      display: block; color: var(--muted); font-size: 11px; font-weight: 500;
       letter-spacing: 0.15em; text-transform: uppercase;
-      font-family: "DM Mono", monospace; line-height: 1.2;
+      font-family: "DM Mono", monospace; line-height: 1; margin-bottom: 12px;
     }
     .name {
-      display: block; margin-top: 10px; font-size: 34px; font-weight: 700; letter-spacing: -0.04em;
-      font-family: "Space Grotesk", "DM Sans", sans-serif;
-      background: linear-gradient(135deg, #ffffff 30%, #999999);
-      -webkit-background-clip: text; background-clip: text; color: transparent;
+      display: block; font-size: 42px; font-weight: 500; letter-spacing: -0.02em;
+      font-family: "Playfair Display", serif; font-style: italic; color: var(--text);
     }
     .plus {
       position: absolute; right: 20px; top: 50%; transform: translateY(-50%);
@@ -335,6 +362,11 @@
     <div class="orb orb-4"></div>
   </div>
 
+  <!-- Day-Bar Progress -->
+  <div class="day-bar-container">
+    <div class="day-bar-fill" id="dayBar"></div>
+  </div>
+
   <!-- Overlays -->
   <div class="vignette"></div>
   <div class="grain"></div>
@@ -363,23 +395,67 @@
 
   <!-- Main UI -->
   <main class="page">
-    <button class="identity glass-panel" id="identity" type="button" aria-expanded="false" aria-controls="info">
+    <button class="identity glass-panel magnetic" id="identity" type="button" aria-expanded="false" aria-controls="info" data-magnet-strength="0.15">
       <span class="role">swe student @ osu</span>
-      <span class="name">aarav kolgaonkar</span>
+      <span class="name">Aarav Kolgaonkar</span>
       <span class="plus" aria-hidden="true">+</span>
     </button>
     <nav aria-label="Social links">
       <ul class="links">
         <li class="link-github">
-          <a class="glass-panel" href="https://github.com/arv20" target="_blank" rel="noopener">github <span class="arrow" aria-hidden="true">↗</span></a>
+          <a class="glass-panel magnetic" href="https://github.com/arv20" target="_blank" rel="noopener" data-magnet-strength="0.3">github <span class="arrow" aria-hidden="true">↗</span></a>
         </li>
-        <li><a class="glass-panel" href="https://www.linkedin.com/in/aarav-kolgaonkar-b1264b369/" target="_blank" rel="noopener">linkedin <span class="arrow" aria-hidden="true">↗</span></a></li>
-        <li><a class="glass-panel" href="mailto:aarav.kolgaonkar@gmail.com">email <span class="arrow" aria-hidden="true">↗</span></a></li>
+        <li><a class="glass-panel magnetic" href="https://www.linkedin.com/in/aarav-kolgaonkar-b1264b369/" target="_blank" rel="noopener" data-magnet-strength="0.3">linkedin <span class="arrow" aria-hidden="true">↗</span></a></li>
+        <li><a class="glass-panel magnetic" href="mailto:aarav.kolgaonkar@gmail.com" data-magnet-strength="0.3">email <span class="arrow" aria-hidden="true">↗</span></a></li>
       </ul>
     </nav>
   </main>
 
   <script>
+    /* ═══════════════════
+       DAY-BAR LOGIC
+       ═══════════════════ */
+    const dayBar = document.getElementById('dayBar');
+    function updateDayBar() {
+      const now = new Date();
+      const start = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0);
+      const msSinceStart = now.getTime() - start.getTime();
+      const msInDay = 24 * 60 * 60 * 1000;
+      const percentageLeft = 1 - (msSinceStart / msInDay);
+      dayBar.style.width = `${percentageLeft * 100}%`;
+      requestAnimationFrame(updateDayBar);
+    }
+    updateDayBar();
+
+    /* ═══════════════════
+       TACTILE MAGNETIC INTERACTIONS
+       ═══════════════════ */
+    const magnets = document.querySelectorAll('.magnetic');
+    magnets.forEach(el => {
+      let bx = 0, by = 0, tx = 0, ty = 0, isHovering = false;
+      const strength = parseFloat(el.dataset.magnetStrength) || 0.2;
+      
+      el.addEventListener('mousemove', (e) => {
+        const rect = el.getBoundingClientRect();
+        const cx = rect.left + rect.width / 2;
+        const cy = rect.top + rect.height / 2;
+        tx = (e.clientX - cx) * strength;
+        ty = (e.clientY - cy) * strength;
+      });
+      
+      el.addEventListener('mouseenter', () => { isHovering = true; });
+      el.addEventListener('mouseleave', () => { isHovering = false; tx = 0; ty = 0; });
+      
+      function render() {
+        bx += (tx - bx) * 0.15;
+        by += (ty - by) * 0.15;
+        const scale = isHovering ? 1.02 : 1.0;
+        el.style.transform = `translate3d(${bx}px, ${by}px, 0) scale(${scale})`;
+        requestAnimationFrame(render);
+      }
+      render();
+    });
+
     /* ═══════════════════
        IDENTITY & INFO PANEL
        ═══════════════════ */
