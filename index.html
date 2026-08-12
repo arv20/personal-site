@@ -29,7 +29,7 @@
     "@context": "https://schema.org",
     "@type": "Person",
     "name": "Aarav Kolgaonkar",
-    "jobTitle": "Software Engineer",
+    "jobTitle": "SWE Student",
     "url": "https://aaravkolgaonkar.dev",
     "sameAs": [
       "https://github.com/arv20",
@@ -41,7 +41,7 @@
   <title>aarav kolgaonkar - swe @ osu</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=DM+Sans:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
   <style>
     /* ── Design tokens ── */
     :root {
@@ -49,9 +49,6 @@
       --bg: #000000;
       --text: #ffffff;
       --muted: #888888;
-      --line: rgba(255, 255, 255, 0.1);
-      --accent: #ffffff;
-      --accent-soft: rgba(255, 255, 255, 0.2);
       
       --glass: rgba(20, 20, 20, 0.4);
       --glass-border: rgba(255, 255, 255, 0.15);
@@ -65,180 +62,111 @@
     body { color: var(--text); font-family: "DM Sans", system-ui, -apple-system, sans-serif; -webkit-font-smoothing: antialiased; }
     a, button { color: inherit; font: inherit; }
     a { text-decoration: none; }
-    ::selection { background: var(--accent-soft); }
-    :focus-visible { outline: 1px solid var(--accent); outline-offset: 3px; }
+    ::selection { background: rgba(255, 255, 255, 0.2); }
+    :focus-visible { outline: 1px solid #fff; outline-offset: 3px; }
 
-    /* ── Liquid Glass Background ── */
-    .liquid-bg {
-      position: fixed; inset: -100px; /* Bleed edge to avoid clip */
-      pointer-events: none;
-      filter: url(#liquid-filter);
-      background: var(--bg);
-      z-index: 0;
+    /* ── WebGL Fluid Background ── */
+    #fluidCanvas {
+      position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+      z-index: 0; pointer-events: auto; /* Allow mouse interaction to trigger fluids */
     }
 
-    .orb {
-      position: absolute; border-radius: 50%;
-      will-change: transform;
-      background: #ffffff;
+    /* ── Flip Tracker (Day / Year) ── */
+    .tracker-container {
+      position: fixed; bottom: 40px; left: 50%; transform: translateX(-50%);
+      width: min(800px, calc(100vw - 80px)); height: 32px;
+      z-index: 10; perspective: 1000px;
+      cursor: pointer; pointer-events: auto;
     }
-    
-    .orb-1 {
-      width: 45vw; height: 45vw; top: 10%; left: 10%;
-      background: radial-gradient(circle, #ffffff 0%, #888888 60%, transparent 80%);
-      animation: drift1 25s ease-in-out infinite;
+    .tracker-inner {
+      position: relative; width: 100%; height: 100%;
+      transition: transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+      transform-style: preserve-3d;
     }
-    .orb-2 {
-      width: 50vw; height: 50vw; bottom: 5%; right: 5%;
-      background: radial-gradient(circle, #aaaaaa 0%, #444444 60%, transparent 80%);
-      animation: drift2 30s ease-in-out infinite;
+    .tracker-container.flipped .tracker-inner { transform: rotateX(-180deg); }
+    .tracker-face {
+      position: absolute; width: 100%; height: 100%;
+      backface-visibility: hidden; display: flex; flex-direction: column; justify-content: flex-end;
     }
-    .orb-3 {
-      width: 35vw; height: 35vw; top: 30%; right: 25%;
-      background: radial-gradient(circle, #ffffff 0%, #666666 60%, transparent 80%);
-      animation: drift3 22s ease-in-out infinite;
-    }
-    .orb-4 {
-      width: 40vw; height: 40vw; bottom: 20%; left: 20%;
-      background: radial-gradient(circle, #dddddd 0%, #555555 60%, transparent 80%);
-      animation: drift4 28s ease-in-out infinite;
-    }
+    .tracker-back { transform: rotateX(180deg); }
 
-    @keyframes drift1 {
-      0%, 100% { transform: translate(0, 0) scale(1); }
-      33% { transform: translate(15vw, 10vh) scale(1.1); }
-      66% { transform: translate(-5vw, 15vh) scale(0.9); }
-    }
-    @keyframes drift2 {
-      0%, 100% { transform: translate(0, 0) scale(1); }
-      33% { transform: translate(-15vw, -10vh) scale(1.15); }
-      66% { transform: translate(10vw, -20vh) scale(0.85); }
-    }
-    @keyframes drift3 {
-      0%, 100% { transform: translate(0, 0) scale(1); }
-      33% { transform: translate(-10vw, 15vh) scale(1.2); }
-      66% { transform: translate(15vw, -10vh) scale(0.9); }
-    }
-    @keyframes drift4 {
-      0%, 100% { transform: translate(0, 0) scale(1); }
-      33% { transform: translate(15vw, -15vh) scale(1.1); }
-      66% { transform: translate(-10vw, 20vh) scale(0.95); }
-    }
-
-    /* ── Day-Bar Progress ── */
-    .day-bar-wrapper {
-      position: fixed;
-      bottom: 40px;
-      left: 50%;
-      transform: translateX(-50%);
-      width: min(800px, calc(100vw - 80px));
-      z-index: 10;
-      pointer-events: none;
-    }
     .day-bar-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-end;
-      margin-bottom: 12px;
-      padding: 0 4px;
+      display: flex; justify-content: space-between; align-items: flex-end;
+      margin-bottom: 8px; padding: 0 4px;
     }
     .day-bar-title {
-      font: 500 11px/1 "DM Mono", monospace;
-      letter-spacing: 0.15em;
-      text-transform: uppercase;
-      color: rgba(255, 255, 255, 0.8);
-      text-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
-      display: flex;
-      align-items: center;
-      gap: 8px;
+      font: 500 11px/1 "DM Mono", monospace; letter-spacing: 0.15em; text-transform: uppercase;
+      color: rgba(255, 255, 255, 0.8); text-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
+      display: flex; align-items: center; gap: 8px;
     }
-    .day-bar-title::before {
-      content: "";
-      width: 6px;
-      height: 6px;
-      border-radius: 50%;
-      background: #00ff66; /* Glowing charger dot */
-      box-shadow: 0 0 8px #00ff66;
+    .charger-dot {
+      width: 6px; height: 6px; border-radius: 50%;
+      background: #00ff66; box-shadow: 0 0 8px #00ff66;
       animation: pulse 2s infinite;
     }
+    .year-dot { background: #00aaff; box-shadow: 0 0 8px #00aaff; }
+    
     @keyframes pulse {
       0%, 100% { opacity: 1; transform: scale(1); }
       50% { opacity: 0.4; transform: scale(0.8); }
     }
+    
     .day-bar-stats {
-      display: flex;
-      gap: 16px;
-      font: 500 11px/1 "DM Mono", monospace;
-      color: rgba(255, 255, 255, 0.9);
-      text-shadow: 0 0 8px rgba(255, 255, 255, 0.2);
-      font-variant-numeric: tabular-nums;
+      display: flex; gap: 16px; font: 500 11px/1 "DM Mono", monospace;
+      color: rgba(255, 255, 255, 0.9); text-shadow: 0 0 8px rgba(255, 255, 255, 0.2); font-variant-numeric: tabular-nums;
     }
-    .day-bar-time {
-      color: var(--muted);
-      text-shadow: none;
-    }
+    .day-bar-time { color: var(--muted); text-shadow: none; }
+    
     .day-bar-container {
-      position: relative;
-      width: 100%;
-      height: 6px;
-      border-radius: 6px;
-      overflow: hidden;
-      /* Liquid glass look for the container */
+      position: relative; width: 100%; height: 6px; border-radius: 6px; overflow: hidden;
       background: rgba(255, 255, 255, 0.05);
-      backdrop-filter: blur(20px) saturate(120%);
-      -webkit-backdrop-filter: blur(20px) saturate(120%);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(20px) saturate(120%); -webkit-backdrop-filter: blur(20px) saturate(120%);
+      border: 1px solid rgba(255, 255, 255, 0.1); box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1);
     }
     .day-bar-fill {
-      height: 100%;
-      background: #ffffff;
-      width: 0%;
+      height: 100%; background: #ffffff; width: 0%; border-radius: 6px;
       box-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
-      border-radius: 6px;
-      transition: width 1s linear;
     }
-    .magnetic { will-change: transform; }
+    .year-bar-fill {
+      height: 100%; background: #00aaff; width: 0%; border-radius: 6px;
+      box-shadow: 0 0 10px rgba(0, 170, 255, 0.5);
+    }
 
     /* ── Overlays ── */
     .grain {
-      position: fixed; inset: 0; z-index: 1; pointer-events: none; opacity: .12;
+      position: fixed; inset: 0; z-index: 2; pointer-events: none; opacity: .12;
       background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.95' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.3'/%3E%3C/svg%3E");
       mix-blend-mode: screen;
     }
     .vignette {
-      position: fixed; inset: 0; z-index: 1; pointer-events: none;
+      position: fixed; inset: 0; z-index: 2; pointer-events: none;
       background: radial-gradient(ellipse at 50% 50%, transparent 30%, rgba(0, 0, 0, 0.8) 100%);
     }
 
     /* ── Page layout ── */
     .page {
-      position: relative; z-index: 2; width: 100%; height: 100%;
+      position: relative; z-index: 3; width: 100%; height: 100%;
       display: flex; flex-direction: column; align-items: center; justify-content: center;
       gap: 24px; padding: 40px; pointer-events: none;
     }
 
     /* ── Glass Panels Base ── */
     .glass-panel {
-      background: var(--glass);
-      border: 1px solid var(--glass-border);
-      border-top: 1px solid var(--glass-border-highlight);
-      backdrop-filter: blur(40px) saturate(150%);
-      -webkit-backdrop-filter: blur(40px) saturate(150%);
+      background: var(--glass); border: 1px solid var(--glass-border); border-top: 1px solid var(--glass-border-highlight);
+      backdrop-filter: blur(40px) saturate(150%); -webkit-backdrop-filter: blur(40px) saturate(150%);
       box-shadow: 0 30px 60px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1);
     }
+    .magnetic { will-change: transform; pointer-events: auto; }
 
     /* ── Identity card ── */
     .identity {
-      pointer-events: auto; appearance: none; cursor: pointer; position: relative;
+      appearance: none; cursor: pointer; position: relative;
       padding: 32px 48px; text-align: center; border-radius: 32px;
-      transition: background 0.35s, border-color 0.35s, transform 0.35s, box-shadow 0.35s;
+      transition: background 0.3s, border-color 0.3s, box-shadow 0.3s;
       opacity: 0; animation: arrive 0.8s cubic-bezier(.16, 1, .3, 1) 0.2s forwards;
     }
     .identity:hover, .identity[aria-expanded="true"] {
-      background: var(--glass-hover); 
-      border-top-color: #fff;
-      transform: translateY(-4px);
+      background: var(--glass-hover); border-top-color: #fff;
       box-shadow: 0 40px 80px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.3);
     }
     .role {
@@ -252,8 +180,7 @@
     }
     .plus {
       position: absolute; right: 20px; top: 50%; transform: translateY(-50%);
-      color: var(--accent); opacity: 0; font-size: 18px;
-      transition: opacity 0.3s, transform 0.3s;
+      color: var(--accent); opacity: 0; font-size: 18px; transition: opacity 0.3s, transform 0.3s;
     }
     .identity:hover .plus { opacity: 0.8; transform: translateY(-50%) rotate(90deg); }
     .identity[aria-expanded="true"] .plus { opacity: 0.8; transform: translateY(-50%) rotate(45deg); }
@@ -261,17 +188,15 @@
     /* ── Nav links ── */
     .links {
       display: flex; align-items: center; gap: 10px; list-style: none; padding: 0;
-      pointer-events: auto; opacity: 0;
-      animation: arrive 0.8s cubic-bezier(.16, 1, .3, 1) 0.4s forwards;
+      opacity: 0; animation: arrive 0.8s cubic-bezier(.16, 1, .3, 1) 0.4s forwards;
     }
     .links a {
       display: flex; align-items: center; gap: 6px; padding: 12px 20px; border-radius: 999px;
-      color: #aaaaaa; font-size: 14px; font-weight: 500;
-      transition: color 0.25s, background 0.25s, border-color 0.25s, transform 0.25s, box-shadow 0.25s;
+      color: #aaaaaa; font-size: 14px; font-weight: 500; font-family: "DM Mono", monospace;
+      transition: color 0.25s, background 0.25s, border-color 0.25s, box-shadow 0.25s;
     }
     .links a:hover, .links a:focus-visible {
-      color: var(--text); background: rgba(255, 255, 255, 0.1);
-      border-top-color: var(--glass-border-highlight); transform: translateY(-2px);
+      color: var(--text); background: rgba(255, 255, 255, 0.1); border-top-color: var(--glass-border-highlight);
       box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
     }
     .arrow { color: #ffffff; font-size: 12px; transition: transform 0.2s; opacity: 0.5; }
@@ -279,8 +204,7 @@
 
     /* ── About / Info panel ── */
     .info {
-      position: fixed; left: 50%; top: 50%;
-      transform: translate(-50%, 20px);
+      position: fixed; left: 50%; top: 50%; transform: translate(-50%, 20px);
       width: min(400px, calc(100vw - 40px)); z-index: 10;
       padding: 28px 32px; border-radius: 28px;
       opacity: 0; pointer-events: none;
@@ -288,20 +212,9 @@
     }
     .info.open { opacity: 1; transform: translate(-50%, 50px); pointer-events: auto; }
     .info p { margin: 0; color: #cccccc; font-size: 14px; line-height: 1.6; font-weight: 500; }
-    .info-label {
-      display: flex; align-items: center; gap: 8px; margin-bottom: 16px;
-      color: #ffffff; font: 600 11px/1 "DM Mono", monospace;
-      letter-spacing: 0.15em; text-transform: uppercase;
-    }
-    .info-label::before {
-      content: ""; width: 6px; height: 6px; border-radius: 50%;
-      background: #ffffff; box-shadow: 0 0 10px #ffffff; flex: none;
-    }
-    .info a {
-      display: inline-flex; align-items: center; gap: 6px;
-      margin-top: 20px; color: #ffffff; font-size: 13px; font-weight: 600;
-      transition: opacity 0.2s; opacity: 0.7;
-    }
+    .info-label { display: flex; align-items: center; gap: 8px; margin-bottom: 16px; color: #ffffff; font: 600 11px/1 "DM Mono", monospace; letter-spacing: 0.15em; text-transform: uppercase; }
+    .info-label::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: #ffffff; box-shadow: 0 0 10px #ffffff; flex: none; }
+    .info a { display: inline-flex; align-items: center; gap: 6px; margin-top: 20px; color: #ffffff; font-size: 13px; font-weight: 600; transition: opacity 0.2s; opacity: 0.7; }
     .info a:hover { opacity: 1; }
 
     /* ── Entrance animation ── */
@@ -309,37 +222,23 @@
       from { opacity: 0; transform: translateY(20px); filter: blur(12px); }
       to { opacity: 1; transform: translateY(0); filter: blur(0); }
     }
+    @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; } }
 
-    @media (prefers-reduced-motion: reduce) {
-      *, *::before, *::after {
-        animation-duration: 0.01ms !important; animation-iteration-count: 1 !important;
-        transition-duration: 0.01ms !important;
-      }
-    }
-
-    /* ── GitHub activity popup ── */
+    /* ── GitHub popup ── */
     .gh-pop {
-      position: fixed; left: 50%; top: 50%;
-      width: 820px; max-width: calc(100vw - 32px); padding: 20px 24px 18px; border-radius: 28px;
+      position: fixed; left: 50%; top: 50%; width: 820px; max-width: calc(100vw - 32px); padding: 20px 24px 18px; border-radius: 28px;
       visibility: hidden; opacity: 0; transform: translateY(10px) scale(0.98); transform-origin: bottom center;
       transition: opacity 0.3s ease, transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.3s;
       pointer-events: auto; z-index: 10;
     }
     .gh-pop.show { visibility: visible; opacity: 1; transform: translateY(0) scale(1); }
     .gh-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 16px; }
-    .gh-title {
-      display: flex; align-items: center; gap: 8px;
-      font: 600 12px/1 "DM Mono", monospace; letter-spacing: 0.15em; text-transform: uppercase; color: #ffffff;
-    }
+    .gh-title { display: flex; align-items: center; gap: 8px; font: 600 12px/1 "DM Mono", monospace; letter-spacing: 0.15em; text-transform: uppercase; color: #ffffff; }
     .gh-title::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: #ffffff; box-shadow: 0 0 10px #ffffff; }
     .gh-link { display: inline-flex; align-items: center; gap: 4px; color: var(--muted); font-size: 12px; transition: color 0.2s; }
     .gh-link:hover { color: #ffffff; }
     .gh-stats { display: flex; gap: 12px; margin-bottom: 18px; }
-    .gh-stat {
-      flex: 1; padding: 12px 16px; border-radius: 16px;
-      background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08);
-      border-top-color: rgba(255, 255, 255, 0.15);
-    }
+    .gh-stat { flex: 1; padding: 12px 16px; border-radius: 16px; background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08); border-top-color: rgba(255, 255, 255, 0.15); }
     .gh-stat b { display: block; font: 700 20px/1.2 "Space Grotesk", sans-serif; color: var(--text); font-variant-numeric: tabular-nums; }
     .gh-stat span { display: block; margin-top: 4px; font: 500 10px/1 "DM Mono", monospace; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
     .gh-heat { position: relative; padding-bottom: 6px; }
@@ -352,21 +251,13 @@
     .gh-rows { position: absolute; left: 0; top: 20px; display: grid; grid-template-rows: repeat(7, 12px); gap: 3px; font: 500 10px/12px "DM Mono", monospace; color: var(--muted); }
     .gh-grid { display: grid; grid-auto-flow: column; grid-template-rows: repeat(7, 12px); gap: 3px; width: max-content; }
     .gh-cell { width: 12px; height: 12px; border-radius: 3px; background: rgba(255, 255, 255, 0.08); }
-    
-    /* Monochrome heatmap */
     .gh-cell.l1 { background: rgba(255, 255, 255, 0.25); }
     .gh-cell.l2 { background: rgba(255, 255, 255, 0.5); }
     .gh-cell.l3 { background: rgba(255, 255, 255, 0.75); }
     .gh-cell.l4 { background: #ffffff; box-shadow: 0 0 8px rgba(255, 255, 255, 0.6); }
-    
     .gh-legend { display: flex; align-items: center; justify-content: flex-end; gap: 4px; margin-top: 12px; font: 500 10px/1 "DM Mono", monospace; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); }
     .gh-legend .gh-cell { width: 10px; height: 10px; }
-    .gh-tip {
-      position: fixed; z-index: 50; padding: 8px 12px; border-radius: 8px;
-      background: #ffffff; border: 1px solid rgba(255, 255, 255, 0.1);
-      color: #000000; font: 600 11px/1.3 "DM Sans", sans-serif; pointer-events: none;
-      opacity: 0; transition: opacity 0.15s; box-shadow: 0 10px 24px rgba(0, 0, 0, 0.5); white-space: nowrap;
-    }
+    .gh-tip { position: fixed; z-index: 50; padding: 8px 12px; border-radius: 8px; background: #ffffff; border: 1px solid rgba(255, 255, 255, 0.1); color: #000000; font: 600 11px/1.3 "DM Sans", sans-serif; pointer-events: none; opacity: 0; transition: opacity 0.15s; box-shadow: 0 10px 24px rgba(0, 0, 0, 0.5); white-space: nowrap; }
     .gh-tip.show { opacity: 1; }
     .gh-empty { color: var(--muted); font-size: 13px; padding: 24px 0; text-align: center; }
 
@@ -384,41 +275,44 @@
 </head>
 <body>
   
-  <!-- SVG Filter for Liquid Effect -->
-  <svg width="0" height="0" style="position: absolute;">
-    <filter id="liquid-filter">
-      <!-- Blur the elements -->
-      <feGaussianBlur in="SourceGraphic" stdDeviation="40" result="blur" />
-      <!-- Sharpen the edges to create a liquid merge effect. Contrast heavily in alpha channel -->
-      <feColorMatrix in="blur" mode="matrix" values="
-        1 0 0 0 0  
-        0 1 0 0 0  
-        0 0 1 0 0  
-        0 0 0 80 -35" result="liquid" />
-      <!-- Composite to render -->
-      <feComposite in="SourceGraphic" in2="liquid" operator="atop"/>
-    </filter>
-  </svg>
+  <!-- WebGL Fluid Canvas -->
+  <canvas id="fluidCanvas"></canvas>
 
-  <!-- Liquid orbs -->
-  <div class="liquid-bg">
-    <div class="orb orb-1"></div>
-    <div class="orb orb-2"></div>
-    <div class="orb orb-3"></div>
-    <div class="orb orb-4"></div>
-  </div>
-
-  <!-- Day-Bar Progress -->
-  <div class="day-bar-wrapper">
-    <div class="day-bar-header">
-      <span class="day-bar-title">Daily Progress</span>
-      <div class="day-bar-stats">
-        <span id="dayPct">--%</span>
-        <span class="day-bar-time" id="dayTime">--:--:-- left</span>
+  <!-- Flip Tracker Progress (Click to toggle) -->
+  <div class="tracker-container" id="trackerFlip" aria-label="Toggle between daily and yearly progress" title="Click to flip">
+    <div class="tracker-inner">
+      <!-- Front: Daily -->
+      <div class="tracker-face tracker-front">
+        <div class="day-bar-header">
+          <span class="day-bar-title">
+            <span class="charger-dot"></span>
+            Daily Progress
+          </span>
+          <div class="day-bar-stats">
+            <span id="dayPct">--%</span>
+            <span class="day-bar-time" id="dayTime">--:--:-- left</span>
+          </div>
+        </div>
+        <div class="day-bar-container">
+          <div class="day-bar-fill" id="dayBar"></div>
+        </div>
       </div>
-    </div>
-    <div class="day-bar-container">
-      <div class="day-bar-fill" id="dayBar"></div>
+      <!-- Back: Yearly -->
+      <div class="tracker-face tracker-back">
+        <div class="day-bar-header">
+          <span class="day-bar-title" style="color: #00aaff; text-shadow: 0 0 10px rgba(0,170,255,0.3);">
+            <span class="charger-dot year-dot"></span>
+            Yearly Progress
+          </span>
+          <div class="day-bar-stats">
+            <span id="yearPct">--%</span>
+            <span class="day-bar-time" id="yearTime">-- left</span>
+          </div>
+        </div>
+        <div class="day-bar-container">
+          <div class="year-bar-fill" id="yearBar"></div>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -466,61 +360,128 @@
     </nav>
   </main>
 
+  <!-- Load WebGL Fluid Simulation Engine -->
+  <script src="https://cdn.jsdelivr.net/npm/webgl-fluid@0.4"></script>
   <script>
     /* ═══════════════════
-       DAY-BAR LOGIC
+       WEBGL FLUID INIT
        ═══════════════════ */
+    WebGLFluid(document.querySelector('#fluidCanvas'), {
+      IMMEDIATE: true,
+      TRIGGER: 'hover',
+      SIM_RESOLUTION: 128,
+      DYE_RESOLUTION: 1024,
+      CAPTURE_RESOLUTION: 512,
+      DENSITY_DISSIPATION: 1.2,
+      VELOCITY_DISSIPATION: 0.2,
+      PRESSURE: 0.8,
+      PRESSURE_ITERATIONS: 20,
+      CURL: 15,
+      SPLAT_RADIUS: 0.2,
+      SPLAT_FORCE: 6000,
+      SHADING: true,
+      COLORFUL: false,
+      color: '#666666', // Darkened base color
+      COLOR_PALETTE: ['#666666', '#444444', '#222222', '#111111'], // Darker shades
+      COLOR_UPDATE_SPEED: 10,
+      PAUSED: false,
+      BACK_COLOR: { r: 0, g: 0, b: 0 },
+      TRANSPARENT: false,
+      BLOOM: true,
+      BLOOM_ITERATIONS: 8,
+      BLOOM_RESOLUTION: 256,
+      BLOOM_INTENSITY: 0.3, // Lowered from 0.8
+      BLOOM_THRESHOLD: 0.6,
+      BLOOM_SOFT_KNEE: 0.7,
+      SUNRAYS: true,
+      SUNRAYS_RESOLUTION: 196,
+      SUNRAYS_WEIGHT: 0.4, // Lowered from 1.0
+    });
+  </script>
+
+  <script>
+    /* ═══════════════════
+       FLIP TRACKER LOGIC
+       ═══════════════════ */
+    const trackerFlip = document.getElementById('trackerFlip');
+    trackerFlip.addEventListener('click', () => trackerFlip.classList.toggle('flipped'));
+       
     const dayBar = document.getElementById('dayBar');
     const dayPct = document.getElementById('dayPct');
     const dayTime = document.getElementById('dayTime');
-    function updateDayBar() {
+    
+    const yearBar = document.getElementById('yearBar');
+    const yearPct = document.getElementById('yearPct');
+    const yearTime = document.getElementById('yearTime');
+
+    function updateTrackers() {
       const now = new Date();
-      const start = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0);
-      const msSinceStart = now.getTime() - start.getTime();
+      
+      // -- Daily Math --
+      const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0).getTime();
       const msInDay = 24 * 60 * 60 * 1000;
+      const msSinceDayStart = now.getTime() - startOfDay;
       
-      const pctComplete = (msSinceStart / msInDay) * 100;
-      dayBar.style.width = `${pctComplete}%`;
-      dayPct.textContent = `${pctComplete.toFixed(2)}%`;
+      const pctDay = (msSinceDayStart / msInDay) * 100;
+      dayBar.style.width = `${pctDay}%`;
+      dayPct.textContent = `${pctDay.toFixed(2)}%`;
       
-      const msLeft = Math.max(0, msInDay - msSinceStart);
-      const h = Math.floor(msLeft / (1000 * 60 * 60));
-      const m = Math.floor((msLeft % (1000 * 60 * 60)) / (1000 * 60));
-      const s = Math.floor((msLeft % (1000 * 60)) / 1000);
-      dayTime.textContent = `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')} left`;
+      const msLeftDay = Math.max(0, msInDay - msSinceDayStart);
+      const hD = Math.floor(msLeftDay / (1000 * 60 * 60));
+      const mD = Math.floor((msLeftDay % (1000 * 60 * 60)) / (1000 * 60));
+      const sD = Math.floor((msLeftDay % (1000 * 60)) / 1000);
+      dayTime.textContent = `${String(hD).padStart(2,'0')}:${String(mD).padStart(2,'0')}:${String(sD).padStart(2,'0')} left`;
+
+      // -- Yearly Math --
+      const startOfYear = new Date(now.getFullYear(), 0, 1).getTime();
+      const endOfYear = new Date(now.getFullYear() + 1, 0, 1).getTime();
+      const msInYear = endOfYear - startOfYear;
+      const msSinceYearStart = now.getTime() - startOfYear;
       
-      requestAnimationFrame(updateDayBar);
+      const pctYear = (msSinceYearStart / msInYear) * 100;
+      yearBar.style.width = `${pctYear}%`;
+      yearPct.textContent = `${pctYear.toFixed(4)}%`; 
+      
+      const msLeftYear = Math.max(0, msInYear - msSinceYearStart);
+      const dY = Math.floor(msLeftYear / (1000 * 60 * 60 * 24));
+      const hY = Math.floor((msLeftYear % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+      const mY = Math.floor((msLeftYear % (1000 * 60 * 60)) / (1000 * 60));
+      const sY = Math.floor((msLeftYear % (1000 * 60)) / 1000);
+      yearTime.textContent = `${dY}d ${String(hY).padStart(2,'0')}:${String(mY).padStart(2,'0')}:${String(sY).padStart(2,'0')} left`;
+      
+      requestAnimationFrame(updateTrackers);
     }
-    updateDayBar();
+    updateTrackers();
 
     /* ═══════════════════
-       TACTILE MAGNETIC INTERACTIONS
+       TACTILE MAGNETIC UI
        ═══════════════════ */
     const magnets = document.querySelectorAll('.magnetic');
+    
+    // Magnetic state
     magnets.forEach(el => {
-      let bx = 0, by = 0, tx = 0, ty = 0, isHovering = false;
-      const strength = parseFloat(el.dataset.magnetStrength) || 0.2;
-      
+      el._magnet = { bx: 0, by: 0, tx: 0, ty: 0, hover: false, str: parseFloat(el.dataset.magnetStrength) || 0.2 };
       el.addEventListener('mousemove', (e) => {
         const rect = el.getBoundingClientRect();
-        const cx = rect.left + rect.width / 2;
-        const cy = rect.top + rect.height / 2;
-        tx = (e.clientX - cx) * strength;
-        ty = (e.clientY - cy) * strength;
+        el._magnet.tx = (e.clientX - (rect.left + rect.width / 2)) * el._magnet.str;
+        el._magnet.ty = (e.clientY - (rect.top + rect.height / 2)) * el._magnet.str;
       });
-      
-      el.addEventListener('mouseenter', () => { isHovering = true; });
-      el.addEventListener('mouseleave', () => { isHovering = false; tx = 0; ty = 0; });
-      
-      function render() {
-        bx += (tx - bx) * 0.15;
-        by += (ty - by) * 0.15;
-        const scale = isHovering ? 1.02 : 1.0;
-        el.style.transform = `translate3d(${bx}px, ${by}px, 0) scale(${scale})`;
-        requestAnimationFrame(render);
-      }
-      render();
+      el.addEventListener('mouseenter', () => { el._magnet.hover = true; });
+      el.addEventListener('mouseleave', () => { el._magnet.hover = false; el._magnet.tx = 0; el._magnet.ty = 0; });
     });
+
+    function physicsLoop() {
+      // Magnetic UI easing
+      magnets.forEach(el => {
+        const m = el._magnet;
+        m.bx += (m.tx - m.bx) * 0.15;
+        m.by += (m.ty - m.by) * 0.15;
+        const scale = m.hover ? 1.02 : 1.0;
+        el.style.transform = `translate3d(${m.bx}px, ${m.by}px, 0) scale(${scale})`;
+      });
+      requestAnimationFrame(physicsLoop);
+    }
+    physicsLoop();
 
     /* ═══════════════════
        IDENTITY & INFO PANEL
@@ -532,29 +493,6 @@
       identity.setAttribute('aria-expanded', open);
       info.setAttribute('aria-hidden', !open);
     });
-
-    /* ═══════════════════
-       SUBTLE MOUSE PARALLAX ON ORBS
-       ═══════════════════ */
-    const orbs = document.querySelectorAll('.orb');
-    const parallaxStrengths = [0.03, 0.02, 0.04, 0.025];
-    let mouseX = 0, mouseY = 0, smoothX = 0, smoothY = 0;
-
-    window.addEventListener('pointermove', (e) => {
-      mouseX = (e.clientX / innerWidth - 0.5) * 2;
-      mouseY = (e.clientY / innerHeight - 0.5) * 2;
-    });
-
-    function updateParallax() {
-      smoothX += (mouseX - smoothX) * 0.03;
-      smoothY += (mouseY - smoothY) * 0.03;
-      orbs.forEach((orb, i) => {
-        const s = parallaxStrengths[i] || 0.02;
-        orb.style.translate = `${smoothX * s * innerWidth}px ${smoothY * s * innerHeight}px`;
-      });
-      requestAnimationFrame(updateParallax);
-    }
-    updateParallax();
 
     /* ═══════════════════
        RESIZE — reposition GitHub popup if open
