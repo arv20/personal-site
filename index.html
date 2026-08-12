@@ -126,16 +126,62 @@
     }
 
     /* ── Day-Bar Progress ── */
-    .day-bar-container {
+    .day-bar-wrapper {
       position: fixed;
       bottom: 40px;
       left: 50%;
       transform: translateX(-50%);
       width: min(800px, calc(100vw - 80px));
-      height: 6px;
-      border-radius: 6px;
       z-index: 10;
       pointer-events: none;
+    }
+    .day-bar-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      margin-bottom: 12px;
+      padding: 0 4px;
+    }
+    .day-bar-title {
+      font: 500 11px/1 "DM Mono", monospace;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: rgba(255, 255, 255, 0.8);
+      text-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .day-bar-title::before {
+      content: "";
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #00ff66; /* Glowing charger dot */
+      box-shadow: 0 0 8px #00ff66;
+      animation: pulse 2s infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.4; transform: scale(0.8); }
+    }
+    .day-bar-stats {
+      display: flex;
+      gap: 16px;
+      font: 500 11px/1 "DM Mono", monospace;
+      color: rgba(255, 255, 255, 0.9);
+      text-shadow: 0 0 8px rgba(255, 255, 255, 0.2);
+      font-variant-numeric: tabular-nums;
+    }
+    .day-bar-time {
+      color: var(--muted);
+      text-shadow: none;
+    }
+    .day-bar-container {
+      position: relative;
+      width: 100%;
+      height: 6px;
+      border-radius: 6px;
       overflow: hidden;
       /* Liquid glass look for the container */
       background: rgba(255, 255, 255, 0.05);
@@ -363,8 +409,17 @@
   </div>
 
   <!-- Day-Bar Progress -->
-  <div class="day-bar-container">
-    <div class="day-bar-fill" id="dayBar"></div>
+  <div class="day-bar-wrapper">
+    <div class="day-bar-header">
+      <span class="day-bar-title">Daily Progress</span>
+      <div class="day-bar-stats">
+        <span id="dayPct">--%</span>
+        <span class="day-bar-time" id="dayTime">--:--:-- left</span>
+      </div>
+    </div>
+    <div class="day-bar-container">
+      <div class="day-bar-fill" id="dayBar"></div>
+    </div>
   </div>
 
   <!-- Overlays -->
@@ -416,13 +471,24 @@
        DAY-BAR LOGIC
        ═══════════════════ */
     const dayBar = document.getElementById('dayBar');
+    const dayPct = document.getElementById('dayPct');
+    const dayTime = document.getElementById('dayTime');
     function updateDayBar() {
       const now = new Date();
       const start = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0);
       const msSinceStart = now.getTime() - start.getTime();
       const msInDay = 24 * 60 * 60 * 1000;
-      const percentageLeft = 1 - (msSinceStart / msInDay);
-      dayBar.style.width = `${percentageLeft * 100}%`;
+      
+      const pctComplete = (msSinceStart / msInDay) * 100;
+      dayBar.style.width = `${pctComplete}%`;
+      dayPct.textContent = `${pctComplete.toFixed(2)}%`;
+      
+      const msLeft = Math.max(0, msInDay - msSinceStart);
+      const h = Math.floor(msLeft / (1000 * 60 * 60));
+      const m = Math.floor((msLeft % (1000 * 60 * 60)) / (1000 * 60));
+      const s = Math.floor((msLeft % (1000 * 60)) / 1000);
+      dayTime.textContent = `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')} left`;
+      
       requestAnimationFrame(updateDayBar);
     }
     updateDayBar();
