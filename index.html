@@ -65,37 +65,10 @@
     ::selection { background: rgba(255, 255, 255, 0.2); }
     :focus-visible { outline: 1px solid #fff; outline-offset: 3px; }
 
-    /* ── Liquid Glass Background ── */
-    .liquid-bg {
-      position: fixed; inset: -100px; 
-      pointer-events: none;
-      filter: url(#liquid-filter);
-      background: var(--bg);
-      z-index: 0;
-    }
-    .orb { position: absolute; border-radius: 50%; will-change: transform; background: #ffffff; }
-    .orb-1 { width: 45vw; height: 45vw; top: 10%; left: 10%; background: radial-gradient(circle, #ffffff 0%, #888888 60%, transparent 80%); animation: drift1 25s ease-in-out infinite; }
-    .orb-2 { width: 50vw; height: 50vw; bottom: 5%; right: 5%; background: radial-gradient(circle, #aaaaaa 0%, #444444 60%, transparent 80%); animation: drift2 30s ease-in-out infinite; }
-    .orb-3 { width: 35vw; height: 35vw; top: 30%; right: 25%; background: radial-gradient(circle, #ffffff 0%, #666666 60%, transparent 80%); animation: drift3 22s ease-in-out infinite; }
-    .orb-4 { width: 40vw; height: 40vw; bottom: 20%; left: 20%; background: radial-gradient(circle, #dddddd 0%, #555555 60%, transparent 80%); animation: drift4 28s ease-in-out infinite; }
-
-    @keyframes drift1 { 0%, 100% { transform: translate(0, 0) scale(1); } 33% { transform: translate(15vw, 10vh) scale(1.1); } 66% { transform: translate(-5vw, 15vh) scale(0.9); } }
-    @keyframes drift2 { 0%, 100% { transform: translate(0, 0) scale(1); } 33% { transform: translate(-15vw, -10vh) scale(1.15); } 66% { transform: translate(10vw, -20vh) scale(0.85); } }
-    @keyframes drift3 { 0%, 100% { transform: translate(0, 0) scale(1); } 33% { transform: translate(-10vw, 15vh) scale(1.2); } 66% { transform: translate(15vw, -10vh) scale(0.9); } }
-    @keyframes drift4 { 0%, 100% { transform: translate(0, 0) scale(1); } 33% { transform: translate(15vw, -15vh) scale(1.1); } 66% { transform: translate(-10vw, 20vh) scale(0.95); } }
-
-    /* ── Magnet Lines Grid ── */
-    .magnet-grid {
-      position: fixed; inset: 0; z-index: 1; pointer-events: none;
-      display: grid; align-content: center; justify-content: center;
-    }
-    .magnet-line {
-      width: 2px; height: 16px; 
-      background: rgba(255, 255, 255, 0.25);
-      border-radius: 2px; margin: auto;
-      will-change: transform;
-      /* Very subtle mix blend mode makes it look liquid over the bright orbs */
-      mix-blend-mode: overlay;
+    /* ── WebGL Fluid Background ── */
+    #fluidCanvas {
+      position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+      z-index: 0; pointer-events: auto; /* Allow mouse interaction to trigger fluids */
     }
 
     /* ── Flip Tracker (Day / Year) ── */
@@ -302,25 +275,8 @@
 </head>
 <body>
   
-  <!-- SVG Filter for Liquid Effect -->
-  <svg width="0" height="0" style="position: absolute;">
-    <filter id="liquid-filter">
-      <feGaussianBlur in="SourceGraphic" stdDeviation="40" result="blur" />
-      <feColorMatrix in="blur" mode="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 80 -35" result="liquid" />
-      <feComposite in="SourceGraphic" in2="liquid" operator="atop"/>
-    </filter>
-  </svg>
-
-  <!-- Liquid orbs -->
-  <div class="liquid-bg">
-    <div class="orb orb-1"></div>
-    <div class="orb orb-2"></div>
-    <div class="orb orb-3"></div>
-    <div class="orb orb-4"></div>
-  </div>
-
-  <!-- Magnet Lines Grid -->
-  <div class="magnet-grid" id="magnetGrid"></div>
+  <!-- WebGL Fluid Canvas -->
+  <canvas id="fluidCanvas"></canvas>
 
   <!-- Flip Tracker Progress (Click to toggle) -->
   <div class="tracker-container" id="trackerFlip" aria-label="Toggle between daily and yearly progress" title="Click to flip">
@@ -404,41 +360,44 @@
     </nav>
   </main>
 
+  <!-- Load WebGL Fluid Simulation Engine -->
+  <script src="https://cdn.jsdelivr.net/npm/webgl-fluid@0.4"></script>
   <script>
     /* ═══════════════════
-       MAGNET LINES GRID
+       WEBGL FLUID INIT
        ═══════════════════ */
-    const magnetGrid = document.getElementById('magnetGrid');
-    const spacing = 40; // Size of each grid cell
-    let magnetData = [];
-    
-    function initMagnetGrid() {
-      magnetGrid.innerHTML = '';
-      magnetData = [];
-      const cols = Math.floor(window.innerWidth / spacing) + 1;
-      const rows = Math.floor(window.innerHeight / spacing) + 1;
-      magnetGrid.style.gridTemplateColumns = `repeat(${cols}, ${spacing}px)`;
-      magnetGrid.style.gridTemplateRows = `repeat(${rows}, ${spacing}px)`;
-      
-      for(let i = 0; i < cols * rows; i++) {
-        const line = document.createElement('div');
-        line.className = 'magnet-line';
-        magnetGrid.appendChild(line);
-        magnetData.push({ el: line, cx: 0, cy: 0 });
-      }
-      
-      // Cache the bounding box centers after paint
-      setTimeout(() => {
-        magnetData.forEach(item => {
-          const r = item.el.getBoundingClientRect();
-          item.cx = r.left + r.width / 2;
-          item.cy = r.top + r.height / 2;
-        });
-      }, 0);
-    }
-    initMagnetGrid();
-    window.addEventListener('resize', initMagnetGrid);
+    WebGLFluid(document.querySelector('#fluidCanvas'), {
+      IMMEDIATE: true,
+      TRIGGER: 'hover',
+      SIM_RESOLUTION: 128,
+      DYE_RESOLUTION: 1024,
+      CAPTURE_RESOLUTION: 512,
+      DENSITY_DISSIPATION: 1.2,
+      VELOCITY_DISSIPATION: 0.2,
+      PRESSURE: 0.8,
+      PRESSURE_ITERATIONS: 20,
+      CURL: 15, // Higher curl creates beautiful metallic eddies
+      SPLAT_RADIUS: 0.2,
+      SPLAT_FORCE: 6000,
+      SHADING: true, // Crucial for liquid metal 3D effect
+      COLORFUL: false, // Forces monochrome output
+      COLOR_UPDATE_SPEED: 10,
+      PAUSED: false,
+      BACK_COLOR: { r: 0, g: 0, b: 0 },
+      TRANSPARENT: false,
+      BLOOM: true,
+      BLOOM_ITERATIONS: 8,
+      BLOOM_RESOLUTION: 256,
+      BLOOM_INTENSITY: 0.8,
+      BLOOM_THRESHOLD: 0.6,
+      BLOOM_SOFT_KNEE: 0.7,
+      SUNRAYS: true,
+      SUNRAYS_RESOLUTION: 196,
+      SUNRAYS_WEIGHT: 1.0,
+    });
+  </script>
 
+  <script>
     /* ═══════════════════
        FLIP TRACKER LOGIC
        ═══════════════════ */
@@ -479,7 +438,7 @@
       
       const pctYear = (msSinceYearStart / msInYear) * 100;
       yearBar.style.width = `${pctYear}%`;
-      yearPct.textContent = `${pctYear.toFixed(4)}%`; // 4 decimals for slower yearly progress
+      yearPct.textContent = `${pctYear.toFixed(4)}%`; 
       
       const msLeftYear = Math.max(0, msInYear - msSinceYearStart);
       const dY = Math.floor(msLeftYear / (1000 * 60 * 60 * 24));
@@ -493,12 +452,9 @@
     updateTrackers();
 
     /* ═══════════════════
-       TACTILE MAGNETIC UI & PARALLAX
+       TACTILE MAGNETIC UI
        ═══════════════════ */
     const magnets = document.querySelectorAll('.magnetic');
-    const orbs = document.querySelectorAll('.orb');
-    const parallaxStrengths = [0.03, 0.02, 0.04, 0.025];
-    let mouseX = 0, mouseY = 0, smoothX = 0, smoothY = 0;
     
     // Magnetic state
     magnets.forEach(el => {
@@ -512,29 +468,7 @@
       el.addEventListener('mouseleave', () => { el._magnet.hover = false; el._magnet.tx = 0; el._magnet.ty = 0; });
     });
 
-    window.addEventListener('pointermove', (e) => {
-      // Parallax tracking
-      mouseX = (e.clientX / innerWidth - 0.5) * 2;
-      mouseY = (e.clientY / innerHeight - 0.5) * 2;
-      
-      // Update Magnet Lines Grid angles immediately on move
-      magnetData.forEach(item => {
-        if (!item.cx) return; // Wait for cache
-        // Calculate angle to mouse (+ 90deg offset so lines point AT mouse instead of being tangent)
-        const angle = Math.atan2(e.clientY - item.cy, e.clientX - item.cx) + (Math.PI / 2);
-        item.el.style.transform = `rotate(${angle}rad)`;
-      });
-    });
-
     function physicsLoop() {
-      // Parallax easing
-      smoothX += (mouseX - smoothX) * 0.03;
-      smoothY += (mouseY - smoothY) * 0.03;
-      orbs.forEach((orb, i) => {
-        const s = parallaxStrengths[i] || 0.02;
-        orb.style.translate = `${smoothX * s * innerWidth}px ${smoothY * s * innerHeight}px`;
-      });
-      
       // Magnetic UI easing
       magnets.forEach(el => {
         const m = el._magnet;
@@ -543,7 +477,6 @@
         const scale = m.hover ? 1.02 : 1.0;
         el.style.transform = `translate3d(${m.bx}px, ${m.by}px, 0) scale(${scale})`;
       });
-      
       requestAnimationFrame(physicsLoop);
     }
     physicsLoop();
