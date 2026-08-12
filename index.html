@@ -376,13 +376,13 @@
       VELOCITY_DISSIPATION: 0.2,
       PRESSURE: 0.8,
       PRESSURE_ITERATIONS: 20,
-      CURL: 15, // Higher curl creates beautiful metallic eddies
+      CURL: 15,
       SPLAT_RADIUS: 0.2,
       SPLAT_FORCE: 6000,
-      SHADING: true, // Crucial for liquid metal 3D effect
-      COLORFUL: false, // Forces monochrome output
-      color: '#ffffff', // Set splat color to white/silver
-      COLOR_PALETTE: ['#ffffff', '#cccccc', '#999999', '#555555'],
+      SHADING: true,
+      COLORFUL: false,
+      color: '#666666', // Darkened base color
+      COLOR_PALETTE: ['#666666', '#444444', '#222222', '#111111'], // Darker shades
       COLOR_UPDATE_SPEED: 10,
       PAUSED: false,
       BACK_COLOR: { r: 0, g: 0, b: 0 },
@@ -390,12 +390,12 @@
       BLOOM: true,
       BLOOM_ITERATIONS: 8,
       BLOOM_RESOLUTION: 256,
-      BLOOM_INTENSITY: 0.8,
+      BLOOM_INTENSITY: 0.3, // Lowered from 0.8
       BLOOM_THRESHOLD: 0.6,
       BLOOM_SOFT_KNEE: 0.7,
       SUNRAYS: true,
       SUNRAYS_RESOLUTION: 196,
-      SUNRAYS_WEIGHT: 1.0,
+      SUNRAYS_WEIGHT: 0.4, // Lowered from 1.0
     });
   </script>
 
