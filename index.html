@@ -606,12 +606,20 @@
     function hideTip() { ghTip.classList.remove('show'); }
 
     function positionPop() {
-      const r = linkGh.getBoundingClientRect();
+      // Anchor relative to the identity box so it appears above the name
+      const targetRect = identity.getBoundingClientRect();
       const pw = ghPop.offsetWidth;
       const ph = ghPop.offsetHeight;
-      let left = Math.max(8, Math.min(r.left + r.width / 2 - pw / 2, innerWidth - pw - 8));
-      let top = r.top - ph - 16;
-      if (top < 8) top = Math.min(r.bottom + 14, innerHeight - ph - 8);
+      
+      let left = Math.max(8, Math.min(targetRect.left + targetRect.width / 2 - pw / 2, innerWidth - pw - 8));
+      let top = targetRect.top - ph - 24; // 24px gap above the identity card
+      
+      // If it goes off the top of the screen, fall back to below the nav links
+      if (top < 8) {
+        const linkRect = linkGh.getBoundingClientRect();
+        top = Math.min(linkRect.bottom + 24, innerHeight - ph - 8);
+      }
+      
       ghPop.style.left = `${left}px`;
       ghPop.style.top = `${top}px`;
     }
