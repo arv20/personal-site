@@ -1,18 +1,16 @@
 import * as THREE from 'three';
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
 import { canvasTexture, plasterTexture, posterTexture, rugTexture, screenTexture, woodTexture } from './textures';
-import type { RoomSection } from '../data/room';
 
 export function buildRoom() {
   const room = new THREE.Group();
-  const interactive: THREE.Object3D[] = [];
   const woodMap = woodTexture();
   const mat = (color: string, roughness = 0.6, metalness = 0) => new THREE.MeshStandardMaterial({ color, roughness, metalness });
-  const walnut = new THREE.MeshStandardMaterial({ map: woodMap, color: '#9d8874', roughness: 0.48 });
-  const darkWood = new THREE.MeshStandardMaterial({ map: woodMap, color: '#51473b', roughness: 0.5 });
+  const walnut = new THREE.MeshStandardMaterial({ map: woodMap, color: '#d0b68d', roughness: 0.48 });
+  const darkWood = new THREE.MeshStandardMaterial({ map: woodMap, color: '#8f8168', roughness: 0.5 });
   const plaster = new THREE.MeshStandardMaterial({ map: plasterTexture(), roughness: 0.95 });
   const black = mat('#20221f', 0.5);
-  const brass = mat('#ae9561', 0.3, 0.7);
+  const brass = mat('#646967', 0.6, 0.25);
   const chrome = mat('#999d96', 0.26, 0.85);
   const linen = mat('#aaa590', 0.95);
   const paper = mat('#e1dac6', 0.9);
@@ -38,8 +36,8 @@ export function buildRoom() {
     obj.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), b.clone().sub(a).normalize()); return obj;
   }
   const vec = (x: number, y: number, z: number) => new THREE.Vector3(x, y, z);
-  function section(id: RoomSection) {
-    const group = new THREE.Group(); group.userData.section = id; room.add(group); interactive.push(group); return group;
+  function section() {
+    const group = new THREE.Group(); room.add(group); return group;
   }
   function face(w: number, h: number, x: number, y: number, z: number, texture: THREE.Texture, parent: THREE.Object3D, emissive = false) {
     const material = emissive ? new THREE.MeshBasicMaterial({ map: texture }) : new THREE.MeshStandardMaterial({ map: texture, roughness: 0.8 });
@@ -62,11 +60,19 @@ export function buildRoom() {
   box(9.35, 0.07, 0.24, 0, 4.3, -3.25, paper);
   box(0.24, 0.07, 6.6, -4.65, 4.3, 0, paper);
 
-  // Walnut feature wall and recessed warm edge light.
-  box(2.68, 4.24, 0.08, 3.17, 2.14, -3.11, darkWood);
-  for (let i = 0; i < 22; i++) box(0.057, 4.2, 0.075, 1.91 + i * 0.12, 2.13, -3.04, walnut);
-  box(0.025, 4.1, 0.03, 1.78, 2.16, -3.07, warmGlow);
-  box(8.95, 0.026, 0.035, 0, 4.12, -3.12, warmGlow);
+  // A slightly sagging string of warm dorm lights.
+  const stringPoints = Array.from({ length: 25 }, (_, i) => vec(-4.35 + i * 0.36, 4.02 - 0.19 * Math.sin(i / 24 * Math.PI), -3.02));
+  mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(stringPoints), 64, 0.009, 6, false), black, 0, 0, 0);
+  for (let i = 0; i < stringPoints.length; i += 2) {
+    const p = stringPoints[i];
+    rod(p, vec(p.x, p.y - 0.08, p.z), 0.011, black);
+    sphere(0.04, p.x, p.y - 0.12, p.z, warmGlow).scale.y = 1.35;
+  }
+  const pennant = canvasTexture(900, 260, ctx => {
+    ctx.fillStyle = '#913d40'; ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(900, 130); ctx.lineTo(0, 260); ctx.fill();
+    ctx.fillStyle = '#efe6d4'; ctx.font = 'bold 68px Georgia'; ctx.fillText('OHIO STATE', 42, 151);
+  });
+  mesh(new THREE.PlaneGeometry(2.17, 0.63), new THREE.MeshStandardMaterial({ map: pennant, transparent: true, roughness: 1, side: THREE.DoubleSide }), 3.11, 3.48, -3.03);
 
   // A blue-hour window inset into the left wall, with dimensional mullions.
   const windowGroup = new THREE.Group(); windowGroup.position.set(-4.54, 2.55, 0.25); windowGroup.rotation.y = Math.PI / 2; room.add(windowGroup);
@@ -85,27 +91,25 @@ export function buildRoom() {
   box(0.06, 2.3, 0.09, 0, 0, 0.12, black, windowGroup);
   box(2.5, 0.055, 0.09, 0, 0.12, 0.12, black, windowGroup);
   box(2.88, 0.095, 0.34, 0, -1.24, 0.1, walnut, windowGroup);
-  // Light linen curtains, pleated instead of a flat rectangle.
-  for (const side of [-1, 1]) {
-    for (let i = 0; i < 6; i++) {
-      const curtain = cylinder(0.07, 0.075, 2.8, side * (1.28 + i * 0.075), -0.12, 0.23, linen, windowGroup);
-      curtain.scale.z = 0.7;
-    }
-  }
-  rod(vec(-1.85, 1.36, 0.2), vec(1.85, 1.36, 0.2), 0.025, brass, windowGroup);
+  // The standard-issue window blind is pulled up most of the way.
+  for (let i = 0; i < 6; i++) box(2.65, 0.045, 0.09, 0, 1.13 - i * 0.085, 0.17, paper, windowGroup);
+  rod(vec(1.4, 1.2, 0.2), vec(1.4, -0.5, 0.2), 0.008, linen, windowGroup);
 
-  const archive = section('about');
+  const archive = section();
   function frame(kind: 'ohio' | 'chelsea' | 'car', x: number, y: number, width: number, height: number) {
-    box(width + 0.1, height + 0.1, 0.09, x, y, -3.08, black, archive, 0.012);
-    box(width + 0.035, height + 0.035, 0.025, x, y, -3.022, brass, archive);
-    face(width, height, x, y, -3.003, posterTexture(kind), archive);
+    const print = new THREE.Group(); print.position.set(x, y, -3.12);
+    print.rotation.z = kind === 'ohio' ? -0.035 : kind === 'chelsea' ? 0.025 : -0.02;
+    archive.add(print);
+    face(width, height, 0, 0, 0.012, posterTexture(kind), print);
+    const tape = mat('#d5c8a4', 0.95);
+    for (const side of [-1, 1]) box(0.19, 0.09, 0.012, side * width * 0.36, height * 0.48, 0.025, tape, print).rotation.z = side * 0.28;
   }
   frame('ohio', -3.32, 2.98, 1.22, 1.62);
   frame('chelsea', -1.78, 2.98, 1.22, 1.62);
   frame('car', -0.24, 2.98, 1.12, 1.49);
 
   // A desk made from a single thick walnut slab, on brass/black legs.
-  const desk = section('work');
+  const desk = section();
   box(4.8, 0.15, 1.65, -1.55, 1.37, -1.87, walnut, desk, 0.055);
   for (const x of [-3.62, 0.5]) {
     box(0.07, 1.27, 1.35, x, 0.67, -1.87, black, desk);
@@ -152,9 +156,9 @@ export function buildRoom() {
 
   // Woven rug and upholstered office chair with visible arms and casters.
   const rug = new THREE.MeshStandardMaterial({ map: rugTexture(), roughness: 1 });
-  box(5.4, 0.027, 3.5, -0.1, 0.027, 0.64, rug, room, 0.03);
+  box(4.3, 0.027, 3.2, -1.0, 0.027, 0.64, rug, room, 0.03);
   const chair = new THREE.Group(); chair.position.set(-1.43, 0, -0.04); chair.rotation.y = -0.17; room.add(chair);
-  const leather = mat('#514c3c', 0.88);
+  const leather = mat('#424a4b', 0.95);
   box(1.04, 0.17, 0.97, 0, 0.82, 0, leather, chair, 0.12);
   box(0.99, 1.04, 0.16, 0, 1.3, 0.43, leather, chair, 0.11);
   box(0.84, 0.78, 0.07, 0, 1.31, 0.535, darkWood, chair, 0.065);
@@ -169,68 +173,129 @@ export function buildRoom() {
     const wheel = cylinder(0.073, 0.073, 0.09, Math.cos(a) * 0.6, 0.08, Math.sin(a) * 0.6, black, chair); wheel.rotation.z = Math.PI / 2;
   }
 
-  // Display shelves: books, a camera and a small sculptural object.
-  const shelf = section('shelf');
-  for (const y of [1.65, 2.65, 3.62]) {
-    box(2.24, 0.085, 0.55, 3.07, y, -2.72, walnut, shelf, 0.018);
-    box(2.06, 0.016, 0.018, 3.07, y - 0.052, -2.48, warmGlow, shelf);
+  // A simple shelf on steel brackets, over the bed.
+  const shelf = section();
+  box(2.16, 0.09, 0.5, 3.16, 2.7, -2.83, walnut, shelf);
+  for (const x of [2.38, 3.94]) {
+    rod(vec(x, 2.4, -3.09), vec(x, 2.65, -2.63), 0.018, black, shelf);
+    box(0.045, 0.32, 0.035, x, 2.53, -3.10, black, shelf);
   }
-  function book(x: number, y: number, color: string, h = 0.54, title = '') {
-    const b = box(0.13, h, 0.32, x, y + h / 2, -2.7, mat(color), shelf, 0.006);
-    if (title) {
-      const tx = canvasTexture(80, 320, ctx => { ctx.fillStyle = color; ctx.fillRect(0, 0, 80, 320); ctx.translate(40, 160); ctx.rotate(-Math.PI / 2); ctx.textAlign = 'center'; ctx.fillStyle = '#e7dfce'; ctx.font = '18px Georgia'; ctx.fillText(title, 0, 6); });
-      face(0.118, h - 0.03, x, b.position.y, -2.534, tx, shelf);
+  ['#a8624d', '#b7ad8f', '#455970', '#625c49', '#878a74', '#393c39'].forEach((color, i) => {
+    const height = 0.44 + (i % 3) * 0.055;
+    box(0.14, height, 0.3, 2.35 + i * 0.16, 2.75 + height / 2, -2.83, mat(color), shelf, 0.005);
+    box(0.1, 0.018, 0.004, 2.35 + i * 0.16, 2.86, -2.675, paper, shelf);
+  });
+  box(0.48, 0.3, 0.25, 3.77, 2.9, -2.79, black, shelf, 0.045);
+  const lens = cylinder(0.115, 0.13, 0.2, 3.77, 2.9, -2.6, black, shelf); lens.rotation.x = Math.PI / 2;
+  const glass = cylinder(0.09, 0.09, 0.009, 3.77, 2.9, -2.49, mat('#263a43', 0.1, 0.6), shelf); glass.rotation.x = Math.PI / 2;
+
+  // School-issued raised twin: chunky oak frame, storage below, rumpled cotton on top.
+  const bed = section();
+  for (const x of [2.02, 4.2]) for (const z of [-2.42, 2.05]) {
+    box(0.12, z < 0 ? 1.6 : 0.9, 0.12, x, z < 0 ? 0.8 : 0.45, z, walnut, bed, 0.015);
+  }
+  for (const x of [2.03, 4.19]) box(0.10, 0.22, 4.5, x, 0.73, -0.17, walnut, bed);
+  for (const y of [0.93, 1.2, 1.47]) box(2.16, 0.16, 0.075, 3.11, y, -2.42, walnut, bed, 0.012);
+  box(2.13, 0.14, 4.43, 3.11, 0.81, -0.17, walnut, bed);
+  box(2.08, 0.27, 4.32, 3.11, 1.015, -0.17, paper, bed, 0.10);
+  const bedding = canvasTexture(512, 512, ctx => {
+    ctx.fillStyle = '#455e7c'; ctx.fillRect(0, 0, 512, 512);
+    for (let i = 0; i < 512; i += 3) {
+      ctx.fillStyle = i % 2 ? '#ffffff08' : '#00000009'; ctx.fillRect(0, i, 512, 1); ctx.fillRect(i, 0, 1, 512);
     }
+    ctx.fillStyle = '#b6bec4'; ctx.fillRect(0, 405, 512, 7); ctx.fillRect(0, 424, 512, 3);
+  });
+  const duvet = new THREE.MeshStandardMaterial({ map: bedding, roughness: 1, side: THREE.DoubleSide });
+  const duvetGeometry = new THREE.PlaneGeometry(2.55, 3.3, 30, 34);
+  const vertices = duvetGeometry.attributes.position;
+  for (let i = 0; i < vertices.count; i++) {
+    const x = vertices.getX(i), y = vertices.getY(i);
+    const fold = 0.025 * Math.sin(x * 15 + y * 5) + 0.016 * Math.cos(y * 18 - x * 6);
+    const drape = Math.pow(Math.max(0, Math.abs(x) - 0.96), 0.7) * 1.0;
+    vertices.setZ(i, fold - drape);
   }
-  ['#8a7651', '#b7ad8f', '#474b41', '#624b43', '#878a74', '#393c39'].forEach((c, i) => book(2.23 + i * 0.15, 1.70, c, 0.44 + (i % 3) * 0.05, ['DESIGN', 'SYSTEMS', 'NOTES'][i % 3]));
-  // Game and manga covers on the middle shelf.
-  for (const [kind, x] of [['hades', 2.45], ['jjk', 3.08]] as const) {
-    box(0.51, 0.68, 0.12, x, 3.03, -2.71, black, shelf);
-    face(0.48, 0.65, x, 3.03, -2.644, posterTexture(kind), shelf);
-  }
-  // Camera body with a metallic lens.
-  box(0.48, 0.3, 0.25, 3.7, 1.86, -2.65, black, shelf, 0.045);
-  box(0.18, 0.07, 0.17, 3.7, 2.04, -2.65, black, shelf, 0.018);
-  const lens = cylinder(0.116, 0.13, 0.23, 3.67, 1.87, -2.44, black, shelf); lens.rotation.x = Math.PI / 2;
-  const glass = cylinder(0.093, 0.093, 0.008, 3.67, 1.87, -2.32, mat('#263a43', 0.1, 0.6), shelf); glass.rotation.x = Math.PI / 2;
-  const sculpture = mesh(new THREE.TorusKnotGeometry(0.16, 0.045, 80, 12), brass, 3.47, 3.92, -2.7, shelf);
-  sculpture.rotation.x = 0.4;
+  duvetGeometry.computeVertexNormals();
+  const blanket = mesh(duvetGeometry, duvet, 3.11, 1.19, 0.36, bed); blanket.rotation.x = -Math.PI / 2;
+  const pillow = box(1.55, 0.22, 0.64, 3.06, 1.24, -1.81, paper, bed, 0.13); pillow.rotation.y = -0.05;
+  box(2.14, 0.1, 0.35, 3.11, 1.24, -1.16, mat('#76899a', 1), bed, 0.05);
+  // A sweatshirt tossed across the foot of the bed.
+  const hoodie = new THREE.Group(); hoodie.position.set(3.25, 1.23, 1.28); hoodie.rotation.y = -0.32; bed.add(hoodie);
+  const scarlet = mat('#893c3f', 1);
+  box(0.69, 0.08, 0.7, 0, 0.02, 0, scarlet, hoodie, 0.08);
+  box(0.23, 0.08, 0.64, -0.39, 0.02, 0.06, scarlet, hoodie, 0.07).rotation.y = -0.35;
+  box(0.23, 0.08, 0.64, 0.39, 0.02, 0.06, scarlet, hoodie, 0.07).rotation.y = 0.35;
+  const hood = sphere(0.2, 0, 0.055, -0.36, scarlet, hoodie); hood.scale.set(1, 0.34, 0.9);
+  box(0.09, 0.006, 0.14, 0, 0.067, -0.03, paper, hoodie);
+  box(1.08, 0.38, 0.78, 2.73, 0.27, 1.49, mat('#69736a'), bed, 0.03);
+  box(1.12, 0.05, 0.81, 2.73, 0.48, 1.49, mat('#7e887f'), bed, 0.02);
+  box(0.29, 0.05, 0.018, 2.73, 0.32, 1.89, black, bed, 0.012);
+  box(0.78, 0.3, 0.62, 3.71, 0.2, 0.9, mat('#b68252'), bed);
+  box(0.8, 0.04, 0.64, 3.71, 0.37, 0.9, paper, bed);
 
-  // Low record console at the side of the room.
-  const consoleGroup = section('shelf');
-  box(2.12, 0.71, 0.87, 3.14, 0.66, -1.37, walnut, consoleGroup, 0.035);
-  for (const x of [2.28, 4]) for (const z of [-1.7, -1.05]) cylinder(0.035, 0.023, 0.3, x, 0.17, z, black, consoleGroup);
-  box(1.96, 0.55, 0.025, 3.14, 0.66, -0.925, darkWood, consoleGroup);
-  box(0.045, 0.55, 0.06, 3.1, 0.66, -0.89, walnut, consoleGroup);
-  for (let i = 0; i < 10; i++) box(0.04, 0.46, 0.05, 2.27 + i * 0.066, 0.65, -0.88, mat(['#aa956b', '#343c35', '#d4cab5'][i % 3]), consoleGroup);
-  box(1.35, 0.1, 0.66, 3.13, 1.08, -1.36, black, consoleGroup, 0.025);
-  cylinder(0.27, 0.27, 0.025, 2.98, 1.15, -1.36, mat('#101511', 0.3), consoleGroup);
-  cylinder(0.074, 0.074, 0.027, 2.98, 1.155, -1.36, mat('#a99466'), consoleGroup);
-  rod(vec(3.63, 1.17, -1.57), vec(3.54, 1.19, -1.23), 0.012, chrome, consoleGroup);
-  rod(vec(3.54, 1.19, -1.23), vec(3.35, 1.19, -1.15), 0.012, chrome, consoleGroup);
+  // Mini-fridge, with a couple of magnets and a plant on top.
+  const fridge = section();
+  const fridgeWhite = mat('#b8bdba', 0.65);
+  box(0.88, 1.2, 0.88, 1.3, 0.62, -2.57, fridgeWhite, fridge, 0.055);
+  box(0.81, 1.08, 0.04, 1.3, 0.65, -2.1, paper, fridge, 0.025);
+  box(0.055, 0.28, 0.045, 1.61, 0.98, -2.06, black, fridge, 0.015);
+  box(0.18, 0.23, 0.01, 1.18, 0.87, -2.07, mat('#d6bd78'), fridge).rotation.z = -0.14;
+  sphere(0.023, 1.18, 0.95, -2.05, scarlet, fridge);
+  // Corkboard: pinned schedule and snapshots, rather than a UI card.
+  box(0.91, 1.02, 0.06, 1.24, 2.9, -3.08, walnut);
+  box(0.83, 0.94, 0.015, 1.24, 2.9, -3.04, mat('#a68a58', 1));
+  const noteTexture = canvasTexture(300, 380, ctx => {
+    ctx.fillStyle = '#e7dfbc'; ctx.fillRect(0, 0, 300, 380);
+    ctx.fillStyle = '#41515f'; ctx.font = 'bold 35px monospace'; ctx.fillText('THIS WEEK', 24, 58);
+    ctx.font = '22px monospace'; ['CSE notes', 'problem set', 'laundry...', 'call home'].forEach((line, i) => ctx.fillText(line, 24, 122 + i * 55));
+  });
+  face(0.43, 0.55, 1.08, 2.96, -3.021, noteTexture, room).rotation.z = 0.08;
+  sphere(0.024, 1.07, 3.19, -2.997, scarlet);
+  box(0.25, 0.3, 0.012, 1.46, 2.73, -3.015, paper).rotation.z = -0.12;
+  box(0.2, 0.19, 0.015, 1.45, 2.76, -3.003, mat('#6e818c')).rotation.z = -0.12;
 
-  // A lounge chair, side table and a basketball; objects that make the space lived-in.
-  const lounge = new THREE.Group(); lounge.position.set(2.48, 0, 1.48); lounge.rotation.y = -0.42; room.add(lounge);
-  const olive = mat('#73745b', 0.98);
-  box(1.38, 0.32, 1.25, 0, 0.55, 0, olive, lounge, 0.15);
-  const back = box(1.39, 0.88, 0.25, 0, 1, -0.55, olive, lounge, 0.13); back.rotation.x = -0.1;
-  for (const x of [-0.69, 0.69]) {
-    box(0.19, 0.32, 1.24, x, 0.87, 0, olive, lounge, 0.08);
-    for (const z of [-0.45, 0.46]) rod(vec(x, 0.44, z), vec(x * 1.08, 0.05, z * 1.1), 0.045, darkWood, lounge);
+  // Textbooks, a water bottle, and loose sheets on the desk.
+  for (let i = 0; i < 3; i++) {
+    box(0.57, 0.07, 0.43, -3.55, 1.49 + i * 0.075, -2.18, mat(['#556977', '#a8674e', '#c9bd9c'][i]), desk, 0.005).rotation.y = i * 0.1;
   }
-  const cushion = box(0.66, 0.52, 0.18, 0.15, 1.04, -0.32, linen, lounge, 0.1); cushion.rotation.z = 0.12;
-  cylinder(0.47, 0.47, 0.08, 0.9, 0.62, 1.6, darkWood);
-  cylinder(0.09, 0.12, 0.56, 0.9, 0.31, 1.6, black);
-  cylinder(0.3, 0.34, 0.04, 0.9, 0.04, 1.6, black);
-  box(0.44, 0.045, 0.32, 0.91, 0.69, 1.62, paper, room, 0.009).rotation.y = 0.3;
-  const ball = sphere(0.24, 3.86, 0.26, 2.55, mat('#95613b', 0.95));
+  cylinder(0.09, 0.09, 0.42, -3.6, 1.67, -1.46, mat('#54767e'), desk);
+  cylinder(0.067, 0.067, 0.045, -3.6, 1.9, -1.46, black, desk);
+  box(0.42, 0.004, 0.3, -2.7, 1.463, -1.28, paper, desk).rotation.y = -0.21;
+  // Headphones hung on the desk edge.
+  const headphoneBand = mesh(new THREE.TorusGeometry(0.16, 0.025, 8, 32, Math.PI), black, 0.57, 1.32, -1.06);
+  headphoneBand.rotation.z = 0.22;
+  for (const x of [0.42, 0.72]) box(0.1, 0.19, 0.09, x, 1.2, -1.06, black, room, 0.04);
+
+  // Canvas laundry hamper with an open top and clothes poking out.
+  const hamper = new THREE.Group(); hamper.position.set(-3.8, 0, 1.47); room.add(hamper);
+  const canvas = mat('#a4a69a', 1);
+  mesh(new THREE.CylinderGeometry(0.4, 0.31, 0.73, 32, 1, true), canvas, 0, 0.4, 0, hamper);
+  const rim = mesh(new THREE.TorusGeometry(0.4, 0.02, 8, 40), paper, 0, 0.765, 0, hamper); rim.rotation.x = Math.PI / 2;
+  for (let i = 0; i < 4; i++) {
+    const clothes = sphere(0.19, Math.sin(i * 2) * 0.17, 0.7 + i % 2 * 0.05, Math.cos(i * 2) * 0.16, mat(['#babebd', '#465a72', '#c3b5a3', '#7c4645'][i]), hamper);
+    clothes.scale.y = 0.5;
+  }
+  // Backpack dropped beside the desk chair.
+  const backpack = new THREE.Group(); backpack.position.set(-0.22, 0, 0.19); backpack.rotation.y = -0.25; room.add(backpack);
+  const bag = mat('#354438', 1);
+  box(0.6, 0.77, 0.3, 0, 0.42, 0, bag, backpack, 0.13);
+  box(0.45, 0.3, 0.16, 0, 0.3, 0.18, bag, backpack, 0.06);
+  box(0.42, 0.012, 0.015, 0, 0.45, 0.26, paper, backpack);
+  const loop = mesh(new THREE.TorusGeometry(0.09, 0.017, 8, 24, Math.PI), black, 0, 0.8, 0, backpack);
+  loop.scale.y = 0.7;
+  // Everyday sneakers next to the bed.
+  for (const x of [1.22, 1.64]) {
+    box(0.27, 0.085, 0.63, x, 0.08, 2.1, paper, room, 0.07).rotation.y = -0.17;
+    box(0.24, 0.18, 0.48, x, 0.19, 2.05, mat('#576171'), room, 0.09).rotation.y = -0.17;
+    for (let i = 0; i < 3; i++) rod(vec(x - 0.06, 0.285, 2.04 + i * 0.055), vec(x + 0.07, 0.285, 2.04 + i * 0.055), 0.008, paper);
+  }
+  const ball = sphere(0.24, -2.65, 0.26, 2.55, mat('#95613b', 0.95));
   for (let i = 0; i < 3; i++) {
     const seam = mesh(new THREE.TorusGeometry(0.242, 0.004, 6, 64), black, 0, 0, 0, ball);
     if (i === 1) seam.rotation.x = Math.PI / 2; if (i === 2) seam.rotation.y = Math.PI / 2;
   }
 
   // Broad leaves modelled individually around stems.
-  const plant = new THREE.Group(); plant.position.set(-3.8, 0, 2.15); room.add(plant);
+  const plant = new THREE.Group(); plant.position.set(1.3, 1.23, -2.57); plant.scale.setScalar(0.4); room.add(plant);
   cylinder(0.35, 0.27, 0.55, 0, 0.31, 0, mat('#a39980', 0.95), plant);
   cylinder(0.32, 0.32, 0.025, 0, 0.59, 0, mat('#302d20'), plant);
   const leafMat = mat('#3f553b', 0.85); leafMat.side = THREE.DoubleSide;
@@ -243,7 +308,7 @@ export function buildRoom() {
   }
 
   // Small wall clock with actual hands, a quiet architectural detail.
-  const clock = new THREE.Group(); clock.position.set(1.12, 3.31, -3.06); room.add(clock);
+  const clock = new THREE.Group(); clock.position.set(0.9, 3.72, -3.06); room.add(clock);
   const dial = cylinder(0.26, 0.26, 0.05, 0, 0, 0, brass, clock); dial.rotation.x = Math.PI / 2;
   const clockFace = cylinder(0.235, 0.235, 0.012, 0, 0, 0.03, paper, clock); clockFace.rotation.x = Math.PI / 2;
   for (let i = 0; i < 12; i++) {
@@ -254,5 +319,5 @@ export function buildRoom() {
   rod(vec(0, 0, 0.05), vec(0.09, 0.1, 0.05), 0.009, black, clock);
   rod(vec(0, 0, 0.055), vec(-0.12, 0.12, 0.055), 0.007, black, clock);
 
-  return { room, interactive };
+  return { room };
 }

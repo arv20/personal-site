@@ -42,6 +42,13 @@ export function plasterTexture() {
       ctx.fillStyle = `rgba(${shade},${shade},${shade},${rand() * 0.045})`;
       ctx.fillRect(rand() * 512, rand() * 512, 2, 2);
     }
+    ctx.strokeStyle = '#aaa79e'; ctx.lineWidth = 2;
+    for (let y = 0; y <= 512; y += 64) {
+      ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(512, y); ctx.stroke();
+      for (let x = (y / 64 % 2) * 64; x < 512; x += 128) {
+        ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x, y + 64); ctx.stroke();
+      }
+    }
   });
 }
 

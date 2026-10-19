@@ -1,60 +1,52 @@
 import { test, expect } from '@playwright/test';
 
-// Catches broken object navigation, stranded focus, and inaccessible dialogs.
-test('visitors can explore the room and return to the same navigation control', async ({ page }, testInfo) => {
-  await page.goto('/');
-  const work = page.getByRole('button', { name: 'Work', exact: true });
-  await work.click();
-  const dialog = page.getByRole('dialog');
-  await expect(dialog).toBeVisible();
-  await expect(dialog.getByRole('heading', { name: 'On the desk' })).toBeVisible();
-  await page.screenshot({ path: testInfo.outputPath('work-panel.png'), animations: 'disabled' });
-  await expect(dialog.getByRole('link', { name: /GitHub/ }).first()).toHaveAttribute('href', 'https://github.com/arv20');
-  await page.keyboard.press('Escape');
-  await expect(dialog).not.toBeVisible();
-  await expect(work).toBeFocused();
-  await page.getByRole('button', { name: 'About', exact: true }).click();
-  await expect(dialog).toContainText('Ohio State');
-  await dialog.getByRole('button', { name: 'Close' }).click();
-  await page.getByRole('button', { name: 'Shelf', exact: true }).click();
-  await expect(dialog).toContainText('Hades II');
-});
-
-// Catches renderer startup failures and a lighting control disconnected from state.
-test('the 3D room loads and the lighting can be changed', async ({ page }, testInfo) => {
+test('the room fills the page without cards, links, or overlay controls', async ({ page }, testInfo) => {
   const errors: string[] = [];
   page.on('pageerror', error => errors.push(error.message));
   await page.goto('/');
   await expect(page.locator('.room-stage')).toHaveAttribute('data-status', 'ready', { timeout: 20000 });
-  await expect(page.locator('canvas')).toBeVisible();
+  await expect(page.getByRole('button')).toHaveCount(0);
+  await expect(page.getByRole('link')).toHaveCount(0);
+  await expect(page.getByRole('navigation')).toHaveCount(0);
+  await expect(page.getByRole('dialog')).toHaveCount(0);
+  const canvas = page.locator('canvas');
+  const box = await canvas.boundingBox();
+  expect(box?.height).toBe(page.viewportSize()!.height);
+  expect(box?.width).toBe(page.viewportSize()!.width);
   await page.screenshot({ path: testInfo.outputPath('desktop.png'), animations: 'disabled' });
-  await page.locator('canvas').screenshot({ path: testInfo.outputPath('room.png'), omitBackground: true, animations: 'disabled', style: 'html,body,.portfolio { background: transparent !important; }' });
-  const daylight = await page.locator('canvas').screenshot({ animations: 'disabled' });
-  const lighting = page.getByRole('button', { name: 'Dim the lights' });
-  await lighting.click();
-  await expect(page.getByRole('button', { name: 'Turn up the lights' })).toHaveAttribute('aria-pressed', 'true');
-  await expect(page.locator('.room-stage')).toHaveAttribute('data-lighting', 'night');
-  await page.waitForTimeout(1500);
-  await page.screenshot({ path: testInfo.outputPath('night.png'), animations: 'disabled' });
-  expect(await page.locator('canvas').screenshot()).not.toEqual(daylight);
-  await page.getByRole('button', { name: 'Reset view' }).click();
+  await canvas.screenshot({ path: testInfo.outputPath('room.png'), omitBackground: true, animations: 'disabled', style: 'html,body,.portfolio { background: transparent !important; }' });
   expect(errors).toEqual([]);
 });
 
-test('mobile navigation fits and every section stays reachable', async ({ page }, testInfo) => {
-  await page.setViewportSize({ width: 390, height: 844 });
+test('the room can be rotated with a pointer or keyboard without opening a card', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.goto('/');
-  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   await expect(page.locator('.room-stage')).toHaveAttribute('data-status', 'ready', { timeout: 20000 });
-  await page.screenshot({ path: testInfo.outputPath('mobile.png'), animations: 'disabled' });
-  await page.getByRole('button', { name: 'About', exact: true }).click();
-  await expect(page.getByRole('dialog')).toBeVisible();
-  await expect(page.getByRole('dialog').getByRole('button', { name: 'Close' })).toBeInViewport();
-  await page.keyboard.press('Escape');
-  await expect(page.getByRole('dialog')).not.toBeVisible();
+  const canvas = page.locator('canvas');
+  const capture = () => canvas.screenshot({ style: 'canvas { outline: none !important; }' });
+  const initial = await capture();
+  await page.mouse.move(660, 480);
+  await page.mouse.down();
+  await page.mouse.move(820, 460, { steps: 12 });
+  await page.mouse.up();
+  expect(await capture()).not.toEqual(initial);
+  await expect(page.getByRole('dialog')).toHaveCount(0);
+  await canvas.press('Home');
+  await expect.poll(async () => (await capture()).equals(initial)).toBe(true);
+  await canvas.press('ArrowLeft');
+  expect(await capture()).not.toEqual(initial);
 });
 
-test('a device without WebGL can still read the portfolio', async ({ page }, testInfo) => {
+test('the dorm fits a phone viewport', async ({ page }, testInfo) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('/');
+  await expect(page.locator('.room-stage')).toHaveAttribute('data-status', 'ready', { timeout: 20000 });
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  await expect(page.getByRole('button')).toHaveCount(0);
+  await page.screenshot({ path: testInfo.outputPath('mobile.png'), animations: 'disabled' });
+});
+
+test('a device without WebGL sees a still of the room', async ({ page }) => {
   await page.addInitScript(() => {
     const original = HTMLCanvasElement.prototype.getContext;
     HTMLCanvasElement.prototype.getContext = function (type: string, ...args: unknown[]) {
@@ -64,27 +56,7 @@ test('a device without WebGL can still read the portfolio', async ({ page }, tes
   });
   await page.goto('/');
   await expect(page.locator('.room-stage')).toHaveAttribute('data-status', 'fallback', { timeout: 15000 });
-  await page.getByRole('button', { name: 'Work', exact: true }).click();
-  await expect(page.getByRole('dialog')).toContainText('Spandrift');
-  await page.screenshot({ path: testInfo.outputPath('fallback-panel.png'), animations: 'disabled' });
-});
-
-// Catches accidental selection after a drag and a reset that leaves camera momentum.
-test('objects respond to clicks and a dragged view can be reset', async ({ page }) => {
-  await page.goto('/');
-  await expect(page.locator('.room-stage')).toHaveAttribute('data-status', 'ready', { timeout: 20000 });
-  const anchor = page.getByRole('button', { name: 'Explore the desk' });
-  const initial = await anchor.boundingBox();
-  if (!initial) throw new Error('Desk target unavailable');
-  await page.mouse.click(initial.x - 12, initial.y + 5);
-  await expect(page.getByRole('dialog')).toContainText('On the desk');
-  await page.keyboard.press('Escape');
-  await page.mouse.move(660, 480);
-  await page.mouse.down();
-  await page.mouse.move(820, 460, { steps: 12 });
-  await page.mouse.up();
-  await expect(page.getByRole('dialog')).not.toBeVisible();
-  await expect.poll(async () => Math.abs((await anchor.boundingBox())!.x - initial.x)).toBeGreaterThan(8);
-  await page.getByRole('button', { name: 'Reset view' }).click();
-  await expect.poll(async () => Math.abs((await anchor.boundingBox())!.x - initial.x)).toBeLessThan(1);
+  const still = page.getByRole('img', { name: /college dorm/ });
+  await expect(still).toBeVisible();
+  expect(await still.evaluate((image: HTMLImageElement) => image.complete && image.naturalWidth > 0)).toBe(true);
 });

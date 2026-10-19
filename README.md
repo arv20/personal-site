@@ -1,17 +1,12 @@
-# Aarav’s room
+# Aarav’s dorm room
 
-A personal portfolio built as an interactive 3D room. Inspired by the object-led exploration of Drake Related and the restrained storefront design of OVO, with original procedural geometry and artwork.
+A full-screen, interactive 3D college dorm. The room is the entire page: no cards, navigation, social links, hotspot markers, or pop-up panels.
 
-## The room
+A study desk, raised twin bed, rumpled bedding, Ohio State and Chelsea posters, a corkboard, string lights, mini-fridge, laundry, backpack, sneakers, and books make up the scene. All geometry and artwork are created locally with Three.js and canvas textures.
 
-Walnut desk, monitor, custom wall prints, book shelves, a turntable, lounge chair, and a window overlooking a stylized skyline. Drag to look around, click objects to explore, or use **Work**, **About**, and **Shelf**. The lighting control switches to an evening scene; Reset view returns to the original camera.
+## Controls
 
-- React + TypeScript + Vite
-- Three.js, physically lit materials, soft shadows, procedural canvas textures
-- Lazy-loaded renderer; local still-image fallback if WebGL is unavailable
-- Native accessible dialogs; keyboard navigation and focus restoration
-- Reduced motion support, capped pixel ratio, rendering only when the view changes, paused rendering in hidden tabs, GPU cleanup
-- GitHub activity from the checked-in data, with a visible sync date and no fabricated fallback metrics
+Drag with a mouse or touch to rotate. Keyboard users can focus the scene, use the arrow keys to rotate, and press **Home** to restore the original view. There are no visible overlay controls.
 
 ## Development
 
@@ -25,20 +20,20 @@ npm run build
 npm test
 ```
 
-Local browser tests use installed Google Chrome. CI installs Chromium. To use Playwright Chromium locally, change `channel` in `playwright.config.ts`, or run with `CI=1` after `npx playwright install chromium`. Browser tests cover navigation, focus restoration, mobile layout, lighting, and WebGL fallback.
+Local browser tests use installed Google Chrome. CI installs Chromium and tests the production build. Tests cover the room-only layout, pointer/keyboard camera controls, mobile sizing, and the still-image fallback when WebGL is unavailable.
 
-## Editing the room
+## Scene files
 
-- `src/scene/buildRoom.ts`: furniture, architecture, and object hit targets.
-- `src/scene/textures.ts`: original wall prints and surface textures.
-- `src/components/RoomScene.tsx`: renderer, camera, lighting, and interaction lifecycle.
-- `src/components/RoomPanel.tsx`: portfolio content and activity panel.
-- `src/data/room.ts`: profile links and world-space anchor positions.
-- `src/index.css`: responsive page and panel styling.
-- `public/room-preview.png`: still rendered from the actual scene for loading/fallback.
+- `src/scene/buildRoom.ts`: dorm architecture, furniture, and belongings.
+- `src/scene/textures.ts`: original posters and material textures.
+- `src/components/RoomScene.tsx`: renderer, camera, lighting, and resource lifecycle.
+- `src/App.tsx` and `src/index.css`: full-screen scene and accessible fallback.
+- `public/room-preview.png`: actual scene render used while loading or without WebGL.
+
+The renderer is lazy-loaded, caps pixel ratio, respects reduced motion, only draws changed frames, suspends while the tab is hidden, and disposes GPU resources on unmount.
 
 ## Deployment
 
-A push to `main` runs typechecking, a production build, lint, and browser smoke tests before GitHub Pages deployment. `public/CNAME` preserves **aaravkolgaonkar.dev**. The daily contribution workflow updates the local activity data.
+Pushing to `main` runs typechecking, the production build, lint, and browser smoke tests before publishing to GitHub Pages. `public/CNAME` preserves **aaravkolgaonkar.dev**.
 
-The previous driving experiment remains archived in `index.driving-backup.html`.
+The earlier driving experiment remains archived in `index.driving-backup.html`.
