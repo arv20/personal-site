@@ -1,0 +1,43 @@
+# Dorm room audit — 2026-10-19
+
+Baseline: `7e3a663`, React 19 + TypeScript 6 + Vite 8, imperative Three.js 0.186. No new framework needed.
+
+## Scene map
+- `src/components/RoomScene.tsx`: renderer, orthographic camera, OrbitControls, lighting, resize, motion preference and disposal.
+- `src/scene/buildRoom.ts`: all procedural furniture/architecture/props. No GLB, GLTF, Draco, Meshopt or KTX2 loaders/assets.
+- `src/scene/textures.ts`: canvas wood, plaster, rug, monitor, and approximated artwork.
+- `src/App.tsx`: loading/error fallback. `public/room-preview.png`: still. `public/og-image.jpg`: older social image.
+- No hotspot/click handlers exist in this baseline. Removed by the preceding room-only request. Drag/touch rotate; arrow keys rotate; Home resets. Preserve this behavior, rather than resurrecting removed cards.
+
+## Renderer
+ACESFilmicToneMapping, exposure 1.12. Output color space defaults to Three's SRGBColorSpace (not explicit). Antialias true, alpha true, low-power preference. Pixel ratio capped at 1.5. PCFShadowMap, 2048² directional shadow, normalBias .035, bias -.0002, radius 4; static shadows. PMREM RoomEnvironment, environmentIntensity .28. Orthographic viewHeight max(10.8,13/aspect), camera (10,10,12), target (0,2.05,0). Azimuth .22–1.18, polar .78–1.18. Zoom/pan disabled.
+
+## Every light
+| Light | Color / ground | Intensity | Shadow |
+|---|---|---:|---|
+| Hemisphere | #e8e5da / #59533c | 1.45 | No |
+| Directional sun | #fff0d2 | 2.2 | Yes |
+| Directional window fill | #b5cce0 | 1.2 | No |
+| Point desk lamp | #ffca7d | 4 | No |
+| Point shelf | #ffc67c | 3 | No |
+| Point wall | #ffe2ab | 3 | No |
+
+## Materials and geometry
+Most meshes use MeshStandardMaterial. MeshBasicMaterial is used for bulbs/lamp diffuser, monitor, window view and floating foundation shadow. No Lambert or Phong. No Physical materials. Wood/walls/rug/bedding use canvas color maps; remaining props generally use a flat color and constant roughness. No roughness, normal or AO maps. Most boxes have sharp edges; selected furniture is heavily rounded. Everything is procedural.
+
+The room is 9.3 × 6.6 × 4.3 units; desk 4.8 × 1.65 × 1.37 and mattress 2.08 × 4.32 × .27. There is no consistent meter scale. Dark plank flooring, bright global fill and simplified cloth dominate the toy appearance.
+
+## Baseline measurements
+Production bundle: app 222.05 kB (69.67 gzip), room/Three 595.86 kB (151.14 gzip), CSS 1.18 kB (.57 gzip), HTML 2.04 kB. Still image 487,303 bytes. Browser transferred 708,098 bytes at both viewports.
+
+Cold first room frame: **8,540 ms desktop (1440×900), 4,023 ms mobile viewport (390×844)**. Measured locally in headless Chrome with SwiftShader software rendering, reduced motion; these are not hardware/mobile performance claims. Zero uncaught page errors. Screenshots and raw metrics are in the linked review directory below.
+
+## Assets and links
+No supplied poster/photo files or résumé found. New scene must use neutral placeholders until provided; no generated crests. Existing generated art is retained only inside the frozen legacy scene.
+GitHub `arv20` and `arv20/spandrift` verified via GitHub CLI. Trove has no matching public repo in the returned inventory; do not invent its URL. Existing LinkedIn returns HTTP 999 (automated requests blocked), not a demonstrated 404; retain existing URL and flag human verification. Email: aarav.kolgaonkar@gmail.com.
+Blender not found on PATH or at /Applications/Blender.app: optional Phase 5 bake unavailable.
+
+## Accepted implementation direction
+Follow the user's supplied phased specification: meter-scale 3.9 × 2.9 × 2.4 m cutaway, off-white CMU, warm gray VCT, navy plaid bedding, asymmetric personal belongings, dusk window with warm practicals. Retain the original scene at `?legacy=1`. Use existing Three addons, procedural mapped materials and baked AO/contact masks. No new framework. One unobtrusive simple-page link is explicitly requested by the new brief; no portfolio cards return to the room.
+
+Review images: `/Users/aaravk/.codex/visualizations/2026/10/19/01a1522a-dc43-7752-9468-f9f836f60551/dorm-rebuild/phase-0/`.
