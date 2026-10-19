@@ -4,12 +4,12 @@ import {texture,type Materials} from './materials';
 export function buildShell(room:T.Group,m:Materials){
   box(4.06,.12,3.06,0,-.08,0,m.trim,room,.008);
   box(3.9,.025,2.9,0,-.006,0,m.floor,room,.003);
-  box(4.06,2.4,.12,0,1.2,-1.51,m.paint,room);
+  box(4.06,2.4,.12,0,1.2,-1.51,m.paint,room,.0002);
   // Window opening is an actual hole, so the key light can enter the room.
-  box(.12,.76,2.9,-2.01,.38,0,m.paint,room);
-  box(.12,.34,2.9,-2.01,2.23,0,m.paint,room);
-  box(.12,1.3,.6,-2.01,1.41,-1.15,m.paint,room);
-  box(.12,1.3,1.1,-2.01,1.41,.9,m.paint,room);
+  box(.12,.76,2.9,-2.01,.38,0,m.paint,room,.0002);
+  box(.12,.34,2.9,-2.01,2.23,0,m.paint,room,.0002);
+  box(.12,1.3,.6,-2.01,1.41,-1.15,m.paint,room,.0002);
+  box(.12,1.3,1.1,-2.01,1.41,.9,m.paint,room,.0002);
   box(3.9,.09,.018,0,.045,-1.442,m.trim,room);
   box(.018,.09,2.9,-1.942,.045,0,m.trim,room);
   const win=group(room,-1.956,1.41,-.25,Math.PI/2);

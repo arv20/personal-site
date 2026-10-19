@@ -12,6 +12,7 @@ export function materials() {
     const r=seeded(); c.fillStyle='#b5b5b5';c.fillRect(0,0,256,256);
     for(let i=0;i<21000;i++){const v=130+r()*100;c.fillStyle=`rgb(${v},${v},${v})`;c.fillRect(r()*256,r()*256,1+r()*3,1+r()*2);}
   },false);
+  const albedo = texture(256,256,c=>{const r=seeded(15);c.fillStyle='#c1c1c1';c.fillRect(0,0,256,256);for(let i=0;i<19000;i++){const v=187+r()*9;c.fillStyle=`rgb(${v},${v},${v})`;c.fillRect(r()*256,r()*256,1,1);}});
   const weave = texture(256,256,c=>{
     c.fillStyle='#858585';c.fillRect(0,0,256,256);
     for(let y=0;y<256;y+=4)for(let x=0;x<256;x+=4){c.fillStyle=(x+y)%8?'#9a9a9a':'#6d6d6d';c.fillRect(x,y,3,2);c.fillStyle='#ababab';c.fillRect(x,y+2,2,2);}
@@ -37,8 +38,8 @@ export function materials() {
     for(let i=0;i<=1024;i+=128){c.beginPath();c.moveTo(i,0);c.lineTo(i,1024);c.moveTo(0,i);c.lineTo(1024,i);c.stroke();}
     for(let i=0;i<12;i++){c.strokeStyle='#6c685b0e';c.lineWidth=3;c.beginPath();c.ellipse(r()*1024,r()*1024,20,5,r(),0,2);c.stroke();}
   });
-  const plain=(color: string,roughness=.65,metalness=0)=>new T.MeshStandardMaterial({color,roughness,metalness,map:noise,roughnessMap:noise,bumpMap:noise,bumpScale:.0003});
-  const fabric=(color:string)=>new T.MeshPhysicalMaterial({color,map:noise,roughness:.98,roughnessMap:noise,bumpMap:weave,bumpScale:.001,sheen:.35,sheenColor:new T.Color(color),sheenRoughness:1,side:T.DoubleSide});
+  const plain=(color: string,roughness=.65,metalness=0)=>new T.MeshStandardMaterial({color,roughness,metalness,map:albedo,roughnessMap:noise,bumpMap:noise,bumpScale:.0003});
+  const fabric=(color:string)=>new T.MeshPhysicalMaterial({color,map:albedo,roughness:.98,roughnessMap:noise,bumpMap:weave,bumpScale:.001,sheen:.35,sheenColor:new T.Color(color),sheenRoughness:1,side:T.DoubleSide});
   return {noise,weave,wood,wall,joints,tile,plain,fabric,
     oak:new T.MeshPhysicalMaterial({map:wood,roughness:.58,roughnessMap:noise,bumpMap:wood,bumpScale:.0006,clearcoat:.12,clearcoatRoughness:.6}),
     paint:new T.MeshStandardMaterial({map:wall,roughness:.95,roughnessMap:noise,bumpMap:joints,bumpScale:.0015}),
