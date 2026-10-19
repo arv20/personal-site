@@ -68,3 +68,24 @@ test('legacy URL preserves the previous room separately from the rebuild', async
   await page.goto('/');
   await expect(page.locator('.room-stage')).toHaveAttribute('data-scene', 'dorm');
 });
+
+test('missing local poster files fall back safely and supplied artwork renders', async ({ page }) => {
+  test.setTimeout(90000);
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  const errors: string[] = [];
+  const warnings: string[] = [];
+  page.on('pageerror', e => errors.push(e.message));
+  page.on('console', message => { if(message.type() === 'warning') warnings.push(message.text()); });
+  await page.route('**/textures/posters/**', route => route.fulfill({ status: 404, body: '' }));
+  await page.goto('/');
+  await expect(page.locator('.room-stage')).toHaveAttribute('data-status', 'ready', { timeout: 30000 });
+  expect(warnings.some(w => w.includes('Missing room image:') && w.includes('osu-poster.jpg'))).toBe(true);
+  const neutral = await page.locator('canvas').screenshot();
+  await page.unroute('**/textures/posters/**');
+  // A real local image response exercises texture decoding, geometry sizing and rendering.
+  await page.route('**/textures/posters/**', route => route.fulfill({ contentType: 'image/png', path: 'public/room-preview.png' }));
+  await page.reload();
+  await expect(page.locator('.room-stage')).toHaveAttribute('data-status', 'ready', { timeout: 30000 });
+  expect(await page.locator('canvas').screenshot()).not.toEqual(neutral);
+  expect(errors).toEqual([]);
+});

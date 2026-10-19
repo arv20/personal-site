@@ -43,7 +43,7 @@ export default function RoomScene({ onStatus }: Props) {
     scene.environment = envTarget.texture;
     scene.environmentIntensity = 0.35;
     environment.dispose(); pmrem.dispose();
-    const { room } = buildRoom(); scene.add(room);
+    const { room, assetsReady, disposeAssets } = buildRoom(renderer.capabilities.getMaxAnisotropy()); scene.add(room);
     const camera = new THREE.OrthographicCamera(-8, 8, 5, -5, 0.1, 100);
     const initialPosition = new THREE.Vector3(4.8, 4.5, 6);
     camera.position.copy(initialPosition);
@@ -117,20 +117,22 @@ export default function RoomScene({ onStatus }: Props) {
     document.addEventListener('visibilitychange', visibility);
     reducedMotion.addEventListener('change', motionChanged);
     let ready = false;
+    let assetsLoaded = false;
+    void assetsReady.then(() => { if (!disposed) { assetsLoaded = true; dirty = true; } });
     function render() {
       if (disposed || document.hidden || !contextAvailable) return;
       const changed = controls.update();
       if (dirty || changed) {
         renderer.shadowMap.needsUpdate = !ready;
         renderer.render(scene, camera);
-        if (!ready) { ready = true; callbacks.current.onStatus('ready'); }
+        if (!ready && assetsLoaded) { ready = true; callbacks.current.onStatus('ready'); }
         dirty = false;
       }
       frame = requestAnimationFrame(render);
     }
     frame = requestAnimationFrame(render);
     return () => {
-      disposed = true; cancelAnimationFrame(frame); observer.disconnect(); controls.removeEventListener('change', invalidate); controls.dispose();
+      disposed = true; disposeAssets(); cancelAnimationFrame(frame); observer.disconnect(); controls.removeEventListener('change', invalidate); controls.dispose();
       renderer.domElement.removeEventListener('keydown', keyboard);
       renderer.domElement.removeEventListener('webglcontextlost', contextLost);
       document.removeEventListener('visibilitychange', visibility);

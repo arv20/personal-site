@@ -1,0 +1,1 @@
+Optional personal photos: corkboard-01.jpg and corkboard-02.jpg. Portrait or landscape works; the original ratio is preserved. Optimize to 512 pixels and <100 KB each. Missing photos use neutral paper.
