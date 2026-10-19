@@ -2,8 +2,8 @@ import * as T from 'three';
 import {box,group,mesh,plane} from './geometry';
 import {texture,type Materials} from './materials';
 
-export function artwork(m:Materials,anisotropy:number){
-  const pending:Promise<void>[]=[];let disposed=false;
+export function artwork(m:Materials,anisotropy:number,onProgress:(fraction:number)=>void=()=>{}){
+  const pending:Promise<void>[]=[];let disposed=false;let finished=0;
   const loader=new T.TextureLoader();
   const placeholder=texture(256,256,c=>{c.fillStyle='#93948e';c.fillRect(0,0,256,256);if(import.meta.env.DEV){c.fillStyle='#424845';c.textAlign='center';c.font='18px sans-serif';c.fillText('ADD IMAGE',128,135);}});
   function poster(parent:T.Object3D,path:string,x:number,y:number,z:number,w:number,h:number,rotation=0,felt=false,photo=false){
@@ -32,7 +32,7 @@ export function artwork(m:Materials,anisotropy:number){
         if(backing){backing.scale.set((width+.025)/(w+.025),(height+.055)/(h+.055),1);}
         paper.map=t;paper.needsUpdate=true;resolve();
       },undefined,()=>{clearTimeout(timer);fail();});
-    }));
+    }).then(()=>{finished++;if(!disposed)onProgress(finished/pending.length);}));
     return g;
   }
   return {poster,ready:()=>Promise.all(pending),dispose:()=>{disposed=true;placeholder.dispose();}};

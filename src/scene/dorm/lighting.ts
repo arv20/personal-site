@@ -6,10 +6,10 @@ import type {buildRoom} from '../buildRoom';
 export function lighting(scene:T.Scene,model:ReturnType<typeof buildRoom>){
   const hemi=new T.HemisphereLight('#849fc5','#726253',.25);scene.add(hemi);
   const sun=new T.DirectionalLight('#f0c29b',1.65);sun.position.set(-4,3.3,-1.3);sun.target.position.set(.4,.2,.3);sun.castShadow=true;
-  sun.shadow.mapSize.set(2048,2048);Object.assign(sun.shadow.camera,{left:-3,right:3,top:3,bottom:-3,near:.1,far:12});sun.shadow.normalBias=.008;sun.shadow.bias=-.0001;sun.shadow.radius=4;scene.add(sun,sun.target);
+  sun.shadow.mapSize.set(2048,2048);Object.assign(sun.shadow.camera,{left:-3,right:3,top:3,bottom:-3,near:.1,far:12});sun.shadow.camera.updateProjectionMatrix();sun.shadow.normalBias=.008;sun.shadow.bias=-.0001;sun.shadow.radius=4;scene.add(sun,sun.target);
   const lamp=new T.SpotLight('#ffd09a',1.2,2.7,.86,.65,2);lamp.position.copy(model.lampPosition);lamp.target.position.copy(model.lampTarget);lamp.castShadow=true;lamp.shadow.mapSize.set(1024,1024);lamp.shadow.bias=-.0001;lamp.shadow.normalBias=.003;lamp.shadow.camera.near=.05;lamp.shadow.camera.far=3;scene.add(lamp,lamp.target);
   for(const i of [1,5,9,13]){const light=new T.PointLight('#ffcb87',.09,1.45,2);light.position.copy(model.bulbs[i]).add(new T.Vector3(0,-.03,.05));scene.add(light);}
-  const monitor=new T.PointLight('#8eadd9',.045,.8,2);monitor.position.set(-.92,1.07,-1.17);scene.add(monitor);
+  const monitor=new T.PointLight('#8eadd9',.018,.8,2);monitor.position.set(-.92,1.07,-1.08);scene.add(monitor);
   const shadowMap=texture(128,128,c=>{const g=c.createRadialGradient(64,64,8,64,64,64);g.addColorStop(0,'#24252a9c');g.addColorStop(.4,'#24252a66');g.addColorStop(1,'#24252a00');c.fillStyle=g;c.fillRect(0,0,128,128);});
   const shadowMaterial=new T.MeshStandardMaterial({map:shadowMap,transparent:true,roughness:1,depthWrite:false,polygonOffset:true,polygonOffsetFactor:-1});
   function contact(x:number,z:number,w:number,d:number,y=.016){const s=plane(w,d,x,y,z,shadowMaterial,model.room);s.rotation.x=-Math.PI/2;s.castShadow=s.receiveShadow=false;return s;}

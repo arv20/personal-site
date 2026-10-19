@@ -1,0 +1,14 @@
+[
+  {
+    "name": "desktop",
+    "firstRenderMs": 13856.29999999702,
+    "resources": 731814,
+    "errors": []
+  },
+  {
+    "name": "mobile",
+    "firstRenderMs": 9228.79999999702,
+    "resources": 731814,
+    "errors": []
+  }
+]

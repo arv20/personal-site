@@ -1,0 +1,18 @@
+[
+  {
+    "name": "desktop",
+    "firstRenderMs": 17693.5,
+    "resources": 750462,
+    "quality": "low",
+    "sampleFps": "1.3",
+    "errors": []
+  },
+  {
+    "name": "mobile",
+    "firstRenderMs": 13131.20000000298,
+    "resources": 750462,
+    "quality": "low",
+    "sampleFps": "2.1",
+    "errors": []
+  }
+]

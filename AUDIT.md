@@ -56,3 +56,6 @@ Added physically located desk spotlight, four weak steady string-light points, c
 
 ## Phase 5
 Optional Blender lightmap bake not run: Blender is not installed. Static AO/contact masks provide a lightweight alternative, but do not claim Blender path-traced lighting or photographic fidelity.
+
+## Phase 6 review
+Implemented truthful staged/asset loading progress, a two-second actual-render performance probe, automatic low tier, manual quality query for troubleshooting, 750 ms eased keyboard/reset camera moves, no-JS HTML portfolio at /#/simple, subtle Skip the room link, native-GPU measurement, and regenerated 1200×630 OG/fallback renders. Fixed the excessive monitor reflection and explicitly updated directional shadow projection after assigning its bounds. Final desktop/mobile captures are in Phase 6. Build/lint and the 10-test suite pass; a real touch-drag check also exercises the phone interaction. Apple M3 measured 60 fps at 1440×900 DPR1; physical Android target is unverified. See REVIEW.md for honest remaining acceptance limits and docs/review/review.html for before/after images.
