@@ -14,3 +14,7 @@ yarn-error.log*
 
 # Freebuff workspace metadata
 .freebuff/
+
+# Browser verification output
+test-results/
+playwright-report/

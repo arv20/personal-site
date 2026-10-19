@@ -2,7 +2,7 @@ name: Deploy Spatial Portfolio to GitHub Pages
 
 on:
   push:
-    branches: [main, spatial_portfolio_camera_rig]
+    branches: [main]
   workflow_dispatch:
 
 permissions:
@@ -24,7 +24,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: 'npm'
 
       - name: Install dependencies
@@ -32,6 +32,15 @@ jobs:
 
       - name: Build production bundle
         run: npm run build
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Install browser for smoke tests
+        run: npx playwright install --with-deps chromium
+
+      - name: Browser smoke tests
+        run: npm test -- --workers=1
 
       - name: Setup Pages
         uses: actions/configure-pages@v5
