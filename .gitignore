@@ -1,2 +1,16 @@
-# Freebuff workspace metadata (internal app database)
+# Dependencies
+node_modules/
+
+# Production build output
+dist/
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS metadata
+.DS_Store
+
+# Freebuff workspace metadata
 .freebuff/

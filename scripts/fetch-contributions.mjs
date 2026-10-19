@@ -26,5 +26,9 @@ const payload = await response.json();
 if (payload.errors) throw new Error(payload.errors.map(error => error.message).join('; '));
 const calendar = payload.data.user.contributionsCollection.contributionCalendar;
 const contributions = calendar.weeks.flatMap(week => week.contributionDays).map(day => ({ date: day.date, count: day.contributionCount }));
+
+const dataPayload = JSON.stringify({ generatedAt: new Date().toISOString(), total: calendar.totalContributions, contributions });
 await mkdir('data', { recursive: true });
-await writeFile('data/github-contributions.json', JSON.stringify({ generatedAt: new Date().toISOString(), total: calendar.totalContributions, contributions }));
+await mkdir('public/data', { recursive: true });
+await writeFile('data/github-contributions.json', dataPayload);
+await writeFile('public/data/github-contributions.json', dataPayload);
