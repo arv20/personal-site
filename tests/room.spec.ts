@@ -60,3 +60,11 @@ test('a device without WebGL sees a still of the room', async ({ page }) => {
   await expect(still).toBeVisible();
   expect(await still.evaluate((image: HTMLImageElement) => image.complete && image.naturalWidth > 0)).toBe(true);
 });
+
+test('legacy URL preserves the previous room separately from the rebuild', async ({ page }) => {
+  await page.goto('/?legacy=1');
+  await expect(page.locator('.room-stage')).toHaveAttribute('data-scene', 'legacy');
+  await expect(page.locator('.room-stage')).toHaveAttribute('data-status', 'ready', { timeout: 30000 });
+  await page.goto('/');
+  await expect(page.locator('.room-stage')).toHaveAttribute('data-scene', 'dorm');
+});

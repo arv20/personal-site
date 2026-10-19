@@ -23,12 +23,13 @@ export default function RoomScene({ onStatus }: Props) {
       callbacks.current.onStatus('fallback');
       return;
     }
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     renderer.shadowMap.enabled = true;
-    renderer.shadowMap.type = THREE.PCFShadowMap;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
     renderer.shadowMap.autoUpdate = false;
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 1.12;
+    renderer.toneMappingExposure = 1.0;
     renderer.setClearColor(0x171815, 0);
     renderer.domElement.setAttribute('aria-label', 'A college dorm room with a twin bed, study desk, posters and string lights. Drag or use the arrow keys to rotate; Home resets the view.');
     renderer.domElement.setAttribute('role', 'img');
@@ -40,13 +41,13 @@ export default function RoomScene({ onStatus }: Props) {
     const environment = new RoomEnvironment();
     const envTarget = pmrem.fromScene(environment, 0.04);
     scene.environment = envTarget.texture;
-    scene.environmentIntensity = 0.28;
+    scene.environmentIntensity = 0.35;
     environment.dispose(); pmrem.dispose();
     const { room } = buildRoom(); scene.add(room);
     const camera = new THREE.OrthographicCamera(-8, 8, 5, -5, 0.1, 100);
-    const initialPosition = new THREE.Vector3(10, 10, 12);
+    const initialPosition = new THREE.Vector3(4.8, 4.5, 6);
     camera.position.copy(initialPosition);
-    const target = new THREE.Vector3(0, 2.05, 0);
+    const target = new THREE.Vector3(0, 1.03, 0);
     const controls = new OrbitControls(camera, renderer.domElement);
     const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
     controls.enableDamping = !reducedMotion.matches;
@@ -60,27 +61,14 @@ export default function RoomScene({ onStatus }: Props) {
     controls.touches = { ONE: THREE.TOUCH.ROTATE, TWO: THREE.TOUCH.DOLLY_ROTATE };
     controls.update(); controls.saveState();
 
-    const hemi = new THREE.HemisphereLight('#e8e5da', '#59533c', 1.45); scene.add(hemi);
-    const sun = new THREE.DirectionalLight('#fff0d2', 2.2);
-    sun.position.set(-3, 9, 7); sun.castShadow = true;
-    sun.shadow.mapSize.set(2048, 2048);
-    sun.shadow.camera.left = -9; sun.shadow.camera.right = 9;
-    sun.shadow.camera.top = 9; sun.shadow.camera.bottom = -9;
-    sun.shadow.normalBias = 0.035; sun.shadow.bias = -0.0002; sun.shadow.radius = 4;
-    scene.add(sun);
-    const windowLight = new THREE.DirectionalLight('#b5cce0', 1.2); windowLight.position.set(-6, 4, 2); scene.add(windowLight);
-    const lamp = new THREE.PointLight('#ffca7d', 4, 4, 2); lamp.position.set(0.26, 2.35, -2.0); scene.add(lamp);
-    const shelfLight = new THREE.PointLight('#ffc67c', 3, 5, 2); shelfLight.position.set(3.1, 3.6, -2.3); scene.add(shelfLight);
-    const wallLight = new THREE.PointLight('#ffe2ab', 3, 7, 2); wallLight.position.set(-2.5, 3.8, -1.8); scene.add(wallLight);
-    // A soft grounding shadow below the floating foundation.
-    const shadowCanvas = document.createElement('canvas'); shadowCanvas.width = shadowCanvas.height = 128;
-    const ctx = shadowCanvas.getContext('2d')!;
-    const gradient = ctx.createRadialGradient(64, 64, 16, 64, 64, 64);
-    gradient.addColorStop(0, 'rgba(0,0,0,0.48)'); gradient.addColorStop(1, 'rgba(0,0,0,0)');
-    ctx.fillStyle = gradient; ctx.fillRect(0, 0, 128, 128);
-    const shadowTexture = new THREE.CanvasTexture(shadowCanvas);
-    const ground = new THREE.Mesh(new THREE.PlaneGeometry(14, 11), new THREE.MeshBasicMaterial({ map: shadowTexture, transparent: true, depthWrite: false }));
-    ground.rotation.x = -Math.PI / 2; ground.position.y = -0.34; scene.add(ground);
+    const hemi = new THREE.HemisphereLight('#8caccf', '#746453', .35); scene.add(hemi);
+    const sun = new THREE.DirectionalLight('#ffd4a2', 2.1);
+    sun.position.set(-4, 3.3, -1.3); sun.target.position.set(.4, .2, .3);
+    sun.castShadow = true; sun.shadow.mapSize.set(2048, 2048);
+    sun.shadow.camera.left=-3; sun.shadow.camera.right=3; sun.shadow.camera.top=3; sun.shadow.camera.bottom=-3;
+    sun.shadow.camera.near=.1; sun.shadow.camera.far=12;
+    sun.shadow.normalBias=.012; sun.shadow.bias=-.00015; sun.shadow.radius=4;
+    scene.add(sun,sun.target);
 
     let dirty = true;
     const invalidate = () => { dirty = true; };
@@ -93,7 +81,7 @@ export default function RoomScene({ onStatus }: Props) {
       const width = host!.clientWidth, height = host!.clientHeight;
       if (!width || !height) return;
       const aspect = width / height;
-      const viewHeight = Math.max(10.8, 13.0 / aspect);
+      const viewHeight = Math.max(4.9, 5.9 / aspect);
       camera.left = -viewHeight * aspect / 2; camera.right = viewHeight * aspect / 2;
       camera.top = viewHeight / 2; camera.bottom = -viewHeight / 2;
       camera.updateProjectionMatrix(); renderer.setSize(width, height); dirty = true;

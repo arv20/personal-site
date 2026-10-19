@@ -41,3 +41,6 @@ Blender not found on PATH or at /Applications/Blender.app: optional Phase 5 bake
 Follow the user's supplied phased specification: meter-scale 3.9 × 2.9 × 2.4 m cutaway, off-white CMU, warm gray VCT, navy plaid bedding, asymmetric personal belongings, dusk window with warm practicals. Retain the original scene at `?legacy=1`. Use existing Three addons, procedural mapped materials and baked AO/contact masks. No new framework. One unobtrusive simple-page link is explicitly requested by the new brief; no portfolio cards return to the room.
 
 Review images: `/Users/aaravk/.codex/visualizations/2026/10/19/01a1522a-dc43-7752-9468-f9f836f60551/dorm-rebuild/phase-0/`.
+
+## Phase 1 review
+Real-scale shell, VCT floor, CMU bump, actual window opening, 1.2 × 1.3 m glazing, uneven blind, dusk skyline, explicit sRGB/ACES and soft window shadows. Desktop/mobile screenshots in `dorm-rebuild/phase-1/`. Window projects a physically positioned light patch and framing fits both sizes. Still weak: empty room, broad fill; furniture and practical lights come in subsequent phases. Baseline/after comparison: room width now 3.9 m versus 9.3 arbitrary units; texture variation replaces wood planks. Production build/lint pass; no page errors.
