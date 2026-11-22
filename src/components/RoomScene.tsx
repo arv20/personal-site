@@ -363,7 +363,7 @@ const RoomScene = forwardRef<RoomHandle, Props>(function RoomScene({ onStatus, o
     function keyboard(event: KeyboardEvent) {
       if (!['Home', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(event.key)) return;
       event.preventDefault(); interact();
-      if (event.key === 'Home') { controls.reset(); dirty = true; return; }
+      if (event.key === 'Home') { camera.position.set(4.8, 4.5, 6); controls.target.set(0, 1.03, 0); controls.update(); dirty = true; return; }
       const s = new THREE.Spherical().setFromVector3(camera.position.clone().sub(controls.target));
       if (event.key === 'ArrowLeft') s.theta -= .1;
       if (event.key === 'ArrowRight') s.theta += .1;
