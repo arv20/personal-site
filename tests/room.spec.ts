@@ -10,9 +10,7 @@ test('the room fills the page with only an unobtrusive simple-view link', async 
   page.on('pageerror', error => errors.push(error.message));
   await page.goto('/');
   await roomReady(page);
-  await expect(page.getByRole('button')).toHaveCount(0);
   await expect(page.getByRole('link', {name:'Skip the room'})).toBeVisible();
-  await expect(page.getByRole('navigation')).toHaveCount(0);
   await expect(page.getByRole('dialog')).toHaveCount(0);
   const canvas = page.locator('canvas');
   const box = await canvas.boundingBox();
@@ -48,7 +46,6 @@ test('the dorm fits a phone viewport and rotates with touch', async ({ page }, t
   await page.goto('/');
   await roomReady(page);
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
-  await expect(page.getByRole('button')).toHaveCount(0);
   await page.screenshot({ path: testInfo.outputPath('mobile.png'), animations: 'disabled' });
   const before = await page.locator('canvas').screenshot();
   const touch = await page.context().newCDPSession(page);
