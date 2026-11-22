@@ -40,6 +40,13 @@
 
     <title>aarav kolgaonkar - swe @ osu</title>
 
+    <script>
+      (function () {
+        function sync() { document.documentElement.classList.toggle('room-enabled', location.hash !== '#/simple'); }
+        sync();
+        addEventListener('hashchange', sync);
+      })();
+    </script>
   </head>
   <body>
     <main id="simple-view" class="simple-view">

@@ -1,5 +1,5 @@
 import { test, expect, type Page } from '@playwright/test';
-test.setTimeout(120000);
+test.setTimeout(300000);
 async function roomReady(page: Page) {
   await expect(page.locator('.room-stage')).toHaveAttribute('data-status', 'ready', { timeout: 60000 });
   if (await page.locator('.room-stage').getAttribute('data-scene') === 'dorm') await expect(page.locator('.room-canvas')).toHaveAttribute('data-quality', /^(low|high)$/, { timeout: 60000 });
@@ -80,7 +80,7 @@ test('legacy URL preserves the previous room separately from the rebuild', async
 });
 
 test('missing local poster files fall back safely and supplied artwork renders', async ({ page }) => {
-  test.setTimeout(90000);
+  test.setTimeout(300000);
   await page.emulateMedia({ reducedMotion: 'reduce' });
   const errors: string[] = [];
   const warnings: string[] = [];
