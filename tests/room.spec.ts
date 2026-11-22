@@ -104,6 +104,8 @@ test('simple view is linked and contains usable portfolio text without WebGL', a
   await page.goto('/');
   await page.getByRole('link', {name:'Skip the room'}).click();
   await expect(page).toHaveURL(/#\/simple$/);
+  await page.waitForFunction(() => !document.documentElement.classList.contains('room-enabled'), { timeout: 10000 });
+  await expect(page.locator('#simple-view')).toBeVisible();
   await expect(page.getByRole('heading', {name:'Aarav Kolgaonkar', exact:true})).toBeVisible();
   await expect(page.getByRole('link', {name:'Spandrift',exact:true})).toHaveAttribute('href','https://github.com/arv20/spandrift');
   await expect(page.locator('canvas')).toHaveCount(0);
